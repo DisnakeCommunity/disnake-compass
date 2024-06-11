@@ -1,6 +1,7 @@
 """A simple example on the use of buttons with disnake-ext-components."""
 
 import os
+import typing
 
 import disnake
 from disnake.ext import commands, components
@@ -17,7 +18,7 @@ manager.add_to_bot(bot)
 # Then we make a simple component and register it to the manager.
 @manager.register
 class MyButton(components.RichButton):
-    label: str = "0"  # Set the label of the button...
+    label: typing.Optional[str] = "0"  # Set the label of the button...
 
     count: int  # Define a custom_id parameter...
 

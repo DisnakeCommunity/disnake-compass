@@ -19,7 +19,7 @@ __all__: typing.Sequence[str] = (
 
 _PARSERS: typing.Dict[typing.Type[typing.Any], typing.Type[Parser[typing.Any]]] = {}
 _REV_PARSERS: typing.Dict[
-    typing.Type[Parser[typing.Any]], typing.Tuple[typing.Type[typing.Any]]
+    typing.Type[Parser[typing.Any]], typing.Tuple[typing.Type[typing.Any], ...]
 ] = {}
 
 
@@ -142,7 +142,10 @@ def get_parser(type_: typing.Type[_T]) -> Parser[_T]:
     if issubclass(origin, typing.Collection):
         inner_type = next(iter(type_args), str)  # Get first element, default to str
         inner_parser = get_parser(inner_type)
-        return parser_type(inner_parser, collection_type=origin)  # see CollectionParser
+        return parser_type(  # see CollectionParser
+            inner_parser,
+            collection_type=origin,  # pyright: ignore[reportUnknownArgumentType]
+        )
 
     msg = f"Coult not create a parser for type {type_.__name__!r}."
     raise TypeError(msg)
@@ -191,7 +194,7 @@ class Parser(parser_api.Parser[_T], typing.Protocol[_T]):
         return cls()
 
     @classmethod
-    def default_types(cls) -> typing.Tuple[typing.Type[typing.Any]]:
+    def default_types(cls) -> typing.Tuple[typing.Type[typing.Any], ...]:
         """Return the types for which this parser type is the default implementation.
 
         Returns

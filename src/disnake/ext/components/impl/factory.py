@@ -170,7 +170,7 @@ class NoopFactory(component_api.ComponentFactory[typing.Any]):
 
     def __new__(cls) -> typing_extensions.Self:  # noqa: D102
         if cls.__instance is not None:
-            return cls.__instance
+            return cls.__instance  # pyright: ignore[reportReturnType]
 
         cls.__instance = self = super().__new__(cls)
         return self
@@ -181,7 +181,7 @@ class NoopFactory(component_api.ComponentFactory[typing.Any]):
     ) -> typing_extensions.Self:
         # <<docstring inherited from api.components.ComponentFactory>>
 
-        return NoopFactory()
+        return cls()
 
     async def load_params(self, *_: object) -> typing.NoReturn:  # noqa: D102
         # <<docstring inherited from api.components.ComponentFactory>>

@@ -289,7 +289,7 @@ class ComponentManager(component_api.ComponentManager):
         return _recurse_parents_getattr(self, "_sep", _DEFAULT_SEP)
 
     @property
-    def parent(self) -> typing.Optional[typing_extensions.Self]:  # noqa: D102
+    def parent(self) -> typing.Optional[ComponentManager]:  # noqa: D102
         # <<docstring inherited from api.components.ComponentManager>>
 
         if "." not in self.name:

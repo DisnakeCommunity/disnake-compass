@@ -9,6 +9,6 @@ poetry.lock
 test.py
 *.ipynb
 
-tests/_*.py
+tests/*
 coverage.*
 .coverage

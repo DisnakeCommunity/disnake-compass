@@ -118,7 +118,7 @@ class GetPrivateChannelParser(  # noqa: D101
     is_default_for=(disnake.abc.PrivateChannel,),
 ):
     # <<docstring inherited from parser_api.Parser>>
-    parser_type = disnake.abc.PrivateChannel
+    parser_type = disnake.abc.PrivateChannel  # pyright: ignore[reportAssignmentType]
 
 
 # PRIVATE
@@ -215,7 +215,7 @@ class PrivateChannelParser(  # noqa: D101
     is_default_for=(disnake.abc.PrivateChannel,),
 ):
     # <<docstring inherited from parser_api.Parser>>
-    parser_type = disnake.abc.PrivateChannel
+    parser_type = disnake.abc.PrivateChannel  # pyright: ignore[reportAssignmentType]
 
 
 # ASYNC PRIVATE
