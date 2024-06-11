@@ -10,49 +10,46 @@ from disnake.ext.components.impl.parser import base, helpers, snowflake
 __all__: typing.Sequence[str] = ("GuildParser", "GetGuildParser")
 
 
-def _get_guild(
-    source: typing.Union[helpers.BotAware, helpers.GuildAware],
-    argument: str,
-) -> disnake.Guild:
-    if isinstance(source, helpers.BotAware):
-        guild = source.bot.get_guild(int(argument))
+class GetGuildParser(  # noqa: D101
+    base.Parser[disnake.Guild],
+    is_default_for=(disnake.Guild,),
+):
+    # <<docstring inherited from parser_api.Parser>>
 
-        if guild is None and isinstance(source, helpers.GuildAware) and source.guild:
-            return source.guild
+    def __init__(self) -> None:
+        super().__init__()
+        self.dumps = snowflake.snowflake_dumps
 
-    elif source.guild:
-        return source.guild
+    def loads(  # noqa: D102
+        self, inter: disnake.Interaction, argument: str
+    ) -> disnake.Guild:
+        # <<docstring inherited from parser_api.Parser>>
 
-    msg = f"Could not find a guild with id {argument!r}."
-    raise LookupError(msg)
+        guild = inter.bot.get_guild(int(argument))
 
+        if guild is None:
+            msg = f"Could not find a guild with id {argument!r}."
+            raise LookupError(msg)
 
-async def _fetch_guild(
-    source: typing.Union[helpers.BotAware, helpers.GuildAware],
-    argument: str,
-) -> disnake.Guild:
-    id_ = int(argument)
-    if isinstance(source, helpers.BotAware):
-        guild = source.bot.get_guild(id_)
-        if guild:
-            return guild
-
-        try:
-            return await source.bot.fetch_guild(id_)
-        except disnake.HTTPException:
-            if isinstance(source, helpers.GuildAware) and source.guild:
-                return source.guild
-
-    elif source.guild:
-        return source.guild
-
-    msg = f"Could not find a guild with id {argument!r}."
-    raise LookupError(msg)
+        return guild
 
 
-GetGuildParser = base.Parser.from_funcs(
-    _get_guild, snowflake.snowflake_dumps, is_default_for=(disnake.Guild,)
-)
-GuildParser = base.Parser.from_funcs(
-    _fetch_guild, snowflake.snowflake_dumps, is_default_for=(disnake.Guild,)
-)
+class GuildParser(  # noqa: D101
+    base.Parser[disnake.Guild],
+    is_default_for=(disnake.Guild,),
+):
+    # <<docstring inherited from parser_api.Parser>>
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.dumps = snowflake.snowflake_dumps
+
+    async def loads(  # noqa: D102
+        self, inter: disnake.Interaction, argument: str
+    ) -> disnake.Guild:
+        # <<docstring inherited from parser_api.Parser>>
+
+        return (
+            inter.bot.get_guild(int(argument))
+            or await inter.bot.fetch_guild(int(argument))
+        )  # fmt: skip

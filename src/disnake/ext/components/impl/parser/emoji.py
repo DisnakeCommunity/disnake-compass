@@ -19,77 +19,124 @@ __all__: typing.Sequence[str] = (
 # GET_ONLY
 
 
-def _get_emoji(source: helpers.BotAware, argument: str) -> disnake.Emoji:
-    emoji = source.bot.get_emoji(int(argument))
+class GetEmojiParser(  # noqa: D101
+    base.Parser[disnake.Emoji],
+    is_default_for=(disnake.Emoji,),
+):
+    # <<docstring inherited from parser_api.Parser>>
 
-    if emoji is None:
-        msg = f"Could not find an emoji with id {argument!r}."
-        raise LookupError(msg)
+    def __init__(self) -> None:
+        super().__init__()
+        self.dumps = snowflake.snowflake_dumps
 
-    return emoji
+    def loads(  # noqa: D102
+        self, inter: disnake.Interaction, argument: str
+    ) -> disnake.Emoji:
+        # <<docstring inherited from parser_api.Parser>>
+
+        emoji = inter.bot.get_emoji(int(argument))
+
+        if emoji is None:
+            msg = f"Could not find an emoji with id {argument!r}."
+            raise LookupError(msg)
+
+        return emoji
 
 
-def _get_sticker(source: helpers.BotAware, argument: str) -> disnake.Sticker:
-    sticker = source.bot.get_sticker(int(argument))
+class GetStickerParser(  # noqa: D101
+    base.Parser[disnake.Sticker],
+    is_default_for=(disnake.Sticker,),
+):
+    # <<docstring inherited from parser_api.Parser>>
 
-    if sticker is None:
-        msg = f"Could not find an emoji with id {argument!r}."
-        raise LookupError(msg)
+    def __init__(self) -> None:
+        super().__init__()
+        self.dumps = snowflake.snowflake_dumps
 
-    return sticker
+    def loads(  # noqa: D102
+        self, inter: disnake.Interaction, argument: str
+    ) -> disnake.Sticker:
+        # <<docstring inherited from parser_api.Parser>>
+
+        sticker = inter.bot.get_sticker(int(argument))
+
+        if sticker is None:
+            msg = f"Could not find an emoji with id {argument!r}."
+            raise LookupError(msg)
+
+        return sticker
 
 
 # GET AND FETCH
 
 
-async def _fetch_emoji(
-    source: helpers.BotAndGuildAware,
-    argument: str,
-) -> disnake.Emoji:
-    if source.guild is None:
-        msg = (
-            "Impossible to fetch an emoji from an"
-            " interaction that doesn't come from a guild."
-        )
-        raise TypeError(msg)
-    return (
-        source.bot.get_emoji(int(argument))
-        or await source.guild.fetch_emoji(int(argument))
-    )  # fmt: skip
+class EmojiParser(  # noqa: D101
+    base.Parser[disnake.Emoji],
+    is_default_for=(disnake.Emoji,),
+):
+    # <<docstring inherited from parser_api.Parser>>
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.dumps = snowflake.snowflake_dumps
+
+    async def loads(  # noqa: D102
+        self, inter: disnake.Interaction, argument: str
+    ) -> disnake.Emoji:
+        # <<docstring inherited from parser_api.Parser>>
+
+        if inter.guild is None:
+            msg = (
+                "Impossible to fetch an emoji from an"
+                " interaction that doesn't come from a guild."
+            )
+            raise TypeError(msg)
+
+        return (
+            inter.bot.get_emoji(int(argument))
+            or await inter.guild.fetch_emoji(int(argument))
+        )  # fmt: skip
 
 
-async def _fetch_sticker(
-    source: helpers.BotAndGuildAware,
-    argument: str,
-) -> disnake.Sticker:
-    if source.guild is None:
-        msg = (
-            "Impossible to fetch a sticker from an"
-            " interaction that doesn't come from a guild."
-        )
-        raise TypeError(msg)
-    return (
-        source.bot.get_sticker(int(argument))
-        or await source.guild.fetch_sticker(int(argument))
-    )  # fmt: skip
-
-
-GetEmojiParser = base.Parser.from_funcs(
-    _get_emoji, snowflake.snowflake_dumps, is_default_for=(disnake.Emoji,)
-)
-GetStickerParser = base.Parser.from_funcs(
-    _get_sticker, snowflake.snowflake_dumps, is_default_for=(disnake.Sticker,)
-)
-
-
-EmojiParser = base.Parser.from_funcs(
-    _fetch_emoji, snowflake.snowflake_dumps, is_default_for=(disnake.Emoji,)
-)
-PartialEmojiParser = base.Parser.from_funcs(
-    lambda _, argument: disnake.PartialEmoji.from_dict({"id": int(argument)}),
-    lambda argument: str(argument.id),
+class PartialEmojiParser(  # noqa: D101
+    base.Parser[disnake.PartialEmoji],
     is_default_for=(disnake.PartialEmoji,),
-)
-StickerParser = base.Parser.from_funcs(
-    _fetch_sticker, snowflake.snowflake_dumps, is_default_for=(disnake.Sticker,)
-)
+):
+    # <<docstring inherited from parser_api.Parser>>
+
+    def dumps(self, __argument: disnake.PartialEmoji) -> str:  # noqa: D102
+        # <<docstring inherited from parser_api.Parser>>
+
+        return str(__argument.id)
+
+    def loads(  # noqa: D102
+        self, _: disnake.Interaction, argument: str
+    ) -> disnake.PartialEmoji:
+        return disnake.PartialEmoji.from_dict({"id": int(argument)})
+
+
+class StickerParser(  # noqa: D101
+    base.Parser[disnake.Sticker],
+    is_default_for=(disnake.Sticker,),
+):
+    # <<docstring inherited from parser_api.Parser>>
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.dumps = snowflake.snowflake_dumps
+
+    async def loads(  # noqa: D102
+        self, inter: disnake.Interaction, argument: str
+    ) -> disnake.Sticker:
+        # <<docstring inherited from parser_api.Parser>>
+
+        if inter.guild is None:
+            msg = (
+                "Impossible to fetch a sticker from an"
+                " interaction that doesn't come from a guild."
+            )
+            raise TypeError(msg)
+        return (
+            inter.bot.get_sticker(int(argument))
+            or await inter.guild.fetch_sticker(int(argument))
+        )  # fmt: skip

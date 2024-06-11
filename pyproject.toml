@@ -19,7 +19,7 @@ disnake = "^2.5.0"
 
 
 [tool.poetry.group.dev.dependencies]
-pyright = "^1.1.290"
+pyright = "^1.1.366"
 ruff = "^0.0.285"
 black = "^23.1.0"
 slotscheck = "^0.16.5"

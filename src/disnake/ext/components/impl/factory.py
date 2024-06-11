@@ -163,7 +163,7 @@ class NoopFactory(component_api.ComponentFactory[typing.Any]):
 
     def __new__(cls) -> typing_extensions.Self:
         if cls.__instance is not None:
-            return cls.__instance
+            return cls.__instance  # pyright: ignore[reportReturnType]
 
         cls.__instance = self = super().__new__(cls)
         return self

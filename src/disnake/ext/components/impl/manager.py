@@ -15,12 +15,12 @@ from disnake.ext import commands
 from disnake.ext.components import fields
 from disnake.ext.components import interaction as interaction_impl
 from disnake.ext.components.api import component as component_api
-from disnake.ext.components.internal import reference
+from disnake.ext.components.internal import omit, reference
 
 if typing.TYPE_CHECKING:
     import typing_extensions
 
-__all__: typing.Sequence[str] = ("ComponentManager", "get_manager")
+__all__: typing.Sequence[str] = ("ComponentManager", "get_manager", "check_manager")
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -55,45 +55,6 @@ ExceptionHandlerFuncT = typing.TypeVar(
 
 ComponentType = typing.Type[component_api.RichComponent]
 ComponentTypeT = typing.TypeVar("ComponentTypeT", bound=ComponentType)
-
-
-class NotSetType(enum.Enum):
-    """Typehint for sentinel value."""
-
-    NotSet = enum.auto()
-    """Sentinel value to distinguish whether or not None was explicitly passed."""
-
-
-NotSet = NotSetType.NotSet
-"""Sentinel value to distinguish whether or not None was explicitly passed."""
-
-
-NotSetOr = typing.Union[typing.Literal[NotSet], T]
-NotSetNoneOr = typing.Optional[NotSetOr[T]]
-
-
-def _to_ui_component(
-    component: typing.Union[disnake.Button, disnake.BaseSelectMenu],
-) -> disnake.ui.MessageUIComponent:
-    if isinstance(component, disnake.Button):
-        return disnake.ui.Button[None].from_component(component)
-    elif isinstance(component, disnake.StringSelectMenu):
-        return disnake.ui.StringSelect[None].from_component(component)
-    elif isinstance(component, disnake.UserSelectMenu):
-        return disnake.ui.UserSelect[None].from_component(component)
-    elif isinstance(component, disnake.RoleSelectMenu):
-        return disnake.ui.RoleSelect[None].from_component(component)
-    elif isinstance(component, disnake.MentionableSelectMenu):
-        return disnake.ui.MentionableSelect[None].from_component(component)
-    elif isinstance(component, disnake.ChannelSelectMenu):
-        return disnake.ui.ChannelSelect[None].from_component(component)
-
-    msg = f"Expected a message component type, got {type(component).__name__!r}."
-    raise TypeError(msg)
-
-
-def _is_set(obj: NotSetNoneOr[T]) -> typing_extensions.TypeGuard[typing.Optional[T]]:
-    return obj is not NotSet
 
 
 def _minimise_count(count: int) -> str:
@@ -341,13 +302,15 @@ class ComponentManager(component_api.ComponentManager):
         return get_manager(root)
 
     def config(
-        self, count: NotSetNoneOr[bool] = NotSet, sep: NotSetNoneOr[str] = NotSet
+        self,
+        count: omit.OmittedNoneOr[bool] = omit.Omitted,
+        sep: omit.OmittedNoneOr[str] = omit.Omitted,
     ) -> None:
         """Set configuration options on this manager."""
-        if _is_set(count):
+        if not omit.is_omitted(count):
             self._count = count
 
-        if _is_set(sep):
+        if not omit.is_omitted(sep):
             self._sep = sep
 
     def make_identifier(self, component_type: ComponentType) -> str:  # noqa: D102
@@ -369,7 +332,7 @@ class ComponentManager(component_api.ComponentManager):
         return name, params
 
     def increment(self) -> str:  # noqa: D102
-        count = _minimise_count(self.count)
+        count = _minimise_count(self._counter)
 
         self._counter += 1
         if self._counter > 24:
@@ -853,10 +816,10 @@ class ComponentManager(component_api.ComponentManager):
         identifier: str,
         *,
         as_root: bool = True,
-        label: NotSetNoneOr[str] = NotSet,
-        style: NotSetOr[disnake.ButtonStyle] = NotSet,
-        emoji: NotSetNoneOr[component_api.AnyEmoji] = NotSet,
-        disabled: NotSetOr[bool] = NotSet,
+        label: omit.Omissible[typing.Optional[str]] = omit.Omitted,
+        style: omit.Omissible[disnake.ButtonStyle] = omit.Omitted,
+        emoji: omit.Omissible[typing.Optional[component_api.AnyEmoji]] = omit.Omitted,
+        disabled: omit.Omissible[bool] = omit.Omitted,
         **kwargs: object,
     ) -> component_api.RichButton:
         """Make an instance of the button class with the provided identifier.
@@ -894,13 +857,13 @@ class ComponentManager(component_api.ComponentManager):
         :class:`Exception`
             Any exception raised during button instantiation is propagated as-is.
         """  # noqa: E501
-        if label is not NotSet:
+        if label is not omit.Omitted:
             kwargs["label"] = label
-        if style is not NotSet:
+        if style is not omit.Omitted:
             kwargs["style"] = style
-        if emoji is not NotSet:
+        if emoji is not omit.Omitted:
             kwargs["emoji"] = emoji
-        if disabled is not NotSet:
+        if disabled is not omit.Omitted:
             kwargs["disabled"] = disabled
 
         manager = get_manager(_ROOT) if as_root else self
@@ -924,11 +887,11 @@ class ComponentManager(component_api.ComponentManager):
         identifier: str,
         *,
         as_root: bool = True,
-        placeholder: NotSetNoneOr[str] = NotSet,
-        min_values: NotSetOr[int] = NotSet,
-        max_values: NotSetOr[int] = NotSet,
-        disabled: NotSetOr[bool] = NotSet,
-        options: NotSetOr[typing.List[disnake.SelectOption]] = NotSet,
+        placeholder: omit.Omissible[str | None] = omit.Omitted,
+        min_values: omit.Omissible[int] = omit.Omitted,
+        max_values: omit.Omissible[int] = omit.Omitted,
+        disabled: omit.Omissible[bool] = omit.Omitted,
+        options: omit.Omissible[typing.List[disnake.SelectOption]] = omit.Omitted,
         **kwargs: object,
     ) -> component_api.RichSelect:
         """Make an instance of the string select class with the provided identifier.
@@ -972,15 +935,15 @@ class ComponentManager(component_api.ComponentManager):
         """
         # NOTE: This currently only supports StringSelects
 
-        if placeholder is not NotSet:
+        if placeholder is not omit.Omitted:
             kwargs["placeholder"] = placeholder
-        if min_values is not NotSet:
+        if min_values is not omit.Omitted:
             kwargs["min_values"] = min_values
-        if max_values is not NotSet:
+        if max_values is not omit.Omitted:
             kwargs["max_values"] = max_values
-        if disabled is not NotSet:
+        if disabled is not omit.Omitted:
             kwargs["disabled"] = disabled
-        if options is not NotSet:
+        if options is not omit.Omitted:
             kwargs["options"] = options
 
         manager = get_manager(_ROOT) if as_root else self
@@ -1075,3 +1038,23 @@ def get_manager(name: typing.Optional[str] = None) -> ComponentManager:
         parent.children.add(manager)
 
     return manager
+
+
+def check_manager(name: str) -> bool:
+    """Check if a manager with the provided name exists.
+
+    .. note::
+        Unlike :func:`get_manager`, this function will not create missing
+        managers.
+
+    Parameters
+    ----------
+    name:
+        The name to check.
+
+    Returns
+    -------
+    :class:`bool`
+        Whether a manager with the provided name exists.
+    """
+    return name in _MANAGER_STORE

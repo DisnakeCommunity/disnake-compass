@@ -9,19 +9,23 @@ from disnake.ext.components.internal import aio
 
 __all__: typing.Sequence[str] = ("EnumParser", "FlagParser")
 
-_EnumT = typing.TypeVar("_EnumT", bound=typing.Union[enum.Enum, disnake.Enum])
+_AnyEnum = typing.Union[enum.Enum, disnake.Enum, disnake.flags.BaseFlags]
+_EnumT = typing.TypeVar("_EnumT", bound=_AnyEnum)
 
 
-def _get_enum_type(
-    enum_class: typing.Type[typing.Union[enum.Enum, disnake.flags.BaseFlags]]
-) -> type:
-    maybe_type = getattr(enum_class, "_member_type_", object)
+def _get_enum_type(enum_class: typing.Type[_AnyEnum]) -> type:
+    if issubclass(enum_class, disnake.flags.BaseFlags):
+        return int
+
+    maybe_type: type = getattr(enum_class, "_member_type_", object)
     if maybe_type is not object:
         return maybe_type
 
     # Get first member's type
-    member_iter = iter(disnake.ActivityType)
-    maybe_type = type(next(member_iter).value)
+    member_iter = iter(enum_class)
+    maybe_type = typing.cast(  # python typing sucks.
+        typing.Type[typing.Any], type(next(member_iter).value)
+    )
 
     # If all members match this type, return it.
     if all(type(member.value) == maybe_type for member in member_iter):
@@ -64,10 +68,10 @@ class EnumParser(
         parsed = await aio.eval_maybe_coro(self.value_parser.loads(source, argument))
         return self.enum_class(parsed)
 
-    def dumps(self, argument: _EnumT) -> parser_base.MaybeCoroutine[str]:  # noqa: D102
+    async def dumps(self, argument: _EnumT) -> str:  # noqa: D102
         # <<docstring inherited from parser_api.Parser>>
 
-        return self.value_parser.dumps(argument.value)
+        return await aio.eval_maybe_coro(self.value_parser.dumps(argument.value))
 
 
 FlagParser = EnumParser
