@@ -53,6 +53,7 @@ class EnumParser(
     ----------
     enum_class:
         The enum or flag class to use for parsing.
+
     """
 
     enum_class: typing.Type[_EnumT]
@@ -66,7 +67,7 @@ class EnumParser(
         # <<docstring inherited from parser_api.Parser>>
 
         parsed = await aio.eval_maybe_coro(self.value_parser.loads(source, argument))
-        return self.enum_class(parsed)
+        return self.enum_class(parsed)  # pyright: ignore[reportCallIssue]
 
     async def dumps(self, argument: _EnumT) -> str:  # noqa: D102
         # <<docstring inherited from parser_api.Parser>>

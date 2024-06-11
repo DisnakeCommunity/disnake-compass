@@ -35,7 +35,7 @@ We can create a child manager as follows
 We can go deeper in the parent/child hierarchy by separating them with dots
 
 .. literalinclude:: ../../../examples/manager.py
-    :caption: examples/manager.py - create a deeply nested manager 
+    :caption: examples/manager.py - create a deeply nested manager
     :lines: 15
 
 .. note::

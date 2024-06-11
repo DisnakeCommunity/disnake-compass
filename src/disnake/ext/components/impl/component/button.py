@@ -65,7 +65,7 @@ class RichButton(
             custom_id=await self.manager.make_custom_id(self),
         )
 
-    async def callback(  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: D102, E501
+    async def callback(  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: D102
         self,
         __inter: interaction.MessageInteraction,
     ) -> None:

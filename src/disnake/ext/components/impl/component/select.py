@@ -41,7 +41,7 @@ class BaseSelect(
     max_values: int = fields.internal(default=1)
     disabled: bool = fields.internal(default=False)
 
-    async def callback(  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: D102, E501
+    async def callback(  # pyright: ignore[reportIncompatibleMethodOverride]
         self, __inter: interaction.MessageInteraction
     ) -> None:
         # <<docstring inherited from component_api.RichButton>>

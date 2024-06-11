@@ -58,6 +58,7 @@ class Parser(typing.Protocol[ParserType]):
         :class:`~typing.Coroutine`\[:data:`.ParserType`]:
             In case the parser method was async, the parser naturally returns a
             coroutine. Awaiting this coroutine returns the parser result.
+
         """
         ...
 
@@ -95,5 +96,6 @@ class Parser(typing.Protocol[ParserType]):
         :class:`~typing.Coroutine`\[:class:`str`]:
             In case the parser method was async, the parser naturally returns a
             coroutine. Awaiting this coroutine returns the dumped argument.
+
         """
         ...

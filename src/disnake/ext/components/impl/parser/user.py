@@ -5,7 +5,8 @@ from __future__ import annotations
 import typing
 
 import disnake
-from disnake.ext.components.impl.parser import base, helpers, snowflake
+from disnake.ext.components.impl.parser import base as parser_base
+from disnake.ext.components.impl.parser import helpers, snowflake
 
 __all__: typing.Sequence[str] = (
     "GetUserParser",
@@ -16,7 +17,7 @@ __all__: typing.Sequence[str] = (
 
 
 class GetUserParser(  # noqa: D101
-    base.Parser[disnake.User],
+    parser_base.Parser[disnake.User],
     is_default_for=(disnake.User, disnake.abc.User),
 ):
     # <<docstring inherited from parser_api.Parser>>
@@ -26,11 +27,11 @@ class GetUserParser(  # noqa: D101
         self.dumps = snowflake.snowflake_dumps
 
     def loads(  # noqa: D102
-        self, inter: disnake.Interaction, argument: str
+        self, source: helpers.BotAware, argument: str
     ) -> disnake.User:
         # <<docstring inherited from parser_api.Parser>>
 
-        user = inter.bot.get_user(int(argument))
+        user = source.bot.get_user(int(argument))
 
         if user is None:
             msg = f"Could not find a user with id {argument!r}."
@@ -40,7 +41,7 @@ class GetUserParser(  # noqa: D101
 
 
 class GetMemberParser(  # noqa: D101
-    base.Parser[disnake.Member],
+    parser_base.Parser[disnake.Member],
     is_default_for=(disnake.Member,),
 ):
     # <<docstring inherited from parser_api.Parser>>
@@ -50,27 +51,40 @@ class GetMemberParser(  # noqa: D101
         self.dumps = snowflake.snowflake_dumps
 
     def loads(  # noqa: D102
-        self, inter: disnake.Interaction, argument: str
+        self,
+        source: typing.Union[
+            helpers.GuildAware,
+            helpers.MessageAware,
+            helpers.ChannelAware,
+        ],
+        argument: str,
     ) -> disnake.Member:
         # <<docstring inherited from parser_api.Parser>>
 
-        if inter.guild is None:
+        guild = None
+        if isinstance(source, helpers.GuildAware):
+            guild = source.guild
+
+        if guild is None and isinstance(source, helpers.MessageAware):
+            guild = source.message.guild
+
+        if guild is None:
             msg = (
-                "Impossible to get a member from an"
+                "Impossible to fetch a role from an"
                 " interaction that doesn't come from a guild."
             )
             raise TypeError(msg)
-        member = inter.guild.get_member(int(argument))
 
-        if member is None:
-            msg = f"Could not find a member with id {argument!r}."
-            raise LookupError(msg)
+        member = guild.get_member(int(argument))
+        if member is not None:
+            return member
 
-        return member
+        msg = f"Could not find a member with id {argument!r}."
+        raise LookupError(msg)
 
 
 class UserParser(  # noqa: D101
-    base.Parser[disnake.User], is_default_for=(disnake.User, disnake.abc.User)
+    parser_base.Parser[disnake.User], is_default_for=(disnake.User, disnake.abc.User)
 ):
     # <<docstring inherited from parser_api.Parser>>
 
@@ -79,18 +93,18 @@ class UserParser(  # noqa: D101
         self.dumps = snowflake.snowflake_dumps
 
     async def loads(  # noqa: D102
-        self, inter: disnake.Interaction, argument: str
+        self, source: helpers.BotAware, argument: str
     ) -> disnake.User:
         # <<docstring inherited from parser_api.Parser>>
 
         return (
-            inter.bot.get_user(int(argument))
-            or await inter.bot.fetch_user(int(argument))
+            source.bot.get_user(int(argument))
+            or await source.bot.fetch_user(int(argument))
         )  # fmt: skip
 
 
 class MemberParser(  # noqa: D101
-    base.Parser[disnake.Member], is_default_for=(disnake.Member,)
+    parser_base.Parser[disnake.Member], is_default_for=(disnake.Member,)
 ):
     # <<docstring inherited from parser_api.Parser>>
 
@@ -99,17 +113,39 @@ class MemberParser(  # noqa: D101
         self.dumps = snowflake.snowflake_dumps
 
     async def loads(  # noqa: D102
-        self, inter: disnake.Interaction, argument: str
+        self,
+        source: typing.Union[
+            helpers.GuildAware,
+            helpers.MessageAware,
+            helpers.ChannelAware,
+        ],
+        argument: str,
     ) -> disnake.Member:
         # <<docstring inherited from parser_api.Parser>>
 
-        if inter.guild is None:
+        guild = None
+        if isinstance(source, helpers.GuildAware):
+            guild = source.guild
+
+        if guild is None and isinstance(source, helpers.MessageAware):
+            guild = source.message.guild
+
+        if (
+            guild is None
+            and isinstance(source, helpers.ChannelAware)
+            and isinstance(source.channel, helpers.GuildAware)
+        ):
+            guild = source.channel.guild
+
+        if guild is None:
             msg = (
                 "Impossible to fetch a member from an"
                 " interaction that doesn't come from a guild."
             )
             raise TypeError(msg)
+
+        id_ = int(argument)
         return (
-            inter.guild.get_member(int(argument))
-            or await inter.guild.fetch_member(int(argument))
+            guild.get_member(id_)
+            or await guild.fetch_member(id_)
         )  # fmt: skip

@@ -5,7 +5,8 @@ from __future__ import annotations
 import typing
 
 import disnake
-from disnake.ext.components.impl.parser import base, helpers, snowflake
+from disnake.ext.components.impl.parser import base as parser_base
+from disnake.ext.components.impl.parser import helpers, snowflake
 
 if typing.TYPE_CHECKING:
     from disnake.ext import commands
@@ -52,16 +53,18 @@ _ChannelT = typing.TypeVar("_ChannelT", bound=_AnyChannel)
 def _get_source(
     source: typing.Union[helpers.GuildAware, helpers.BotAware, helpers.MessageAware],
 ) -> typing.Union[disnake.Guild, _AnyBot]:
+    actual_source = None
     if isinstance(source, helpers.BotAware):
-        return source.bot
+        actual_source = source.bot
 
-    elif isinstance(source, helpers.MessageAware):
+    if actual_source is None and isinstance(source, helpers.MessageAware):
         actual_source = source.message.guild
-        if actual_source:
-            return actual_source
 
-    elif source.guild:
-        return source.guild
+    if actual_source is None and isinstance(source, helpers.GuildAware):
+        actual_source = source.guild
+
+    if actual_source is not None:
+        return actual_source
 
     # TODO: In the future handle just returning message.channel if it
     #       is a DM channel and the id matches the argument.
@@ -72,7 +75,7 @@ def _get_source(
 # GET_ONLY
 
 
-class GetChannelParserBase(base.Parser[_ChannelT]):  # noqa: D101
+class GetChannelParserBase(parser_base.Parser[_ChannelT]):
     # <<docstring inherited from parser_api.Parser>>
 
     parser_type: typing.Type[_ChannelT]
@@ -81,12 +84,16 @@ class GetChannelParserBase(base.Parser[_ChannelT]):  # noqa: D101
         super().__init__()
         self.dumps = snowflake.snowflake_dumps
 
-    def loads(  # noqa: D102
-        self, inter: disnake.Interaction, argument: str
+    def loads(
+        self,
+        source: typing.Union[
+            helpers.GuildAware, helpers.BotAware, helpers.MessageAware
+        ],
+        argument: str,
     ) -> _ChannelT:
         # <<docstring inherited from parser_api.Parser>>
 
-        channel = inter.bot.get_channel(int(argument))
+        channel = _get_source(source).get_channel(int(argument))
 
         if channel is None:
             msg = f"Could not find a channel with id {argument!r}."
@@ -104,7 +111,7 @@ class GetChannelParserBase(base.Parser[_ChannelT]):  # noqa: D101
 # GET AND FETCH
 
 
-class ChannelParserBase(base.Parser[_ChannelT]):  # noqa: D101
+class ChannelParserBase(parser_base.Parser[_ChannelT]):
     # <<docstring inherited from parser_api.Parser>>
 
     parser_type: typing.Type[_ChannelT]
@@ -113,9 +120,7 @@ class ChannelParserBase(base.Parser[_ChannelT]):  # noqa: D101
         super().__init__()
         self.dumps = snowflake.snowflake_dumps
 
-    async def loads(  # noqa: D102
-        self, inter: disnake.Interaction, argument: str
-    ) -> _ChannelT:
+    async def loads(self, inter: disnake.Interaction, argument: str) -> _ChannelT:
         # <<docstring inherited from parser_api.Parser>>
 
         channel_id = int(argument)
@@ -214,7 +219,7 @@ class GetTextChannelParser(  # noqa: D101
     parser_type = disnake.TextChannel
 
 
-class GetThreadParser(  # noqa: D101
+class GetThreadParser(
     GetChannelParserBase[disnake.Thread],
     is_default_for=(disnake.Thread,),
 ):
@@ -311,7 +316,7 @@ class TextChannelParser(  # noqa: D101
     parser_type = disnake.TextChannel
 
 
-class ThreadParser(  # noqa: D101
+class ThreadParser(
     ChannelParserBase[disnake.Thread],
     is_default_for=(disnake.Thread,),
 ):
@@ -328,7 +333,7 @@ class CategoryParser(  # noqa: D101
 
 
 class PartialMessageableParser(  # noqa: D101
-    base.Parser[disnake.PartialMessageable],
+    parser_base.Parser[disnake.PartialMessageable],
     is_default_for=(disnake.PartialMessageable,),
 ):
     # <<docstring inherited from parser_api.Parser>>

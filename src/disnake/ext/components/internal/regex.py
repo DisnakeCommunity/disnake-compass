@@ -36,6 +36,7 @@ def format_to_pattern(
     :class:`re.Pattern`[:class:`str`]:
         A compiled regex pattern that can match any string created by
         formatting the provided format string.
+
     """
     pattern = re.sub(
         # Match {} format groups, strip e.g. :0f and !r specifiers.

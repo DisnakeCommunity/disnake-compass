@@ -55,6 +55,7 @@ class RichComponent(typing.Protocol):
         ----------
         interaction:
             The interaction that caused this button to fire.
+
         """
         ...
 
@@ -66,6 +67,7 @@ class RichComponent(typing.Protocol):
         :class:`WrappedComponent <disnake.ui.WrappedComponent>`
             A component that can be sent by disnake, maintaining the parameters
             and custom id set on this rich component.
+
         """
         ...
 
@@ -201,6 +203,7 @@ class ComponentManager(typing.Protocol):
         -------
         str
             The component type's identifier.
+
         """
         ...
 
@@ -214,6 +217,7 @@ class ComponentManager(typing.Protocol):
         ----------
         custom_id
             The custom id from which to extract the identifier.
+
         """
         ...
 
@@ -232,6 +236,7 @@ class ComponentManager(typing.Protocol):
         -------
         str
             A custom id that fully represents the provided component.
+
         """
         ...
 
@@ -257,6 +262,7 @@ class ComponentManager(typing.Protocol):
             registered to this manager.
         :data:`None`
             The interaction was not related to this manager.
+
         """
         ...
 
@@ -277,6 +283,7 @@ class ComponentManager(typing.Protocol):
         -------
         :class:`type`\[:data:`.ComponentT`]
             The component class that was just registered.
+
         """
         ...
 
@@ -295,6 +302,7 @@ class ComponentManager(typing.Protocol):
         -------
         type[RichComponent]
             The component class that was just deregistered.
+
         """
 
     def add_to_bot(self, bot: AnyBot) -> None:
@@ -323,6 +331,7 @@ class ComponentManager(typing.Protocol):
         ------
         RuntimeError
             This manager has already been registered to the provided bot.
+
         """
         ...
 
@@ -340,6 +349,7 @@ class ComponentManager(typing.Protocol):
         ------
         RuntimeError
             This manager is not registered to the provided bot.
+
         """
         ...
 
@@ -354,6 +364,7 @@ class ComponentManager(typing.Protocol):
         ----------
         interaction
             The interaction with which to try to invoke a component callback.
+
         """
         ...
 
@@ -387,6 +398,7 @@ class ComponentFactory(typing.Protocol[ComponentT]):
         ----------
         component
             The component for which to create a component factory.
+
         """
         ...
 
@@ -409,6 +421,7 @@ class ComponentFactory(typing.Protocol[ComponentT]):
             The source object to use for creating the component instance.
         params
             A mapping of field name to to-be-parsed field values.
+
         """
         # TODO: Return an ext-components specific conversion error.
         ...
@@ -424,6 +437,7 @@ class ComponentFactory(typing.Protocol[ComponentT]):
         ----------
         component
             The component to dump into a custom id.
+
         """
         ...
 
@@ -447,5 +461,6 @@ class ComponentFactory(typing.Protocol[ComponentT]):
         component_params
             A mapping of parameters that is to be directly passed to the
             component constructor.
+
         """
         ...

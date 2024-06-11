@@ -62,7 +62,7 @@ def _main() -> None:
         args.append(module)
 
     # Open a new subprocess that calls our new argument list.
-    process = subprocess.run(args, capture_output=True, cwd=_PROJECT_ROOT)
+    process = subprocess.run(args, capture_output=True, cwd=_PROJECT_ROOT, check=False)
     if process.returncode != 0:
         print("", process.stdout.decode(), process.stderr.decode(), sep="\n")
     else:

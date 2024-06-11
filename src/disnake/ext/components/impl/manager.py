@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import contextlib
-import enum
 import logging
 import sys
 import typing
@@ -55,6 +54,26 @@ ExceptionHandlerFuncT = typing.TypeVar(
 
 ComponentType = typing.Type[component_api.RichComponent]
 ComponentTypeT = typing.TypeVar("ComponentTypeT", bound=ComponentType)
+
+
+def _to_ui_component(
+    component: typing.Union[disnake.Button, disnake.BaseSelectMenu],
+) -> disnake.ui.MessageUIComponent:
+    if isinstance(component, disnake.Button):
+        return disnake.ui.Button[None].from_component(component)
+    elif isinstance(component, disnake.StringSelectMenu):
+        return disnake.ui.StringSelect[None].from_component(component)
+    elif isinstance(component, disnake.UserSelectMenu):
+        return disnake.ui.UserSelect[None].from_component(component)
+    elif isinstance(component, disnake.RoleSelectMenu):
+        return disnake.ui.RoleSelect[None].from_component(component)
+    elif isinstance(component, disnake.MentionableSelectMenu):
+        return disnake.ui.MentionableSelect[None].from_component(component)
+    elif isinstance(component, disnake.ChannelSelectMenu):
+        return disnake.ui.ChannelSelect[None].from_component(component)
+
+    msg = f"Expected a message component type, got {type(component).__name__!r}."
+    raise TypeError(msg)
 
 
 def _minimise_count(count: int) -> str:
@@ -194,6 +213,7 @@ class ComponentManager(component_api.ComponentManager):
     bot: Optional[:class:`commands.Bot`]
         The bot to which to register this manager. This can be specified at any
         point through :meth:`.add_to_bot`.
+
     """
 
     __slots__: typing.Sequence[str] = (
@@ -359,15 +379,13 @@ class ComponentManager(component_api.ComponentManager):
     ) -> typing.Optional[component_api.RichComponent]:
         # <<docstring inherited from api.components.ComponentManager>>
         if isinstance(interaction, disnake.MessageInteraction):
-            component = await self.parse_raw_component(
+            return await self.parse_raw_component(
                 interaction.component,
                 interaction,
             )
 
         else:
             raise NotImplementedError
-
-        return component
 
     async def parse_raw_component(
         self,
@@ -401,6 +419,7 @@ class ComponentManager(component_api.ComponentManager):
         :obj:`None`:
             The provided component could not be parsed into a rich component
             that is registered to this manager.
+
         """
         custom_id = component.custom_id
         if not custom_id:
@@ -490,9 +509,9 @@ class ComponentManager(component_api.ComponentManager):
             These objects share the same component instances, so any changes
             made to components inside the separate sequence will also reflect
             on the nested structure.
+
         """  # noqa: E501
         new_rows: typing.List[typing.List[interaction_impl.MessageComponents]] = []
-        new_row: typing.List[interaction_impl.MessageComponents]
         rich_components: typing.List[component_api.RichComponent] = []
 
         reference_obj = reference.create_reference(
@@ -500,7 +519,8 @@ class ComponentManager(component_api.ComponentManager):
         )
 
         for row in message.components:
-            new_rows.append(new_row := [])
+            new_row: typing.List[interaction_impl.MessageComponents] = []
+            new_rows.append(new_row)
 
             for component in row.children:
                 new_component = await self.parse_raw_component(component, reference_obj)
@@ -703,6 +723,7 @@ class ComponentManager(component_api.ComponentManager):
         -------
         Callable[[:class:`RichComponent`, :class:`disnake.Interaction`], AsyncGenerator[None, None]]
             The function that was just registered.
+
         """  # noqa: E501
         self.wrap_callback = contextlib.asynccontextmanager(func)
         return func
@@ -758,6 +779,7 @@ class ComponentManager(component_api.ComponentManager):
         -------
         Callable[[:class:`RichComponent`, :class:`disnake.Interaction`, :class:`Exception`], None]
             The function that was just registered.
+
         """  # noqa: E501
         self.handle_exception = func
         return func
@@ -856,6 +878,7 @@ class ComponentManager(component_api.ComponentManager):
             The provided identifier belongs to a component that is not a button.
         :class:`Exception`
             Any exception raised during button instantiation is propagated as-is.
+
         """  # noqa: E501
         if label is not omit.Omitted:
             kwargs["label"] = label
@@ -932,6 +955,7 @@ class ComponentManager(component_api.ComponentManager):
             The provided identifier belongs to a component that is not a string select.
         :class:`Exception`
             Any exception raised during button instantiation is propagated as-is.
+
         """
         # NOTE: This currently only supports StringSelects
 
@@ -968,7 +992,7 @@ _MANAGER_STORE: typing.Final[typing.Dict[str, ComponentManager]] = {}
 
 def _recurse_parents(manager: ComponentManager) -> typing.Iterator[ComponentManager]:
     yield manager
-    while manager := manager.parent:  # pyright: ignore[reportGeneralTypeIssues]
+    while manager := manager.parent:  # pyright: ignore[reportAssignmentType]
         yield manager
 
 
@@ -1020,6 +1044,7 @@ def get_manager(name: typing.Optional[str] = None) -> ComponentManager:
         A component manager with the desired name. If a component manager with
         this name already existed before calling this function, that same
         manager is returned. Otherwise, a new manager is created.
+
     """
     if name is None:
         # TODO: Maybe use a sentinel:
@@ -1056,5 +1081,6 @@ def check_manager(name: str) -> bool:
     -------
     :class:`bool`
         Whether a manager with the provided name exists.
+
     """
     return name in _MANAGER_STORE

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import types
 import typing
 
 from disnake.ext.components.api import parser as parser_api
@@ -59,6 +58,7 @@ def register_parser(
         The types for which to register the provided parser as the default.
     force:
         Whether or not to overwrite existing defaults. Defaults to ``True``.
+
     """
     # This allows e.g. is_default_for=(Tuple[Any, ...],) so pyright doesn't complain.
     # The stored type will then still be tuple, as intended.
@@ -112,6 +112,7 @@ def get_parser(type_: typing.Type[_T]) -> Parser[_T]:  # noqa: D417
     ------
     :class:`TypeError`:
         Could not create a parser for the provided type.
+
     """
     # TODO: Somehow allow more flexibility here. It would at the very least
     #       be neat to be able to pick between strictly sync/async parsers
@@ -183,6 +184,7 @@ class Parser(parser_api.Parser[_T], typing.Protocol[_T]):
         -------
         Parser:
             The default parser instance for this parser type.
+
         """
         return cls()
 
@@ -194,59 +196,9 @@ class Parser(parser_api.Parser[_T], typing.Protocol[_T]):
         -------
         Sequence[type]:
             The types for which this parser type is the default implementation.
+
         """
         return _REV_PARSERS[cls]
-
-    @classmethod
-    def from_funcs(
-        cls,
-        loads: typing.Callable[[typing.Any, str], MaybeCoroutine[_T]],
-        dumps: typing.Callable[[_T], MaybeCoroutine[str]],
-        *,
-        is_default_for: typing.Optional[TypeSequence] = None,
-    ) -> typing.Type[typing_extensions.Self]:
-        r"""Generate a parser class from ``loads`` and ``dumps`` functions.
-
-        .. warning::
-            The ``loads`` and ``dumps`` functions must **not** have
-            a ``self`` argument. They are treated as static methods. If a
-            ``self`` argument is required, consider making a parser class
-            through inheritance instead.
-
-        Parameters
-        ----------
-        loads:
-            A function that serves to turn a string value into a different type,
-            similar to :func:`json.loads`. This function can be either sync or
-            async.
-        dumps:
-            A function that serves to turn a value of a given type back into a
-            string, similar to :func:`json.dumps`. This function can be either
-            sync or async.
-        is_default_for:
-            The types for which to register the newly created parser class as
-            the default parser. By default, the parser is not registered as the
-            default for any types.
-
-        Returns
-        -------
-        :class:`type`\[:class:`Parser`]:
-            The newly created parser class.
-        """
-        new_cls = typing.cast(
-            "typing.Type[typing_extensions.Self]",
-            types.new_class(
-                f"{type.__name__}Parser",
-                (cls,),
-                {"is_default_for": is_default_for},
-            ),
-        )
-
-        # XXX: Not really type-safe whatsoever but it'll suffice.
-        new_cls.loads = staticmethod(loads)  # pyright: ignore[reportGeneralTypeIssues]
-        new_cls.dumps = staticmethod(dumps)  # pyright: ignore[reportGeneralTypeIssues]
-
-        return new_cls
 
     def loads(  # noqa: D102
         self, source: typing.Any, argument: str, /  # noqa: ANN401

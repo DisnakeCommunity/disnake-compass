@@ -102,6 +102,7 @@ def get_field_type(
         provided. The most common cause of this is using
         :func:`attrs.field` instead of :func:`components.field() <.field>` to
         define a field.
+
     """
     if FieldMetadata.FIELDTYPE not in field.metadata:
         if default:
@@ -132,6 +133,7 @@ def is_field_of_type(field: attrs.Attribute[typing.Any], kind: FieldType) -> boo
     -------
     :class:`bool`
         Whether the provided field was of the provided :class:`FieldType`.
+
     """
     set_type = field.metadata.get(FieldMetadata.FIELDTYPE)
     return bool(set_type and set_type & kind)  # Check if not None, then check if match.
@@ -155,6 +157,7 @@ def get_fields(
     kind:
         The kind(s) of fields to return. Can be any combination of
         :class:`FieldType`\s.
+
     """
     return [field for field in attrs.fields(cls) if is_field_of_type(field, kind)]
 
@@ -191,6 +194,7 @@ def field(
     -------
     :func:`Field <attrs.field>`\[``T``]
         A new field with the provided default and/or parser.
+
     """
     return attrs.field(
         default=typing.cast(_T, default),
@@ -230,6 +234,7 @@ def internal(
     -------
     :func:`Field <attrs.field>`\[``T``]
         A new field with the provided default and frozen status.
+
     """
     return attrs.field(
         default=default,

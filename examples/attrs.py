@@ -36,6 +36,7 @@ async def make_select(interaction: disnake.CommandInteraction, options: str) -> 
     ----------
     options:
         A comma-separated string with all options. Max 25.
+
     """
     if not options.strip():
         await interaction.response.send_message("You must specify at least one option!")

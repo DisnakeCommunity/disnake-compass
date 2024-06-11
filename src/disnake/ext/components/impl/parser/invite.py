@@ -5,13 +5,14 @@ from __future__ import annotations
 import typing
 
 import disnake
-from disnake.ext.components.impl.parser import base, helpers
+from disnake.ext.components.impl.parser import base as parser_base
+from disnake.ext.components.impl.parser import helpers
 
 __all__: typing.Sequence[str] = ("InviteParser",)
 
 
 class InviteParser(  # noqa: D101
-    base.Parser[disnake.Invite], is_default_for=(disnake.Invite,)
+    parser_base.Parser[disnake.Invite], is_default_for=(disnake.Invite,)
 ):
     # <<docstring inherited from parser_api.Parser>>
 

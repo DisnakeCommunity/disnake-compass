@@ -178,7 +178,7 @@ class ComponentMeta(typing._ProtocolMeta):  # pyright: ignore[reportPrivateUsage
     #       BaseComponent instead, but that comes with its own challenges).
     factory: component_api.ComponentFactory[typing_extensions.Self]  # pyright: ignore
 
-    def __new__(  # noqa: D102
+    def __new__(
         mcls,  # pyright: ignore[reportSelfClsParameterName]
         name: str,
         bases: tuple[type, ...],
@@ -247,6 +247,7 @@ class ComponentBase(
         -------
         str:
             The custom id representing the full state of this component.
+
         """
         if not self.manager:
             message = (

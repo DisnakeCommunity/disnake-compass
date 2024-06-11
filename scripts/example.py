@@ -47,7 +47,7 @@ def _main() -> typing.NoReturn:
 
     try:
         with subprocess.Popen(
-            args,  # noqa: S603
+            args,
             # Pipe all output to stdout...
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,

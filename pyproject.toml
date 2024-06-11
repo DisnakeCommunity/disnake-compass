@@ -20,7 +20,7 @@ disnake = "^2.5.0"
 
 [tool.poetry.group.dev.dependencies]
 pyright = "^1.1.366"
-ruff = "^0.0.285"
+ruff = "^0.4.8"
 black = "^23.1.0"
 slotscheck = "^0.16.5"
 pre-commit = "^3.1.1"
@@ -57,7 +57,7 @@ python-version = 3.8
 reportMissingTypeStubs = false
 
 
-[tool.ruff]
+[tool.ruff.lint]
 # Taken from https://github.com/ooliver1/mafic/blob/master/pyproject.toml
 # as a baseline, will modify these as desired when deemed necessary.
 select = [
@@ -134,14 +134,14 @@ ignore = [
 unfixable = ["RET502", "RET503"]
 
 
-[tool.ruff.flake8-annotations]
+[tool.ruff.lint.flake8-annotations]
 # Allow ommitting None return type in __init__ signatures.
 mypy-init-return = true
 
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 # Allow print in scripts
-"scripts/*" = ["T201"]
+"scripts/*" = ["T201", "S603"]
 # D: Don't enforce docstrings in examples except for the module,
 # TCH: Don't enforce type-checking 'optimisation', as it's distracting from the example.
 # T201: Allow printing inside examples.

@@ -77,6 +77,7 @@ class ComponentFactory(
         -------
         :class:`object`:
             The parsed custom id field value.
+
         """
         parser = self.parsers[param]
         result = parser.loads(source, value)
@@ -100,6 +101,7 @@ class ComponentFactory(
         -------
         :class:`str`:
             The dumped custom id parameter, ready for storage inside a custom id.
+
         """
         parser = self.parsers[param]
         result = parser.dumps(value)

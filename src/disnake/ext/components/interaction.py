@@ -47,9 +47,7 @@ async def _prepare(component: MessageComponents) -> disnake.ui.MessageUIComponen
     if isinstance(
         component, (component_api.RichButton, component_api.RichSelect)
     ):  # TODO: add select
-        return (
-            await component.as_ui_component()
-        )  # pyright: ignore[reportGeneralTypeIssues]
+        return await component.as_ui_component()  # pyright: ignore[reportReturnType]
 
     return component
 
@@ -134,7 +132,7 @@ class WrappedInteraction(disnake.Interaction):
         """Returns the follow up webhook for follow up interactions."""  # noqa: D401
         return self._wrapped.followup  # TODO: custom followup object
 
-    async def edit_original_response(  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: E501, PLR0913
+    async def edit_original_response(  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: PLR0913
         self,
         content: typing.Optional[str] = MISSING,
         *,
@@ -242,6 +240,7 @@ class WrappedInteraction(disnake.Interaction):
         -------
         :class:`InteractionMessage`
             The newly edited message.
+
         """
         return await self._wrapped.edit_original_response(
             content=content,
@@ -258,7 +257,7 @@ class WrappedInteraction(disnake.Interaction):
 
     edit_original_message = edit_original_response
 
-    async def send(  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: E501, PLR0913
+    async def send(  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: PLR0913
         self,
         content: typing.Optional[str] = None,
         *,
@@ -313,7 +312,7 @@ class WrappedInteractionResponse(disnake.InteractionResponse):
         """Get an attribute of this class or the wrapped interaction."""
         return getattr(self._wrapped, name)
 
-    async def send_message(  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: E501, PLR0913
+    async def send_message(  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: PLR0913
         self,
         content: typing.Optional[str] = None,
         *,
@@ -346,7 +345,7 @@ class WrappedInteractionResponse(disnake.InteractionResponse):
             delete_after=delete_after,
         )
 
-    async def edit_message(  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: E501, PLR0913
+    async def edit_message(  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: PLR0913
         self,
         content: typing.Optional[str] = None,
         *,
@@ -374,7 +373,7 @@ class WrappedInteractionResponse(disnake.InteractionResponse):
         )
 
 
-class MessageInteraction(  # pyright: ignore[reportIncompatibleMethodOverride, reportIncompatibleVariableOverride]  # noqa: E501
+class MessageInteraction(  # pyright: ignore[reportIncompatibleMethodOverride, reportIncompatibleVariableOverride]
     WrappedInteraction, disnake.MessageInteraction
 ):
     """Message interaction implementation that wraps :class:`disnake.MessageInteraction`.
