@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import contextlib
-import enum
 import functools
 import logging
 import sys
@@ -16,6 +15,7 @@ from disnake.ext import commands
 from disnake.ext.components import fields
 from disnake.ext.components import interaction as interaction_impl
 from disnake.ext.components.api import component as component_api
+from disnake.ext.components.internal import omit
 
 if typing.TYPE_CHECKING:
     import typing_extensions
@@ -54,24 +54,6 @@ ExceptionHandlerFuncT = typing.TypeVar(
 
 ComponentType = typing.Type[component_api.RichComponent]
 ComponentTypeT = typing.TypeVar("ComponentTypeT", bound=ComponentType)
-
-
-class NotSetType(enum.Enum):
-    """Typehint for sentinel value."""
-
-    NotSet = enum.auto()
-    """Sentinel value to distinguish whether or not None was explicitly passed."""
-
-
-NotSet = NotSetType.NotSet
-"""Sentinel value to distinguish whether or not None was explicitly passed."""
-
-
-NotSetNoneOr = typing.Union[typing.Literal[NotSet], None, T]
-
-
-def _is_set(obj: NotSetNoneOr[T]) -> typing_extensions.TypeGuard[typing.Optional[T]]:
-    return obj is not NotSet
 
 
 def _minimise_count(count: int) -> str:
@@ -300,13 +282,15 @@ class ComponentManager(component_api.ComponentManager):
         return get_manager(root)
 
     def config(
-        self, count: NotSetNoneOr[bool] = NotSet, sep: NotSetNoneOr[str] = NotSet
+        self,
+        count: omit.OmittedNoneOr[bool] = omit.Omitted,
+        sep: omit.OmittedNoneOr[str] = omit.Omitted,
     ) -> None:
         """Set configuration options on this manager."""
-        if _is_set(count):
+        if not omit.is_omitted(count):
             self._count = count
 
-        if _is_set(sep):
+        if not omit.is_omitted(sep):
             self._sep = sep
 
     def make_identifier(self, component_type: ComponentType) -> str:  # noqa: D102
@@ -690,10 +674,10 @@ class ComponentManager(component_api.ComponentManager):
         self,
         identifier: str,
         *,
-        label: typing.Optional[str] = ...,
-        style: disnake.ButtonStyle = ...,
-        emoji: typing.Optional[component_api.AnyEmoji] = ...,
-        disabled: bool = ...,
+        label: omit.Omissible[typing.Optional[str]] = omit.Omitted,
+        style: omit.Omissible[disnake.ButtonStyle] = omit.Omitted,
+        emoji: omit.Omissible[typing.Optional[component_api.AnyEmoji]] = omit.Omitted,
+        disabled: omit.Omissible[bool] = omit.Omitted,
         **kwargs: object,
     ) -> component_api.RichButton:
         """Make an instance of the button class with the provided identifier.
@@ -756,11 +740,11 @@ class ComponentManager(component_api.ComponentManager):
         self,
         identifier: str,
         *,
-        placeholder: str | None = ...,
-        min_values: int = ...,
-        max_values: int = ...,
-        disabled: bool = ...,
-        options: typing.List[disnake.SelectOption] = ...,
+        placeholder: omit.Omissible[str | None] = omit.Omitted,
+        min_values: omit.Omissible[int] = omit.Omitted,
+        max_values: omit.Omissible[int] = omit.Omitted,
+        disabled: omit.Omissible[bool] = omit.Omitted,
+        options: omit.Omissible[typing.List[disnake.SelectOption]] = omit.Omitted,
         **kwargs: object,
     ) -> component_api.RichSelect:
         """Make an instance of the string select class with the provided identifier.
