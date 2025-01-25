@@ -16,7 +16,7 @@ class CustomisableSelect(components.RichStringSelect):
     def __attrs_post_init__(self) -> None:
         self.max_values = len(self.options)
 
-    async def callback(self, interaction: components.MessageInteraction) -> None:
+    async def callback(self, interaction: disnake.MessageInteraction) -> None:
         selection = (
             "\n".join(f"- {value}" for value in interaction.values)
             if interaction.values
@@ -43,9 +43,9 @@ async def make_select(interaction: disnake.CommandInteraction, options: str) -> 
         await interaction.response.send_message("You must specify at most 25 options!")
         return
 
-    wrapped = components.wrap_interaction(interaction)
-    await wrapped.response.send_message(
-        components=CustomisableSelect(options=actual_options),
+    component = await CustomisableSelect(options=actual_options).as_ui_component()
+    await interaction.response.send_message(
+        components=component,
     )
 
 

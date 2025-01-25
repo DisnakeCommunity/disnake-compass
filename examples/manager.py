@@ -21,11 +21,12 @@ class FooButton(components.RichButton):
 
     count: int
 
-    async def callback(self, interaction: components.MessageInteraction) -> None:
+    async def callback(self, interaction: disnake.MessageInteraction) -> None:
         self.count += 1
         self.label = str(self.count)
 
-        await interaction.response.edit_message(components=self)
+        component = await self.as_ui_component()
+        await interaction.response.edit_message(components=component)
 
 
 @deeply_nested_manager.register
@@ -34,11 +35,12 @@ class FooBarBazButton(components.RichButton):
 
     count: int
 
-    async def callback(self, interaction: components.MessageInteraction) -> None:
+    async def callback(self, interaction: disnake.MessageInteraction) -> None:
         self.count += 1
         self.label = str(self.count)
 
-        await interaction.response.edit_message(components=self)
+        component = await self.as_ui_component()
+        await interaction.response.edit_message(components=component)
 
 
 @manager.as_callback_wrapper
@@ -100,19 +102,15 @@ async def error_handler(
 
 
 @bot.slash_command()  # pyright: ignore  # still some unknowns in disnake
-async def test_button(inter: disnake.CommandInteraction) -> None:
-    wrapped = components.wrap_interaction(inter)
-    component = FooButton(count=0)
-
-    await wrapped.response.send_message(components=component)
+async def test_button(interaction: disnake.CommandInteraction) -> None:
+    component = await FooButton(count=0).as_ui_component()
+    await interaction.response.send_message(components=component)
 
 
 @bot.slash_command()  # pyright: ignore  # still some unknowns in disnake
-async def test_nested_button(inter: disnake.CommandInteraction) -> None:
-    wrapped = components.wrap_interaction(inter)
-    component = FooBarBazButton(count=0)
-
-    await wrapped.response.send_message(components=component)
+async def test_nested_button(interaction: disnake.CommandInteraction) -> None:
+    component = await FooBarBazButton(count=0).as_ui_component()
+    await interaction.response.send_message(components=component)
 
 
 bot.run(os.getenv("EXAMPLE_TOKEN"))

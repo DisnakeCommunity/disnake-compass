@@ -50,7 +50,7 @@ class OptionsToggleButton(components.RichButton):
 
         select.set_options(options)
 
-    async def callback(self, interaction: components.MessageInteraction):
+    async def callback(self, interaction: disnake.MessageInteraction):
         # Get all components on the message for easier re-sending.
         # Both of these lists will automagically contain self so that any
         # changes immediately reflect without extra effort.
@@ -68,7 +68,8 @@ class OptionsToggleButton(components.RichButton):
         self.update_select(components)
 
         # Re-send and update all components.
-        await interaction.response.send_message(components=rows)
+        finalised = await manager.finalise_components(rows)
+        await interaction.response.edit_message(components=finalised)
 
 
 @manager.register()
@@ -89,7 +90,7 @@ class DynamicSelectMenu(components.RichStringSelect):
             self.max_values = 1
             self.disabled = True
 
-    async def callback(self, interaction: components.MessageInteraction) -> None:
+    async def callback(self, interaction: disnake.MessageInteraction) -> None:
         selection = (
             "\n".join(f"- {value}" for value in interaction.values)
             if interaction.values
@@ -101,9 +102,8 @@ class DynamicSelectMenu(components.RichStringSelect):
 
 @bot.slash_command()  # pyright: ignore
 async def test_components(interaction: disnake.CommandInteraction) -> None:
-    wrapped = components.wrap_interaction(interaction)
-    await wrapped.response.send_message(
-        components=[
+    layout = await manager.finalise_components(
+        [
             [
                 OptionsToggleButton(label="numbers", options=["1", "2", "3", "4", "5"]),
                 OptionsToggleButton(label="letters", options=["a", "b", "c", "d", "e"]),
@@ -112,6 +112,8 @@ async def test_components(interaction: disnake.CommandInteraction) -> None:
             [DynamicSelectMenu()],
         ]
     )
+
+    await interaction.response.send_message(components=layout)
 
 
 bot.run(os.environ["EXAMPLE_TOKEN"])

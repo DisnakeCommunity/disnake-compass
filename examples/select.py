@@ -58,9 +58,9 @@ class MySelect(components.RichStringSelect):
     colour_middle: str = BLACK_SQUARE
     colour_right: str = BLACK_SQUARE
 
-    async def callback(self, inter: components.MessageInteraction) -> None:
-        assert inter.values is not None
-        selected = inter.values[0]
+    async def callback(self, interaction: disnake.MessageInteraction) -> None:
+        assert interaction.values is not None
+        selected = interaction.values[0]
 
         if self.state == "slot":
             self.handle_slots(selected)
@@ -69,7 +69,8 @@ class MySelect(components.RichStringSelect):
             self.handle_colours(selected)
 
         msg = self.render_colours()
-        await inter.response.edit_message(msg, components=self)
+        component = await self.as_ui_component()
+        await interaction.response.edit_message(msg, components=component)
 
     def handle_slots(self, selected: str) -> None:
         if selected == "Finalise":
@@ -94,12 +95,11 @@ class MySelect(components.RichStringSelect):
 
 
 @bot.slash_command()  # pyright: ignore  # still some unknowns in disnake
-async def test_select(inter: disnake.CommandInteraction) -> None:
-    wrapped = components.wrap_interaction(inter)
-
-    component = MySelect()
-    await wrapped.response.send_message(
-        component.render_colours(), components=component
+async def test_select(interaction: disnake.CommandInteraction) -> None:
+    my_select = MySelect()
+    await interaction.response.send_message(
+        my_select.render_colours(),
+        components=await my_select.as_ui_component(),
     )
 
 
