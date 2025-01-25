@@ -12,4 +12,3 @@ from disnake.ext.components import api as api
 from disnake.ext.components import internal as internal
 from disnake.ext.components.fields import *
 from disnake.ext.components.impl import *
-from disnake.ext.components.interaction import *

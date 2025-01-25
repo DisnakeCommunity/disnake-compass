@@ -267,3 +267,12 @@ class ComponentBase(
             raise RuntimeError(message)
 
         return await self.manager.make_custom_id(self)
+
+    async def callback(  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: D102
+        self, inter: disnake.MessageInteraction, /
+    ) -> None:
+        # <<docstring inherited from component_api.RichButton>>
+
+        # NOTE: We narrow the interaction type down to a disnake.MessageInteraction
+        #       here. This isn't typesafe, but it's just cleaner for the user.
+        ...

@@ -13,7 +13,6 @@ import attr
 import disnake
 from disnake.ext import commands
 from disnake.ext.components import fields
-from disnake.ext.components import interaction as interaction_impl
 from disnake.ext.components.api import component as component_api
 from disnake.ext.components.internal import omit, reference
 
@@ -57,8 +56,19 @@ ExceptionHandlerFuncT = typing.TypeVar(
     "ExceptionHandlerFuncT", bound=ExceptionHandlerFunc
 )
 
-ComponentT = typing.TypeVar("ComponentT", bound=component_api.RichComponent)
-ComponentType = typing.Type[component_api.RichComponent]
+RichComponentT = typing.TypeVar("RichComponentT", bound=component_api.RichComponent)
+RichComponentType = typing.Type[component_api.RichComponent]
+
+MessageComponents = typing.Union[
+    component_api.RichButton,
+    disnake.ui.Button[typing.Any],
+    component_api.RichSelect,
+    disnake.ui.StringSelect[typing.Any],
+    disnake.ui.ChannelSelect[typing.Any],
+    disnake.ui.RoleSelect[typing.Any],
+    disnake.ui.UserSelect[typing.Any],
+    disnake.ui.MentionableSelect[typing.Any],
+]
 
 
 def _to_ui_component(
@@ -238,7 +248,7 @@ class ComponentManager(component_api.ComponentManager):
 
     _bot: typing.Optional[AnyBot]
     _children: typing.Set[ComponentManager]
-    _components: weakref.WeakValueDictionary[str, ComponentType]
+    _components: weakref.WeakValueDictionary[str, RichComponentType]
     _count: typing.Optional[bool]
     _counter: int
     _identifiers: dict[str, str]
@@ -306,7 +316,7 @@ class ComponentManager(component_api.ComponentManager):
         return self._children
 
     @property
-    def components(self) -> typing.Mapping[str, ComponentType]:  # noqa: D102
+    def components(self) -> typing.Mapping[str, RichComponentType]:  # noqa: D102
         # <<docstring inherited from api.components.ComponentManager>>
 
         return self._components
@@ -377,7 +387,7 @@ class ComponentManager(component_api.ComponentManager):
         if not omit.is_omitted(sep):
             self._sep = sep
 
-    def make_identifier(self, component_type: ComponentType) -> str:  # noqa: D102
+    def make_identifier(self, component_type: RichComponentType) -> str:  # noqa: D102
         # <<docstring inherited from api.components.ComponentManager>>
 
         return component_type.__name__
@@ -508,7 +518,7 @@ class ComponentManager(component_api.ComponentManager):
         message: disnake.Message,
         *reference_objects: object,
     ) -> typing.Tuple[
-        typing.Sequence[typing.Sequence[interaction_impl.MessageComponents]],
+        typing.Sequence[typing.Sequence[MessageComponents]],
         typing.Sequence[component_api.RichComponent],
     ]:
         """Parse all components on a message into rich components or ui components.
@@ -555,7 +565,7 @@ class ComponentManager(component_api.ComponentManager):
             on the nested structure.
 
         """  # noqa: E501
-        new_rows: typing.List[typing.List[interaction_impl.MessageComponents]] = []
+        new_rows: typing.List[typing.List[MessageComponents]] = []
         rich_components: typing.List[component_api.RichComponent] = []
 
         reference_obj = reference.create_reference(
@@ -566,7 +576,7 @@ class ComponentManager(component_api.ComponentManager):
         should_test = current_component is not None
 
         for row in message.components:
-            new_row: typing.List[interaction_impl.MessageComponents] = []
+            new_row: typing.List[MessageComponents] = []
             new_rows.append(new_row)
 
             for component in row.children:
@@ -593,14 +603,50 @@ class ComponentManager(component_api.ComponentManager):
 
         return new_rows, rich_components
 
+    async def finalise_components(
+        self,
+        components: typing.Sequence[typing.Sequence[MessageComponents]],
+    ) -> disnake.ui.Components[disnake.ui.MessageUIComponent]:
+        """Finalise the output of :meth:`parse_message_components` back into disnake ui components.
+
+        Parameters
+        ----------
+        components:
+            A sequence of rows of components, which can be any combination of
+            disnake ui components and rich components. The rich components are
+            automatically cast to their equivalent disnake ui components so
+            that they can be sent as an interaction response.
+
+        Returns
+        -------
+        disnake.ui.Components[disnake.ui.MessageUIComponent]:
+            A disnake-compatible structure of sendable components.
+
+        """  # noqa: E501
+        finalised: typing.List[typing.List[disnake.ui.MessageUIComponent]] = []
+
+        for row in components:
+            new_row: typing.List[disnake.ui.MessageUIComponent] = []
+            finalised.append(new_row)
+
+            for component in row:
+                if isinstance(
+                    component, (component_api.RichButton, component_api.RichSelect)
+                ):
+                    new_row.append(await component.as_ui_component())  # type: ignore
+                else:
+                    new_row.append(component)
+
+        return finalised
+
     # Identifier and component: function call, return component
     @typing.overload
     def register(
         self,
-        component_type: typing.Type[ComponentT],
+        component_type: typing.Type[RichComponentT],
         *,
         identifier: typing.Optional[str] = None,
-    ) -> typing.Type[ComponentT]:
+    ) -> typing.Type[RichComponentT]:
         ...
 
     # Only identifier: nested decorator, return callable that registers and
@@ -608,17 +654,17 @@ class ComponentManager(component_api.ComponentManager):
     @typing.overload
     def register(
         self, *, identifier: typing.Optional[str] = None
-    ) -> typing.Callable[[typing.Type[ComponentT]], typing.Type[ComponentT]]:
+    ) -> typing.Callable[[typing.Type[RichComponentT]], typing.Type[RichComponentT]]:
         ...
 
     def register(
         self,
-        component_type: typing.Optional[typing.Type[ComponentT]] = None,
+        component_type: typing.Optional[typing.Type[RichComponentT]] = None,
         *,
         identifier: typing.Optional[str] = None,
     ) -> typing.Union[
-        typing.Type[ComponentT],
-        typing.Callable[[typing.Type[ComponentT]], typing.Type[ComponentT]],
+        typing.Type[RichComponentT],
+        typing.Callable[[typing.Type[RichComponentT]], typing.Type[RichComponentT]],
     ]:
         """Register a component to this component manager.
 
@@ -627,17 +673,19 @@ class ComponentManager(component_api.ComponentManager):
         if component_type is not None:
             return self.register_component(component_type, identifier=identifier)
 
-        def wrapper(component_type: typing.Type[ComponentT]) -> typing.Type[ComponentT]:
+        def wrapper(
+            component_type: typing.Type[RichComponentT],
+        ) -> typing.Type[RichComponentT]:
             return self.register_component(component_type, identifier=identifier)
 
         return wrapper
 
     def register_component(  # noqa: D102
         self,
-        component_type: typing.Type[ComponentT],
+        component_type: typing.Type[RichComponentT],
         *,
         identifier: typing.Optional[str] = None,
-    ) -> typing.Type[ComponentT]:
+    ) -> typing.Type[RichComponentT]:
         # <<docstring inherited from api.components.ComponentManager>>
         resolved_identifier = identifier or self.make_identifier(component_type)
         module_data = _ModuleData.from_object(component_type)
@@ -675,7 +723,9 @@ class ComponentManager(component_api.ComponentManager):
 
         return component_type
 
-    def deregister_component(self, component_type: ComponentType) -> None:  # noqa: D102
+    def deregister_component(  # noqa: D102
+        self, component_type: RichComponentType
+    ) -> None:
         # <<docstring inherited from api.components.ComponentManager>>
 
         identifier = self.make_identifier(component_type)
@@ -881,8 +931,7 @@ class ComponentManager(component_api.ComponentManager):
                     )
 
                 # If none raised, we run the callback.
-                wrapped = interaction_impl.wrap_interaction(interaction)
-                await component.callback(wrapped)
+                await component.callback(interaction)
 
         except Exception as exception:  # noqa: BLE001
             # Blanket exception catching is desired here as it's meant to

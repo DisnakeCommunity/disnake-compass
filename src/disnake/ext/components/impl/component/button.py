@@ -5,7 +5,7 @@ from __future__ import annotations
 import typing
 
 import disnake
-from disnake.ext.components import fields, interaction
+from disnake.ext.components import fields
 from disnake.ext.components.api import component as component_api
 from disnake.ext.components.impl.component import base as component_base
 
@@ -64,12 +64,3 @@ class RichButton(
             emoji=self.emoji,
             custom_id=await self.manager.make_custom_id(self),
         )
-
-    async def callback(  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: D102
-        self, inter: interaction.MessageInteraction, /
-    ) -> None:
-        # <<docstring inherited from component_api.RichButton>>
-
-        # NOTE: We narrow the interaction type down to a disnake.MessageInteraction
-        #       here. This isn't typesafe, but it's just cleaner for the user.
-        ...
