@@ -808,3 +808,53 @@ class UnionParser(parser_base.SourcedParser[_T], typing.Generic[_T]):
 
         msg = f"Failed to parse input {argument!r} to any type in the Union."
         raise RuntimeError(msg)
+
+
+@parser_base.register_parser_for(typing.Literal)  # pyright: ignore[reportArgumentType]
+class LiteralParser(parser_base.SourcedParser[_T], typing.Generic[_T]):
+    options: typing.Sequence[_T]
+    inner_parser: parser_base.ParserWithArgumentType[_T]
+
+    def __init__(
+        self,
+        *options: _T,
+        inner_parser: parser_base.ParserWithArgumentType[_T],
+    ):
+        self.options = options
+        self.inner_parser = inner_parser
+
+    @classmethod
+    def default(cls, type_: type[_T]) -> typing_extensions.Self:
+        assert typing.get_origin(type_) == typing.Literal
+        args: typing.Tuple[_T] = typing.get_args(type_)
+
+        args_iter = iter(args)
+        arg_type = type(next(args_iter))
+        for arg in args_iter:
+            if not isinstance(arg, arg_type):
+                msg = (
+                    "Literal parsers only support literals where all options"
+                    " are of the same type."
+                )
+                raise TypeError(msg)
+
+        return cls(*args, inner_parser=parser_base.get_parser(arg_type))
+
+    async def loads(self, argument: str, /, *, source: object) -> _T:
+        value = await aio.eval_maybe_coro(
+            parser_base.try_loads(self.inner_parser, argument, source=source)
+        )
+
+        assert value in self.options
+
+        return value
+
+    async def dumps(self, argument: _T) -> str:
+        if argument not in self.options:
+            msg = (
+                f"{argument!r} is not a valid option for this parser."
+                f" Expected any of {', '.join(map(repr, self.options))}"
+            )
+            raise ValueError(msg)
+
+        return await aio.eval_maybe_coro(self.inner_parser.dumps(argument))
