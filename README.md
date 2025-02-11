@@ -1,7 +1,7 @@
 NOTE
 ====
 
-This branch is currently in alpha state. As of right now, buttons and selects are supported, and modals are yet to be implemented. Help with development would be very much appreciated. If you're interested in helping, please keep an eye on the repo's issues and [the TODO-section of this readme](https://github.com/DisnakeCommunity/disnake-ext-components/tree/rewrite#to-do).
+This branch is currently in alpha state. As of right now, buttons and selects are supported, and modals are yet to be implemented. Help with development would be very much appreciated. If you're interested in helping, please keep an eye on the repo's issues and [the TODO-section of this readme](https://github.com/DisnakeCommunity/disnake-ext-components/tree/docs#to-do).
 
 disnake-ext-components
 ======================
@@ -14,7 +14,6 @@ Key Features
 - Smoothly integrates with disnake,
 - Uses an intuitive dataclass-like syntax to create stateless persistent components,
 - `custom_id` matching, conversion, and creation are automated for you,
-- (Example pending) Allows you to implement custom RegEx for your listeners if you need more customized behavior.
 
 Installing
 ----------
@@ -25,10 +24,10 @@ To install the extension, run the following command in your command prompt/shell
 
 ``` sh
 # Linux/macOS
-python3 -m pip install -U git+https://github.com/DisnakeCommunity/disnake-ext-components.git@rewrite
+python3 -m pip install -U git+https://github.com/DisnakeCommunity/disnake-ext-components.git@docs
 
 # Windows
-py -3 -m pip install -U git+https://github.com/DisnakeCommunity/disnake-ext-components@rewrite
+py -3 -m pip install -U git+https://github.com/DisnakeCommunity/disnake-ext-components@docs
 ```
 It will be installed to your existing [disnake](https://github.com/DisnakeDev/disnake) installation as an extension. From there, it can be imported as:
 
@@ -52,11 +51,9 @@ manager.add_to_bot(bot)
 
 @manager.register
 class MyButton(components.RichButton):
-    label = "0"
-
     count: int
 
-    async def callback(self, interaction: components.MessageInteraction) -> None:
+    async def callback(self, interaction: disnake.MessageInteraction) -> None:
         self.count += 1
         self.label = str(self.count)
 
@@ -64,21 +61,20 @@ class MyButton(components.RichButton):
 
 
 @bot.slash_command()
-async def test_button(inter: disnake.CommandInteraction) -> None:
-    wrapped = components.wrap_interaction(inter)
-    component = MyButton(count=0)
+async def test_button(interaction: disnake.CommandInteraction) -> None:
+    component = await MyButton(label="0", count=0).as_ui_component()
 
-    await wrapped.send(components=component)
+    await interaction.send(components=component)
 
 
 bot.run("TOKEN")
 ```
 
-For extra examples, please see [the examples folder](https://github.com/DisnakeCommunity/disnake-ext-components/tree/rewrite/examples).
+For extra examples, please see [the examples folder](https://github.com/DisnakeCommunity/disnake-ext-components/tree/docs/examples).
 
 To-Do
 -----
-- Implement more parser types (optionals, unions, etc.),
+- Move the extension out of the disnake.ext namespace,
 - Implement modals,
 - Improve Cog support by somehow injecting the cog instance,
 - PyPI release,
