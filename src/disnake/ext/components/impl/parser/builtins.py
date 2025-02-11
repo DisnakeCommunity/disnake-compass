@@ -7,13 +7,12 @@ import inspect
 import string
 import typing
 
-import disnake.utils
 import typing_extensions
 from disnake.ext.components.impl.parser import base as parser_base
 from disnake.ext.components.internal import aio
 
 if typing.TYPE_CHECKING:
-    import disnake
+    from disnake.ext.components.api import parser as parser_api
 
 __all__: typing.Sequence[str] = (
     "FloatParser",
@@ -398,7 +397,7 @@ def _resolve_collection(type_: typing.Type[_CollectionT]) -> typing.Type[_Collec
 
 
 @parser_base.register_parser_for(tuple, priority=10)
-class TupleParser(parser_base.SourcedParser[_TupleT]):
+class TupleParser(parser_base.Parser[_TupleT]):
     r"""Parser type with support for :class:`tuple`\s.
 
     The benefit of a tuple parser is fixed-length checks and the ability to set
@@ -419,7 +418,7 @@ class TupleParser(parser_base.SourcedParser[_TupleT]):
 
     """
 
-    inner_parsers: typing.Tuple[parser_base.AnyParser, ...]
+    inner_parsers: typing.Tuple[parser_api.Parser[typing.Any], ...]
     """The parsers to use to parse the items inside the tuple.
 
     These define the inner types and the allowed number of items in the in the
@@ -446,7 +445,7 @@ class TupleParser(parser_base.SourcedParser[_TupleT]):
 
     def __init__(
         self,
-        *inner_parsers: parser_base.AnyParser,
+        *inner_parsers: parser_api.Parser[typing.Any],
         sep: str = ",",
         tuple_cls: type[_TupleT] = tuple,
     ) -> None:
@@ -465,7 +464,7 @@ class TupleParser(parser_base.SourcedParser[_TupleT]):
         inner_parsers = [parser_base.get_parser(arg) for arg in args]
         return cls(*inner_parsers, tuple_cls=type_)
 
-    async def loads(self, argument: str, *, source: object) -> _TupleT:
+    async def loads(self, argument: str) -> _TupleT:
         """Load a tuple from a string.
 
         Parameters
@@ -499,7 +498,7 @@ class TupleParser(parser_base.SourcedParser[_TupleT]):
         initialiser = getattr(self.tuple_cls, "_make", self.tuple_cls)
         return initialiser(
             [
-                await parser_base.try_loads(parser, part, source=source)
+                await parser.loads(part)
                 for parser, part in zip(self.inner_parsers, parts)
             ]
         )
@@ -532,7 +531,7 @@ class TupleParser(parser_base.SourcedParser[_TupleT]):
 
 
 @parser_base.register_parser_for(typing.Collection)
-class CollectionParser(parser_base.SourcedParser[_CollectionT]):
+class CollectionParser(parser_base.Parser[_CollectionT]):
     r"""Parser type with support for :class:`typing.Collection`\s.
 
     This supports types such as :class:`list`, :class:`set`, etc.; but also
@@ -561,7 +560,7 @@ class CollectionParser(parser_base.SourcedParser[_CollectionT]):
 
     """
 
-    inner_parser: parser_base.AnyParser
+    inner_parser: parser_api.Parser[typing.Any]
     """The parser to use to parse the items inside the collection.
 
     Note that, unlike a :class:`TupleParser`, a collection parser requires all
@@ -589,7 +588,7 @@ class CollectionParser(parser_base.SourcedParser[_CollectionT]):
 
     def __init__(
         self,
-        inner_parser: typing.Optional[parser_base.AnyParser] = None,
+        inner_parser: typing.Optional[parser_api.Parser[typing.Any]] = None,
         *,
         collection_type: typing.Optional[typing.Type[_CollectionT]] = None,
         sep: str = ",",
@@ -614,12 +613,7 @@ class CollectionParser(parser_base.SourcedParser[_CollectionT]):
         inner_parser = parser_base.get_parser(inner_type)
         return cls(inner_parser, collection_type=origin)
 
-    async def loads(
-        self,
-        argument: str,
-        *,
-        source: disnake.Interaction,
-    ) -> _CollectionT:
+    async def loads(self, argument: str) -> _CollectionT:
         """Load a collection from a string.
 
         Parameters
@@ -637,7 +631,7 @@ class CollectionParser(parser_base.SourcedParser[_CollectionT]):
         """
         # TODO: Maybe make this a generator instead of a list?
         parsed = [
-            await parser_base.try_loads(self.inner_parser, part, source=source)
+            await self.inner_parser.loads(part)
             for part in argument.split(self.sep)
             if not part.isspace()  # TODO: Verify if this should be removed
         ]
@@ -662,7 +656,7 @@ class CollectionParser(parser_base.SourcedParser[_CollectionT]):
 
 
 @parser_base.register_parser_for(typing.Union)  # pyright: ignore[reportArgumentType]
-class UnionParser(parser_base.SourcedParser[_T], typing.Generic[_T]):
+class UnionParser(parser_base.Parser[_T], typing.Generic[_T]):
     r"""Parser type with support for :class:`~typing.Union`\s.
 
     The provided parsers are sequentially tried until one passes. If none work,
@@ -684,12 +678,15 @@ class UnionParser(parser_base.SourcedParser[_T], typing.Generic[_T]):
 
     """
 
-    inner_parsers: typing.Sequence[parser_base.AnyParser]
+    inner_parsers: typing.Sequence[parser_api.Parser[typing.Any]]
     """The parsers with which to sequentially try to parse the argument."""
     optional: bool
     """Whether this parser is optional."""
 
-    def __init__(self, *inner_parsers: typing.Optional[parser_base.AnyParser]) -> None:
+    def __init__(
+        self,
+        *inner_parsers: typing.Optional[parser_api.Parser[typing.Any]],
+    ) -> None:
         if len(inner_parsers) < 2:
             msg = "A Union requires two or more type arguments."
             raise TypeError(msg)
@@ -739,7 +736,7 @@ class UnionParser(parser_base.SourcedParser[_T], typing.Generic[_T]):
         assert isinstance(none_parser, NoneParser)
         none_parser.strict = strict
 
-    async def loads(self, argument: str, *, source: object) -> _T:
+    async def loads(self, argument: str) -> _T:
         """Load a union of types from a string.
 
         If :attr:`optional` is ``True`` and :attr:`strict` is ``False``, this
@@ -772,7 +769,7 @@ class UnionParser(parser_base.SourcedParser[_T], typing.Generic[_T]):
         # Try all parsers sequentially. If any succeeds, return the result.
         for parser in self.inner_parsers:
             with contextlib.suppress(Exception):
-                return await parser_base.try_loads(parser, argument, source=source)
+                return await aio.eval_maybe_coro(parser.loads(argument))
 
         msg = "Failed to parse input to any type in the Union."
         raise RuntimeError(msg)
@@ -799,7 +796,7 @@ class UnionParser(parser_base.SourcedParser[_T], typing.Generic[_T]):
 
         # TODO: Maybe add contextlib.suppress?
         for parser in self.inner_parsers:
-            if isinstance(argument, parser.default_types()):
+            with contextlib.suppress(Exception):
                 return await aio.eval_maybe_coro(parser.dumps(argument))
 
         if self.optional and not self.strict:
@@ -811,14 +808,14 @@ class UnionParser(parser_base.SourcedParser[_T], typing.Generic[_T]):
 
 
 @parser_base.register_parser_for(typing.Literal)  # pyright: ignore[reportArgumentType]
-class LiteralParser(parser_base.SourcedParser[_T], typing.Generic[_T]):
+class LiteralParser(parser_base.Parser[_T], typing.Generic[_T]):
     options: typing.Sequence[_T]
-    inner_parser: parser_base.ParserWithArgumentType[_T]
+    inner_parser: parser_api.Parser[_T]
 
     def __init__(
         self,
         *options: _T,
-        inner_parser: parser_base.ParserWithArgumentType[_T],
+        inner_parser: parser_api.Parser[_T],
     ):
         self.options = options
         self.inner_parser = inner_parser
@@ -840,10 +837,8 @@ class LiteralParser(parser_base.SourcedParser[_T], typing.Generic[_T]):
 
         return cls(*args, inner_parser=parser_base.get_parser(arg_type))
 
-    async def loads(self, argument: str, /, *, source: object) -> _T:
-        value = await aio.eval_maybe_coro(
-            parser_base.try_loads(self.inner_parser, argument, source=source)
-        )
+    async def loads(self, argument: str, /) -> _T:
+        value = await aio.eval_maybe_coro(self.inner_parser.loads(argument))
 
         assert value in self.options
 
