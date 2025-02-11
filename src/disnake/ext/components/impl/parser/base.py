@@ -2,20 +2,24 @@
 
 from __future__ import annotations
 
+import contextvars
 import typing
 
+import attrs
 from disnake.ext.components.api import parser as parser_api
+from disnake.ext.components.internal import omit
 
 if typing.TYPE_CHECKING:
     import typing_extensions
 
 __all__: typing.Sequence[str] = (
-    "register_parser",
-    "get_parser",
     "Parser",
+    "get_parser",
+    "register_parser",
 )
 
 _T = typing.TypeVar("_T")
+_DefaultT = typing.TypeVar("_DefaultT")
 ParserT = typing.TypeVar("ParserT", bound=parser_api.Parser)
 
 _PARSERS: typing.Dict[type, typing.Type[parser_api.Parser[typing.Any]]] = {}
@@ -174,6 +178,16 @@ class Parser(
         """
         return _REV_PARSERS[cls]
 
+    @classmethod
+    def declare_dependencies(cls) -> None:
+        """Declare all dependencies this parser expects.
+
+        Call :func:`declare_dependencies` for all external type
+        dependencies used in :meth:`dumps` and :meth:`loads` here.
+
+        By default this is a no-op.
+        """
+
     async def loads(self, argument: typing.Any, /) -> parser_api.ParserType:  # noqa: D102, ANN401
         # <<Docstring inherited from parser_api.Parser>>
         ...
@@ -181,3 +195,55 @@ class Parser(
     async def dumps(self, argument: parser_api.ParserType, /) -> str:  # noqa: D102
         # <<Docstring inherited from parser_api.Parser>>
         ...
+
+
+# TODO: move
+
+class DependencyManager:
+    _contextvars: typing.Dict[type, contextvars.ContextVar[typing.Any]]
+
+    def __init__(self, component_name: str):
+        self._contextvars = {}
+        self.component_name = component_name
+
+    def declare_dependencies(self, *types: type) -> None:
+        for type_ in types:
+            self._contextvars[type_] = contextvars.ContextVar(
+                # Name should be unlikely to conflict with anything in userspace.
+                f"{self.component_name}|{type_.__name__}"
+            )
+
+    def _get_contextvar_for(
+        self, context_type: typing.Type[_T], /
+    ) -> contextvars.ContextVar[_T]:
+        if context_type in self._contextvars:
+            return self._contextvars[context_type]
+
+        # Resolve subclass of registered type and save it to speed up future lookups.
+        for stored_type, context in self._contextvars.items():
+            if issubclass(context_type, stored_type):
+                self._contextvars[context_type] = context
+                return context
+
+        msg = (
+            f"There is no ContextVar that manages type {context_type.__qualname__}."
+        )
+        raise LookupError(msg)
+
+
+    def set_dependencies(self, *dependencies: object) -> None:
+        for dependency in dependencies:
+            self._get_contextvar_for(type(dependency)).set(dependency)
+
+    def get_dependency(self, dependency_type: typing.Type[_T]) -> omit.Omissible[_T]:
+        return self._get_contextvar_for(dependency_type).get(omit.Omitted)
+
+
+@attrs.define(slots=True)
+class InjectionMarker:
+    dependency_type: typing.Type[typing.Any]
+    default: omit.Omissible[object]
+
+
+def inject(dependency_type: type, default: omit.Omissible[object] = omit.Omitted) -> typing.Any:  # noqa: ANN401
+    return InjectionMarker(dependency_type, default)
