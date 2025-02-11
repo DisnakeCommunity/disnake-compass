@@ -18,11 +18,6 @@ __all__: typing.Sequence[str] = (
 _T = typing.TypeVar("_T")
 ParserT = typing.TypeVar("ParserT", bound=parser_api.Parser)
 
-MaybeCoroutine: typing_extensions.TypeAlias = typing.Union[
-    typing.Coroutine[None, None, _T],
-    _T,
-]
-
 _PARSERS: typing.Dict[type, typing.Type[parser_api.Parser[typing.Any]]] = {}
 _REV_PARSERS: typing.Dict[
     typing.Type[parser_api.Parser[typing.Any]], typing.Tuple[type, ...]
@@ -179,12 +174,10 @@ class Parser(
         """
         return _REV_PARSERS[cls]
 
-    def loads(  # noqa: D102
-        self, argument: typing.Any, /  # noqa: ANN401
-    ) -> MaybeCoroutine[parser_api.ParserType]:
+    async def loads(self, argument: typing.Any, /) -> parser_api.ParserType:  # noqa: D102, ANN401
         # <<Docstring inherited from parser_api.Parser>>
         ...
 
-    def dumps(self, argument: parser_api.ParserType, /) -> MaybeCoroutine[str]:  # noqa: D102
+    async def dumps(self, argument: parser_api.ParserType, /) -> str:  # noqa: D102
         # <<Docstring inherited from parser_api.Parser>>
         ...

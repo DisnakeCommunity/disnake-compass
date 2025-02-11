@@ -9,7 +9,6 @@ import typing
 
 import typing_extensions
 from disnake.ext.components.impl.parser import base as parser_base
-from disnake.ext.components.internal import aio
 
 if typing.TYPE_CHECKING:
     from disnake.ext.components.api import parser as parser_api
@@ -62,7 +61,7 @@ class NoneParser(parser_base.Parser[None]):
     def __init__(self, *, strict: bool = True) -> None:
         self.strict = strict
 
-    def loads(self, argument: str, /) -> None:
+    async def loads(self, argument: str, /) -> None:
         """Load ``None`` from a string.
 
         If :attr:`strict` is set to ``True``, this will fail if the
@@ -87,7 +86,7 @@ class NoneParser(parser_base.Parser[None]):
         msg = f"Strict `NoneParser`s can only load the empty string, got {argument!r}."
         raise ValueError(msg)
 
-    def dumps(self, argument: None) -> str:
+    async def dumps(self, argument: None, /) -> str:
         """Dump ``None`` into a string.
 
         If :attr:`strict` is set to ``True``, this will fail if the
@@ -135,7 +134,7 @@ def dumps_float(number: float) -> str:
 class FloatParser(parser_base.Parser[float]):
     r"""Parser implementation for :class:`float`\s."""
 
-    def loads(self, argument: str) -> float:
+    async def loads(self, argument: str, /) -> float:
         """Load a floating point number from a string.
 
         Parameters
@@ -146,7 +145,7 @@ class FloatParser(parser_base.Parser[float]):
         """
         return float(argument)
 
-    def dumps(self, argument: float) -> str:
+    async def dumps(self, argument: float, /) -> str:
         """Dump a floating point number into a string.
 
         Strips trailing ".0" where possible.
@@ -200,7 +199,7 @@ class IntParser(parser_base.Parser[int]):
         self.signed = signed
         self.base = base
 
-    def loads(self, argument: str) -> int:
+    async def loads(self, argument: str, /) -> int:
         r"""Load an integer from a string.
 
         Parameters
@@ -223,7 +222,7 @@ class IntParser(parser_base.Parser[int]):
 
         return result
 
-    def dumps(self, argument: int) -> str:
+    async def dumps(self, argument: int, /) -> str:
         """Dump an integer into a string.
 
         Parameters
@@ -291,7 +290,7 @@ class BoolParser(parser_base.Parser[bool]):
         self.trues = _DEFAULT_TRUES if trues is None else trues
         self.falses = _DEFAULT_FALSES if falses is None else falses
 
-    def loads(self, argument: str) -> bool:
+    async def loads(self, argument: str, /) -> bool:
         """Load a boolean from a string.
 
         Parameters
@@ -318,7 +317,7 @@ class BoolParser(parser_base.Parser[bool]):
         )
         raise ValueError(msg)
 
-    def dumps(self, argument: bool) -> str:  # noqa: FBT001
+    async def dumps(self, argument: bool, /) -> str:  # noqa: FBT001
         """Dump a boolean into a string.
 
         By default, this opts to dump as ``"1"`` for ``True`` or ``"0"`` for
@@ -346,7 +345,7 @@ class StringParser(parser_base.Parser[str]):
     Both loads and dumps are essentially no-ops.
     """
 
-    def loads(self, argument: str) -> str:
+    async def loads(self, argument: str, /) -> str:
         """Load a string from a string.
 
         Parameters
@@ -357,7 +356,7 @@ class StringParser(parser_base.Parser[str]):
         """
         return argument
 
-    def dumps(self, argument: str) -> str:
+    async def dumps(self, argument: str, /) -> str:
         """Dump a string into a string.
 
         Parameters
@@ -464,7 +463,7 @@ class TupleParser(parser_base.Parser[_TupleT]):
         inner_parsers = [parser_base.get_parser(arg) for arg in args]
         return cls(*inner_parsers, tuple_cls=type_)
 
-    async def loads(self, argument: str) -> _TupleT:
+    async def loads(self, argument: str, /) -> _TupleT:
         """Load a tuple from a string.
 
         Parameters
@@ -503,7 +502,7 @@ class TupleParser(parser_base.Parser[_TupleT]):
             ]
         )
 
-    async def dumps(self, argument: _TupleT) -> str:
+    async def dumps(self, argument: _TupleT, /) -> str:
         """Dump a tuple into a string.
 
         Parameters
@@ -524,7 +523,7 @@ class TupleParser(parser_base.Parser[_TupleT]):
 
         return self.sep.join(
             [
-                await aio.eval_maybe_coro(parser.dumps(part))
+                await parser.dumps(part)
                 for parser, part in zip(self.inner_parsers, argument)
             ]
         )
@@ -613,7 +612,7 @@ class CollectionParser(parser_base.Parser[_CollectionT]):
         inner_parser = parser_base.get_parser(inner_type)
         return cls(inner_parser, collection_type=origin)
 
-    async def loads(self, argument: str) -> _CollectionT:
+    async def loads(self, argument: str, /) -> _CollectionT:
         """Load a collection from a string.
 
         Parameters
@@ -638,7 +637,7 @@ class CollectionParser(parser_base.Parser[_CollectionT]):
 
         return self.collection_type(parsed)  # pyright: ignore[reportCallIssue]
 
-    async def dumps(self, argument: _CollectionT) -> str:
+    async def dumps(self, argument: _CollectionT, /) -> str:
         """Dump a collection into a string.
 
         Parameters
@@ -647,12 +646,7 @@ class CollectionParser(parser_base.Parser[_CollectionT]):
             The value that is to be dumped.
 
         """
-        return ",".join(
-            [
-                await aio.eval_maybe_coro(self.inner_parser.dumps(part))
-                for part in argument
-            ]
-        )
+        return ",".join([await self.inner_parser.dumps(part) for part in argument])
 
 
 @parser_base.register_parser_for(typing.Union)  # pyright: ignore[reportArgumentType]
@@ -736,7 +730,7 @@ class UnionParser(parser_base.Parser[_T], typing.Generic[_T]):
         assert isinstance(none_parser, NoneParser)
         none_parser.strict = strict
 
-    async def loads(self, argument: str) -> _T:
+    async def loads(self, argument: str, /) -> _T:
         """Load a union of types from a string.
 
         If :attr:`optional` is ``True`` and :attr:`strict` is ``False``, this
@@ -769,12 +763,12 @@ class UnionParser(parser_base.Parser[_T], typing.Generic[_T]):
         # Try all parsers sequentially. If any succeeds, return the result.
         for parser in self.inner_parsers:
             with contextlib.suppress(Exception):
-                return await aio.eval_maybe_coro(parser.loads(argument))
+                return await parser.loads(argument)
 
         msg = "Failed to parse input to any type in the Union."
         raise RuntimeError(msg)
 
-    async def dumps(self, argument: _T) -> str:
+    async def dumps(self, argument: _T, /) -> str:
         """Dump a union of types into a string.
 
         Parameters
@@ -797,7 +791,7 @@ class UnionParser(parser_base.Parser[_T], typing.Generic[_T]):
         # TODO: Maybe add contextlib.suppress?
         for parser in self.inner_parsers:
             with contextlib.suppress(Exception):
-                return await aio.eval_maybe_coro(parser.dumps(argument))
+                return await parser.dumps(argument)
 
         if self.optional and not self.strict:
             # Act like the NoneParser with strict=False dumped the argument.
@@ -821,7 +815,7 @@ class LiteralParser(parser_base.Parser[_T], typing.Generic[_T]):
         self.inner_parser = inner_parser
 
     @classmethod
-    def default(cls, type_: type[_T]) -> typing_extensions.Self:
+    def default(cls, type_: type[_T], /) -> typing_extensions.Self:
         assert typing.get_origin(type_) == typing.Literal
         args: typing.Tuple[_T] = typing.get_args(type_)
 
@@ -838,13 +832,13 @@ class LiteralParser(parser_base.Parser[_T], typing.Generic[_T]):
         return cls(*args, inner_parser=parser_base.get_parser(arg_type))
 
     async def loads(self, argument: str, /) -> _T:
-        value = await aio.eval_maybe_coro(self.inner_parser.loads(argument))
+        value = await self.inner_parser.loads(argument)
 
         assert value in self.options
 
         return value
 
-    async def dumps(self, argument: _T) -> str:
+    async def dumps(self, argument: _T, /) -> str:
         if argument not in self.options:
             msg = (
                 f"{argument!r} is not a valid option for this parser."
@@ -852,4 +846,4 @@ class LiteralParser(parser_base.Parser[_T], typing.Generic[_T]):
             )
             raise ValueError(msg)
 
-        return await aio.eval_maybe_coro(self.inner_parser.dumps(argument))
+        return await self.inner_parser.dumps(argument)

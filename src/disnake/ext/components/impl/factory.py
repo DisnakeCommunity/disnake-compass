@@ -10,7 +10,6 @@ from disnake.ext.components import fields
 from disnake.ext.components.api import component as component_api
 from disnake.ext.components.api import parser as parser_api
 from disnake.ext.components.impl.parser import base as parser_base
-from disnake.ext.components.internal import aio
 
 if typing.TYPE_CHECKING:
     import typing_extensions
@@ -77,9 +76,9 @@ class ComponentFactory(
             raise ValueError(message)
 
         return {
-            param: await aio.eval_maybe_coro(self.parsers[param].loads(value))
+            param: await self.parsers[param].loads(value)
             for param, value in zip(self.parsers, params)
-            if value
+            if value  # TODO: Check this, I think this is wrong.
         }
 
     async def dump_params(  # noqa: D102
@@ -88,9 +87,7 @@ class ComponentFactory(
         # <<docstring inherited from api.components.ComponentFactory>>
 
         return {
-            field: await aio.eval_maybe_coro(
-                self.parsers[field].dumps(getattr(component, field))
-            )
+            field: await self.parsers[field].dumps(getattr(component, field))
             for field in self.parsers
         }
 

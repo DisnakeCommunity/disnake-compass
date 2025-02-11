@@ -10,7 +10,6 @@ __all__: typing.Sequence[str] = ("Parser",)
 
 
 _T = typing.TypeVar("_T")
-MaybeCoroutine = typing.Union[_T, typing.Coroutine[None, None, _T]]
 
 ParserType = typing_extensions.TypeVar(
     "ParserType",
@@ -65,14 +64,11 @@ class Parser(typing.Protocol[ParserType]):
         """
         ...
 
-    def loads(self, argument: str, /) -> MaybeCoroutine[ParserType]:
+    async def loads(self, argument: str, /) -> ParserType:
         r"""Load a value from a string and apply the necessary conversion logic.
 
         Any errors raised inside this method remain unmodified, and should be
         handled externally.
-
-        .. note::
-            This method can be either sync or async.
 
         Parameters
         ----------
@@ -91,7 +87,7 @@ class Parser(typing.Protocol[ParserType]):
         """
         ...
 
-    def dumps(self, argument: ParserType, /) -> MaybeCoroutine[str]:
+    async def dumps(self, argument: ParserType, /) -> str:
         r"""Dump a value from a given type and convert it to a string.
 
         In most cases it is imperative to ensure that this is done in a
@@ -109,9 +105,6 @@ class Parser(typing.Protocol[ParserType]):
 
         Any errors raised inside this method remain unmodified, and should be
         handled externally.
-
-        .. note::
-            This method can be either sync or async.
 
         Parameters
         ----------
