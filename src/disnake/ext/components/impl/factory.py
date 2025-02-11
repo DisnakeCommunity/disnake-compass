@@ -18,7 +18,7 @@ if typing.TYPE_CHECKING:
 __all__: typing.Sequence[str] = ("ComponentFactory",)
 
 
-ParserMapping = typing.Mapping[str, parser_base.AnyParser]
+ParserMapping = typing.Mapping[str, parser_api.Parser[typing.Any]]
 
 
 @attr.define(slots=True)
@@ -44,9 +44,9 @@ class ComponentFactory(
         component: typing.Type[component_api.RichComponent],
     ) -> typing_extensions.Self:
         # <<docstring inherited from api.components.ComponentFactory>>
-        parser: typing.Optional[parser_api.AnyParser]
+        parser: typing.Optional[parser_api.Parser[typing.Any]]
 
-        parsers: typing.Dict[str, parser_base.AnyParser] = {}
+        parsers: typing.Dict[str, parser_api.Parser[typing.Any]] = {}
         for field in fields.get_fields(component, kind=fields.FieldType.CUSTOM_ID):
             parser = fields.get_parser(field)
 
@@ -54,7 +54,6 @@ class ComponentFactory(
                 parser_type = field.type or str
                 parser = parser_base.get_parser(parser_type).default(parser_type)
 
-            assert isinstance(parser, (parser_base.Parser, parser_base.SourcedParser))
             parsers[field.name] = parser
 
         return cls(
@@ -62,60 +61,8 @@ class ComponentFactory(
             typing.cast(typing.Type[component_api.ComponentT], component),
         )
 
-    async def loads_param(
-        self,
-        param: str,
-        value: str,
-        *,
-        source: object,
-    ) -> object:
-        """Parse a single custom id parameter to the desired type with its parser.
-
-        Parameters
-        ----------
-        param:
-            The name of the custom id field that is to be parsed.
-        value:
-            The value of the custom id field that is to be parsed.
-        source:
-            The source object used to parse the custom id parameter.
-
-        Returns
-        -------
-        :class:`object`:
-            The parsed custom id field value.
-
-        """
-        parser = self.parsers[param]
-        return await parser_base.try_loads(parser, value, source=source)
-
-    async def dumps_param(
-        self,
-        param: str,
-        value: object,
-    ) -> str:
-        """Parse a single custom id parameter to its string form for custom id storage.
-
-        Parameters
-        ----------
-        param:
-            The name of the custom id field that is to be parsed.
-        value:
-            The value of the custom id field that is to be parsed.
-
-        Returns
-        -------
-        :class:`str`:
-            The dumped custom id parameter, ready for storage inside a custom id.
-
-        """
-        parser = self.parsers[param]
-        result = parser.dumps(value)
-        return await aio.eval_maybe_coro(result)
-
     async def load_params(  # noqa: D102
         self,
-        source: object,
         params: typing.Sequence[str],
     ) -> typing.Mapping[str, object]:
         # <<docstring inherited from api.components.ComponentFactory>>
@@ -130,7 +77,7 @@ class ComponentFactory(
             raise ValueError(message)
 
         return {
-            param: await self.loads_param(param, value, source=source)
+            param: await aio.eval_maybe_coro(self.parsers[param].loads(value))
             for param, value in zip(self.parsers, params)
             if value
         }
@@ -141,19 +88,20 @@ class ComponentFactory(
         # <<docstring inherited from api.components.ComponentFactory>>
 
         return {
-            field: await self.dumps_param(field, getattr(component, field))
+            field: await aio.eval_maybe_coro(
+                self.parsers[field].dumps(getattr(component, field))
+            )
             for field in self.parsers
         }
 
     async def build_component(  # noqa: D102
         self,
-        source: object,
         params: typing.Sequence[str],
         component_params: typing.Optional[typing.Mapping[str, object]] = None,
     ) -> component_api.ComponentT:
         # <<docstring inherited from api.components.ComponentFactory>>
 
-        parsed = await self.load_params(source, params)
+        parsed = await self.load_params(params)
         return self.component(**parsed, **(component_params or {}))
 
 
@@ -196,7 +144,6 @@ class NoopFactory(component_api.ComponentFactory[typing.Any]):
 
     async def build_component(
         self,
-        source: object,
         params: typing.Sequence[str],
         component_params: typing.Optional[typing.Mapping[str, object]] = None,
     ) -> typing.NoReturn:

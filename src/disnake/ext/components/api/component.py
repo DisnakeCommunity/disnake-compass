@@ -406,7 +406,6 @@ class ComponentFactory(typing.Protocol[ComponentT]):
     # TODO: Update docstring
     async def load_params(
         self,
-        source: typing.Any,  # noqa: ANN401
         params: typing.Sequence[str],
         /,
     ) -> typing.Mapping[str, object]:
@@ -418,8 +417,6 @@ class ComponentFactory(typing.Protocol[ComponentT]):
 
         Parameters
         ----------
-        source
-            The source object to use for creating the component instance.
         params
             A mapping of field name to to-be-parsed field values.
 
@@ -444,7 +441,6 @@ class ComponentFactory(typing.Protocol[ComponentT]):
 
     async def build_component(
         self,
-        source: typing.Any,  # noqa: ANN401
         params: typing.Sequence[str],
         component_params: typing.Optional[typing.Mapping[str, object]],
     ) -> ComponentT:
@@ -455,8 +451,6 @@ class ComponentFactory(typing.Protocol[ComponentT]):
 
         Parameters
         ----------
-        source
-            The source object to use for creating the component instance.
         params
             A sequence of to-be-parsed field values.
         component_params
