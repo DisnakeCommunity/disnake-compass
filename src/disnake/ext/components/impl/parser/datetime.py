@@ -8,8 +8,8 @@ from disnake.ext.components.impl.parser import base as parser_base
 from disnake.ext.components.impl.parser import builtins as builtins_parsers
 
 __all__: typing.Sequence[str] = (
-    "DatetimeParser",
     "DateParser",
+    "DatetimeParser",
     "TimeParser",
     "TimedeltaParser",
     "TimezoneParser",
@@ -117,7 +117,7 @@ class DatetimeParser(parser_base.Parser[datetime.datetime]):
         timezone: datetime.timezone = datetime.timezone.utc,
         strict: bool = True,
         int_parser: typing.Optional[builtins_parsers.IntParser] = None,
-    ):
+    ) -> None:
         if resolution < 1e-6:
             msg = f"Resolution must be greater than 1e-6, got {resolution}."
             raise ValueError(msg)
@@ -132,7 +132,7 @@ class DatetimeParser(parser_base.Parser[datetime.datetime]):
         self.strict = strict
         self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
 
-    def loads(self, argument: str) -> datetime.datetime:
+    async def loads(self, argument: str, /) -> datetime.datetime:
         """Load a datetime from a string.
 
         This uses the underlying :attr:`int_parser`.
@@ -146,11 +146,11 @@ class DatetimeParser(parser_base.Parser[datetime.datetime]):
 
         """
         return datetime.datetime.fromtimestamp(
-            self.int_parser.loads(argument) * self.resolution,
+            await self.int_parser.loads(argument) * self.resolution,
             tz=self.timezone,
         )
 
-    def dumps(self, argument: datetime.datetime) -> str:
+    async def dumps(self, argument: datetime.datetime, /) -> str:
         """Dump a datetime into a string.
 
         This uses the underlying :attr:`int_parser`.
@@ -190,7 +190,7 @@ class DatetimeParser(parser_base.Parser[datetime.datetime]):
         if self.resolution != 0:
             timestamp //= self.resolution
 
-        return self.int_parser.dumps(int(timestamp))
+        return await self.int_parser.dumps(int(timestamp))
 
 
 @parser_base.register_parser_for(datetime.timedelta)
@@ -239,7 +239,7 @@ class TimedeltaParser(parser_base.Parser[datetime.timedelta]):
         *,
         resolution: typing.Union[int, float] = Resolution.SECONDS,
         int_parser: typing.Optional[builtins_parsers.IntParser] = None,
-    ):
+    ) -> None:
         if resolution < 1e-6:
             msg = f"Resolution must be greater than 1e-6, got {resolution}."
             raise ValueError(msg)
@@ -252,7 +252,7 @@ class TimedeltaParser(parser_base.Parser[datetime.timedelta]):
         self.resolution = resolution
         self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
 
-    def loads(self, argument: str) -> datetime.timedelta:
+    async def loads(self, argument: str, /) -> datetime.timedelta:
         """Load a timedelta from a string.
 
         This uses the underlying :attr:`int_parser`.
@@ -263,10 +263,10 @@ class TimedeltaParser(parser_base.Parser[datetime.timedelta]):
             The string that is to be converted into a timedelta.
 
         """
-        seconds = self.int_parser.loads(argument) * self.resolution
+        seconds = await self.int_parser.loads(argument) * self.resolution
         return datetime.timedelta(seconds=seconds)
 
-    def dumps(self, argument: datetime.timedelta) -> str:
+    async def dumps(self, argument: datetime.timedelta, /) -> str:
         """Dump a timedelta into a string.
 
         This uses the underlying :attr:`int_parser`.
@@ -277,7 +277,7 @@ class TimedeltaParser(parser_base.Parser[datetime.timedelta]):
             The value that is to be dumped.
 
         """
-        return self.int_parser.dumps(int(argument.total_seconds() // self.resolution))
+        return await self.int_parser.dumps(int(argument.total_seconds() // self.resolution))
 
 
 @parser_base.register_parser_for(datetime.date)
@@ -298,10 +298,10 @@ class DateParser(parser_base.Parser[datetime.date]):
     default date parser will also return compressed results.
     """
 
-    def __init__(self, *, int_parser: typing.Optional[builtins_parsers.IntParser]):
+    def __init__(self, *, int_parser: typing.Optional[builtins_parsers.IntParser]) -> None:
         self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
 
-    def loads(self, argument: str) -> datetime.date:
+    async def loads(self, argument: str, /) -> datetime.date:
         """Load a date from a string.
 
         This uses the underlying :attr:`int_parser`.
@@ -312,9 +312,9 @@ class DateParser(parser_base.Parser[datetime.date]):
             The string that is to be converted into a date.
 
         """
-        return datetime.date.fromordinal(self.int_parser.loads(argument))
+        return datetime.date.fromordinal(await self.int_parser.loads(argument))
 
-    def dumps(self, argument: datetime.date) -> str:
+    async def dumps(self, argument: datetime.date, /) -> str:
         """Dump a datetime into a string.
 
         This uses the underlying :attr:`int_parser`.
@@ -325,7 +325,7 @@ class DateParser(parser_base.Parser[datetime.date]):
             The value that is to be dumped.
 
         """
-        return self.int_parser.dumps(datetime.date.toordinal(argument))
+        return await self.int_parser.dumps(datetime.date.toordinal(argument))
 
 
 @parser_base.register_parser_for(datetime.time)
@@ -378,7 +378,7 @@ class TimeParser(parser_base.Parser[datetime.time]):
         timezone: datetime.timezone = datetime.timezone.utc,
         timedelta_parser: typing.Optional[TimedeltaParser] = None,
         strict: bool = True,
-    ):
+    ) -> None:
         self.timezone = timezone
         self.timedelta_parser = (
             timedelta_parser or TimedeltaParser.default(datetime.timedelta)
@@ -405,7 +405,7 @@ class TimeParser(parser_base.Parser[datetime.time]):
     def resolution(self, resolution: typing.Union[int, float]) -> None:
         self.timedelta_parser.resolution = resolution
 
-    def loads(self, argument: str) -> datetime.time:
+    async def loads(self, argument: str, /) -> datetime.time:
         """Load a time from a string.
 
         This uses the underlying :attr:`timedelta_parser`.
@@ -418,10 +418,10 @@ class TimeParser(parser_base.Parser[datetime.time]):
             The string that is to be converted into a time.
 
         """
-        dt = datetime.datetime.min + self.timedelta_parser.loads(argument)
+        dt = datetime.datetime.min + await self.timedelta_parser.loads(argument)
         return dt.time().replace(tzinfo=self.timezone)
 
-    def dumps(self, argument: datetime.time) -> str:
+    async def dumps(self, argument: datetime.time, /) -> str:
         """Dump a time into a string.
 
         This uses the underlying :attr:`timedelta_parser`.
@@ -457,7 +457,7 @@ class TimeParser(parser_base.Parser[datetime.time]):
             )
             raise ValueError(msg)
 
-        return self.timedelta_parser.dumps(
+        return await self.timedelta_parser.dumps(
             datetime.timedelta(
                 hours=argument.hour,
                 minutes=argument.minute,
@@ -491,7 +491,7 @@ class TimezoneParser(parser_base.Parser[datetime.timezone]):
     default datetime parser will also return compressed results.
     """
 
-    def __init__(self, *, timedelta_parser: typing.Optional[TimedeltaParser] = None):
+    def __init__(self, *, timedelta_parser: typing.Optional[TimedeltaParser] = None) -> None:
         self.timedelta_parser = timedelta_parser or TimedeltaParser()
 
     @property
@@ -514,7 +514,7 @@ class TimezoneParser(parser_base.Parser[datetime.timezone]):
     def resolution(self, resolution: typing.Union[int, float]) -> None:
         self.timedelta_parser.resolution = resolution
 
-    def loads(self, argument: str) -> datetime.timezone:
+    async def loads(self, argument: str, /) -> datetime.timezone:
         """Load a timezone from a string.
 
         This uses the underlying :attr:`timedelta_parser`.
@@ -525,9 +525,9 @@ class TimezoneParser(parser_base.Parser[datetime.timezone]):
             The string that is to be converted into a timezone.
 
         """
-        return datetime.timezone(self.timedelta_parser.loads(argument))
+        return datetime.timezone(await self.timedelta_parser.loads(argument))
 
-    def dumps(self, argument: datetime.timezone) -> str:
+    async def dumps(self, argument: datetime.timezone, /) -> str:
         """Dump a timezone into a string.
 
         This uses the underlying :attr:`timedelta_parser`.
@@ -538,4 +538,4 @@ class TimezoneParser(parser_base.Parser[datetime.timezone]):
             The value that is to be dumped.
 
         """
-        return self.timedelta_parser.dumps(argument.utcoffset(None))
+        return await self.timedelta_parser.dumps(argument.utcoffset(None))
