@@ -175,16 +175,6 @@ class Parser(
         """
         return _REV_PARSERS[cls]
 
-    @classmethod
-    def declare_dependencies(cls) -> None:
-        """Declare all dependencies this parser expects.
-
-        Call :func:`declare_dependencies` for all external type
-        dependencies used in :meth:`dumps` and :meth:`loads` here.
-
-        By default this is a no-op.
-        """
-
     async def loads(self, argument: typing.Any, /) -> parser_api.ParserType:  # noqa: D102, ANN401
         # <<Docstring inherited from parser_api.Parser>>
         ...
