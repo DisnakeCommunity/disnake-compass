@@ -9,6 +9,11 @@ from disnake.ext.components.internal import omit
 
 _T = typing.TypeVar("_T")
 
+# XXX:  This actually introduces a memory leak when combined with hot-reloading
+#       as old types will never be cleared from the dependency map. Since hot-
+#       reloading in production environments is ill-advised anyway, I don't
+#       think it's worth adding a lot more complexity to circumvent it.
+#       ...Unless, of course, someone can come up with a better approach.
 DEPENDENCY_MAP: typing.Dict[typing.Type[typing.Any], contextvars.ContextVar[typing.Any]] = {}
 
 
