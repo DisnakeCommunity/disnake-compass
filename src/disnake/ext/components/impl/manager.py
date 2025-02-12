@@ -10,6 +10,7 @@ import typing
 import weakref
 
 import attr
+
 import disnake
 from disnake.ext import commands
 from disnake.ext.components import fields
@@ -19,7 +20,7 @@ from disnake.ext.components.internal import di, omit
 if typing.TYPE_CHECKING:
     import typing_extensions
 
-__all__: typing.Sequence[str] = ("ComponentManager", "get_manager", "check_manager")
+__all__: typing.Sequence[str] = ("ComponentManager", "check_manager", "get_manager")
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -36,14 +37,22 @@ T = typing.TypeVar("T")
 
 AnyBot = typing.Union[commands.Bot, commands.InteractionBot]
 
-DependencyProviderFunc = typing.Callable[
-    ["ComponentManager", disnake.Interaction],
-    typing.AsyncGenerator[None, None],
-]
-DependencyProvider = typing.Callable[
-    ["ComponentManager", disnake.Interaction],
-    typing.AsyncContextManager[None],
-]
+class DependencyProviderFunc(typing.Protocol):
+    def __call__(
+        self,
+        manager: ComponentManager,
+        *dependencies: object,
+    ) -> typing.AsyncGenerator[None, None]:
+        ...
+
+class DependencyProvider(typing.Protocol):
+    def __call__(
+        self,
+        manager: ComponentManager,
+        *dependencies: object,
+    ) -> typing.AsyncContextManager[None]:
+        ...
+
 DependencyProviderFuncT = typing.TypeVar("DependencyProviderFuncT", bound=DependencyProviderFunc)
 
 
@@ -120,22 +129,16 @@ _DEFAULT_COUNT: typing.Final[typing.Literal[True]] = True
 @contextlib.asynccontextmanager
 async def default_dependency_provider(
     manager: component_api.ComponentManager,  # noqa: ARG001
-    interaction: disnake.Interaction,
+    *dependencies: object,
 ) -> typing.AsyncGenerator[None, None]:
-    # Provide useful types...
     tokens = di.register_dependencies(
-        interaction,
-        interaction.guild,
-        interaction.bot,
-        interaction.channel,
-        interaction.author,
+        *(dependency for dependency in dependencies if dependency is not None)
     )
-    if isinstance(interaction, disnake.MessageInteraction):
-        tokens.update(di.register_dependencies(interaction.message))
 
     yield
 
     di.reset_dependencies(tokens)
+
 
 @contextlib.asynccontextmanager
 async def default_callback_wrapper(
@@ -272,9 +275,9 @@ class ComponentManager(component_api.ComponentManager):
         "_module_data",
         "_name",
         "_sep",
-        "provide_dependencies",
-        "wrap_callback",
         "handle_exception",
+        "set_invocation_dependencies",
+        "wrap_callback",
     )
 
     _bot: typing.Optional[AnyBot]
@@ -294,7 +297,7 @@ class ComponentManager(component_api.ComponentManager):
         count: typing.Optional[bool] = None,
         sep: typing.Optional[str] = None,
         bot: typing.Optional[commands.Bot] = None,
-    ):
+    ) -> None:
         self._name = name
         self._children = set()
         self._components = weakref.WeakValueDictionary()
@@ -303,7 +306,7 @@ class ComponentManager(component_api.ComponentManager):
         self._counter = 0
         self._module_data = {}
         self._sep = sep
-        self.provide_dependencies: DependencyProvider = default_dependency_provider
+        self.set_invocation_dependencies: DependencyProvider = default_dependency_provider
         self.wrap_callback: CallbackWrapper = default_callback_wrapper
         self.handle_exception: ExceptionHandlerFunc = default_exception_handler
 
@@ -461,12 +464,11 @@ class ComponentManager(component_api.ComponentManager):
         return self.sep.join([identifier, *dumped_params.values()])
 
     async def parse_message_interaction(  # noqa: D102
-        self, interaction: disnake.Interaction
+        self, interaction: disnake.Interaction,
     ) -> typing.Optional[component_api.RichComponent]:
         # <<docstring inherited from api.components.ComponentManager>>
         if isinstance(interaction, disnake.MessageInteraction):
-            async with self.provide_dependencies(self, interaction):
-                return await self.parse_raw_component(interaction.component)
+            return await self.parse_raw_component(interaction.component)
 
         else:
             raise NotImplementedError
@@ -781,7 +783,7 @@ class ComponentManager(component_api.ComponentManager):
         # bot.remove_listener(self.invoke_component, _MODAL_EVENT)
 
     def as_dependency_provider(self, func: DependencyProviderFuncT) -> DependencyProviderFuncT:
-        self.provide_dependencies = contextlib.asynccontextmanager(func)
+        self.set_invocation_dependencies = contextlib.asynccontextmanager(func)
         return func
 
     def as_callback_wrapper(self, func: CallbackWrapperFuncT) -> CallbackWrapperFuncT:
@@ -895,11 +897,7 @@ class ComponentManager(component_api.ComponentManager):
         self.handle_exception = func
         return func
 
-    async def invoke_component(  # noqa: D102
-        self, interaction: disnake.MessageInteraction
-    ) -> None:
-        # <<docstring inherited from api.components.ComponentManager>>
-
+    async def _invoke_component(self, interaction: disnake.MessageInteraction) -> None:
         # First, we check if the component is managed.
         component = await self.parse_message_interaction(interaction)
         if not (component and component.manager):
@@ -951,6 +949,31 @@ class ComponentManager(component_api.ComponentManager):
 
         finally:
             _COMPONENT_CTX.reset(component_ctx_token)
+
+    async def invoke_component(  # noqa: D102
+        self,
+        interaction: disnake.MessageInteraction,
+        /,
+        *,
+        with_di: bool = True,
+    ) -> None:
+        # <<docstring inherited from api.components.ComponentManager>>
+
+        if with_di:
+            async with self.set_invocation_dependencies(
+                self,
+                interaction,
+                interaction.guild,
+                interaction.bot,
+                interaction.channel,
+                interaction.author,
+                # XXX:  Potential edge-case here where a parser needs a user
+                #       but we can only provide a member.
+            ):
+                await self._invoke_component(interaction)
+
+        else:
+            await self._invoke_component(interaction)
 
     def make_button(  # noqa: PLR0913
         self,
