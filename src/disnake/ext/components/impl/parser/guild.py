@@ -8,6 +8,7 @@ import typing
 import disnake
 from disnake.ext.components.impl.parser import base as parser_base
 from disnake.ext.components.impl.parser import builtins as builtins_parsers
+from disnake.ext.components.internal import di
 
 __all__: typing.Sequence[str] = (
     "GuildParser",
@@ -55,14 +56,7 @@ class GuildParser(parser_base.Parser[disnake.Guild]):
         self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
         self.allow_api_requests = allow_api_requests
 
-    async def loads(
-        self,
-        argument: str,
-        /,
-        *,
-        maybe_guild: typing.Optional[disnake.Guild] = parser_base.inject(disnake.Guild, None),
-        maybe_client: typing.Optional[disnake.Client] = parser_base.inject(disnake.Client, None),
-    ) -> disnake.Guild:
+    async def loads(self, argument: str, /) -> disnake.Guild:
         """Load a guild from a string.
 
         This uses the underlying :attr:`int_parser`.
@@ -80,9 +74,11 @@ class GuildParser(parser_base.Parser[disnake.Guild]):
         """
         guild_id = await self.int_parser.loads(argument)
 
+        maybe_guild = di.resolve_dependency(disnake.Guild, None)
         if maybe_guild and maybe_guild.id == guild_id:
             return maybe_guild
 
+        maybe_client = di.resolve_dependency(disnake.Client, None)
         if maybe_client:
             maybe_guild = maybe_client.get_guild(guild_id)
             if maybe_guild:
@@ -108,9 +104,10 @@ class GuildParser(parser_base.Parser[disnake.Guild]):
         """
         return await self.int_parser.dumps(argument.id)
 
+
 @parser_base.register_parser_for(disnake.Invite)
 class InviteParser(parser_base.Parser[disnake.Invite]):
-    """Asynchronous parser type with support for guilds.
+    """Parser type with support for guilds.
 
     .. warning::
         This parser can make API requests.
@@ -148,14 +145,8 @@ class InviteParser(parser_base.Parser[disnake.Invite]):
         self.with_expiration = with_expiration
         self.guild_scheduled_event_id = guild_scheduled_event_id
 
-    async def loads(
-        self,
-        argument: str,
-        /,
-        *,
-        client: disnake.Client = parser_base.inject(disnake.Client),
-    ) -> disnake.Invite:
-        """Asynchronously load a guild invite from a string.
+    async def loads(self, argument: str) -> disnake.Invite:
+        """Load a guild invite from a string.
 
         This uses the underlying :attr:`int_parser`.
 
@@ -169,13 +160,9 @@ class InviteParser(parser_base.Parser[disnake.Invite]):
         ----------
         argument:
             The value that is to be loaded into a guild invite.
-        source:
-            The source to use for parsing.
-
-            Must be a type that has access to a
-            :class:`bot <disnake.ext.commands.Bot>` attribute.
 
         """
+        client = di.resolve_dependency(disnake.Client)
         return await client.fetch_invite(
             argument,
             with_counts=self.with_counts,
@@ -199,7 +186,7 @@ class InviteParser(parser_base.Parser[disnake.Invite]):
 
 @parser_base.register_parser_for(disnake.Role)
 class RoleParser(parser_base.Parser[disnake.Role]):
-    r"""Synchronous parser type with support for roles.
+    r"""Parser type with support for roles.
 
     .. warning::
         This parser can make API requests.
@@ -236,13 +223,7 @@ class RoleParser(parser_base.Parser[disnake.Role]):
         self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
         self.allow_api_requests = allow_api_requests
 
-    async def loads(
-        self,
-        argument: str,
-        /,
-        *,
-        guild: disnake.Guild = parser_base.inject(disnake.Guild),
-    ) -> disnake.Role:
+    async def loads(self, argument: str) -> disnake.Role:
         """Load a role from a string.
 
         This uses the underlying :attr:`int_parser`.
@@ -251,12 +232,6 @@ class RoleParser(parser_base.Parser[disnake.Role]):
         ----------
         argument:
             The value that is to be loaded into a role.
-        source:
-            The source to use for parsing.
-
-            Must be a type that has access to a
-            :class:`guild <disnake.Guild>`, :class:`message <disnake.Message>`,
-            or a :class:`channel <disnake.TextChannel>` attribute.
 
         Raises
         ------
@@ -266,6 +241,7 @@ class RoleParser(parser_base.Parser[disnake.Role]):
         """
         role_id = await self.int_parser.loads(argument)
 
+        guild = di.resolve_dependency(disnake.Guild)
         role = guild.get_role(role_id)
         if role:
             return role
