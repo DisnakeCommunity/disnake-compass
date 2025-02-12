@@ -4,8 +4,8 @@ import enum
 import typing
 
 import disnake
+from disnake.ext.components.api import parser as parser_api
 from disnake.ext.components.impl.parser import base as parser_base
-from disnake.ext.components.internal import aio
 
 __all__: typing.Sequence[str] = ("EnumParser", "FlagParser")
 
@@ -27,6 +27,7 @@ def _get_enum_type(enum_class: typing.Type[_AnyEnum]) -> typing.Optional[type]:
         typing.Type[typing.Any], type(next(member_iter).value)
     )
 
+    # TODO: Check if this can be `is` instead of `==`.
     # If all members match this type, return it.
     if all(type(member.value) == maybe_type for member in member_iter):
         return maybe_type
@@ -42,7 +43,7 @@ def _get_enum_type(enum_class: typing.Type[_AnyEnum]) -> typing.Optional[type]:
     disnake.flags.BaseFlags,
     priority=20,
 )
-class EnumParser(parser_base.SourcedParser[_EnumT]):
+class EnumParser(parser_base.Parser[_EnumT]):
     """Parser type for enums and flags.
 
     Enums and flags are stored by value instead of by name. This makes parsing
@@ -75,7 +76,7 @@ class EnumParser(parser_base.SourcedParser[_EnumT]):
     For enum types where the members are *not* all of the same type, this
     *must* be ``False``.
     """
-    value_parser: parser_base.AnyParser
+    value_parser: parser_api.Parser[typing.Any]
     """The parser responsible for converting to/from the enum type.
 
     If :attr:`store_by_values` is set to ``False``, this is *always* a
@@ -125,7 +126,7 @@ class EnumParser(parser_base.SourcedParser[_EnumT]):
         self.enum_class = enum_class
         self.value_parser = parser_base.get_parser(value_type)
 
-    async def loads(self, argument: str, *, source: object) -> _EnumT:
+    async def loads(self, argument: str, /) -> _EnumT:
         """Load an enum member from a string.
 
         This uses the underlying :attr:`value_parser`.
@@ -148,7 +149,7 @@ class EnumParser(parser_base.SourcedParser[_EnumT]):
             passed to them.
 
         """
-        parsed = await parser_base.try_loads(self.value_parser, argument, source=source)
+        parsed = await self.value_parser.loads(argument)
 
         if self.store_by_value:
             return self.enum_class(parsed)  # pyright: ignore[reportCallIssue]
@@ -170,14 +171,12 @@ class EnumParser(parser_base.SourcedParser[_EnumT]):
 
         """
         if self.store_by_value:
-            result = self.value_parser.dumps(argument.value)
+            return await self.value_parser.dumps(argument.value)
         else:
             # Baseflags members are always integers. This should never error
             # due to the check in __init__.
             assert not isinstance(argument, disnake.flags.BaseFlags)
-            result = self.value_parser.dumps(argument.name)
-
-        return await aio.eval_maybe_coro(result)
+            return await self.value_parser.dumps(argument.name)
 
 
 FlagParser = EnumParser
