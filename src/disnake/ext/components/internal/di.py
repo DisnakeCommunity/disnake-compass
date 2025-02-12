@@ -7,6 +7,12 @@ import typing
 
 from disnake.ext.components.internal import omit
 
+__all__: typing.Sequence[str] = (
+    "register_dependencies",
+    "reset_dependencies",
+    "resolve_dependency",
+)
+
 _T = typing.TypeVar("_T")
 
 # XXX:  This actually introduces a memory leak when combined with hot-reloading
