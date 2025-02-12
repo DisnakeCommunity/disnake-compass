@@ -33,10 +33,10 @@ class SnowflakeParser(parser_base.Parser[disnake.abc.Snowflake]):
     default snowflake parser will also return compressed results.
     """
 
-    def __init__(self, int_parser: typing.Optional[builtins_parsers.IntParser] = None):
+    def __init__(self, int_parser: typing.Optional[builtins_parsers.IntParser] = None) -> None:
         self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
 
-    def loads(self, argument: str) -> disnake.Object:
+    async def loads(self, argument: str, /) -> disnake.Object:
         """Load a snowflake from a string.
 
         This uses the underlying :attr:`int_parser`.
@@ -47,9 +47,9 @@ class SnowflakeParser(parser_base.Parser[disnake.abc.Snowflake]):
             The value that is to be loaded into a floating point number.
 
         """
-        return disnake.Object(self.int_parser.loads(argument))
+        return disnake.Object(await self.int_parser.loads(argument))
 
-    def dumps(self, argument: disnake.abc.Snowflake) -> str:
+    async def dumps(self, argument: disnake.abc.Snowflake, /) -> str:
         """Dump a snowflake into a string.
 
         This uses the underlying :attr:`int_parser`.
@@ -60,7 +60,4 @@ class SnowflakeParser(parser_base.Parser[disnake.abc.Snowflake]):
             The value that is to be dumped.
 
         """
-        return self.int_parser.dumps(argument.id)
-
-
-ObjectParser = SnowflakeParser  # TODO: Remove.
+        return await self.int_parser.dumps(argument.id)
