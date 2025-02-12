@@ -18,7 +18,7 @@ def _get_contextvar_for(dependency_type: typing.Type[_T], /) -> contextvars.Cont
 
     # Resolve subclass of registered type and save it to speed up future lookups.
     for registered_type, context in DEPENDENCY_MAP.items():
-        if issubclass(dependency_type, registered_type):
+        if issubclass(registered_type, dependency_type):
             DEPENDENCY_MAP[dependency_type] = context
             return context
 

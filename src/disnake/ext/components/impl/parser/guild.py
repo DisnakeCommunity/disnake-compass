@@ -75,7 +75,6 @@ class GuildParser(parser_base.Parser[disnake.Guild]):
         guild_id = await self.int_parser.loads(argument)
 
         maybe_guild = di.resolve_dependency(disnake.Guild, None)
-        print(maybe_guild)
         if maybe_guild and maybe_guild.id == guild_id:
             return maybe_guild
 
