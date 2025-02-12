@@ -14,7 +14,7 @@ import disnake
 from disnake.ext import commands
 from disnake.ext.components import fields
 from disnake.ext.components.api import component as component_api
-from disnake.ext.components.internal import omit, reference
+from disnake.ext.components.internal import omit
 
 if typing.TYPE_CHECKING:
     import typing_extensions
@@ -433,10 +433,7 @@ class ComponentManager(component_api.ComponentManager):
     ) -> typing.Optional[component_api.RichComponent]:
         # <<docstring inherited from api.components.ComponentManager>>
         if isinstance(interaction, disnake.MessageInteraction):
-            return await self.parse_raw_component(
-                interaction.component,
-                interaction,
-            )
+            return await self.parse_raw_component(interaction.component)
 
         else:
             raise NotImplementedError
@@ -444,27 +441,17 @@ class ComponentManager(component_api.ComponentManager):
     async def parse_raw_component(
         self,
         component: typing.Union[disnake.Button, disnake.BaseSelectMenu],
-        *reference_objects: object,
     ) -> typing.Optional[component_api.RichComponent]:
-        """Parse a message component given any number of reference objects.
+        """Parse a rich message component from a disnake raw component.
 
-        The required reference objects depend on the parsers of the component
-        you are trying to create. If available, a
-        :class:`disnake.MessageInteraction` should always suffice for the
-        parsers provided by disnake-ext-components.
-
-        Note that this only works for components registered to this manager.
+        .. note::
+            This method only works for components registered to this manager.
 
         Parameters
         ----------
         component:
             The raw message component that is to be turned into a rich
             component.
-        *reference_objects:
-            The objects to use as reference in the parsers. For example,
-            a member object requires a guild as a reference object. This can
-            be provided either directly, or through any object that has a
-            ``.guild`` property, such as an interaction.
 
         Returns
         -------
@@ -508,15 +495,13 @@ class ComponentManager(component_api.ComponentManager):
             )
         }
 
-        reference_obj = reference.create_reference(*reference_objects)
         return await component_type.factory.build_component(
-            reference_obj, params, component_params=component_params
+            params, component_params=component_params
         )
 
     async def parse_message_components(
         self,
         message: disnake.Message,
-        *reference_objects: object,
     ) -> typing.Tuple[
         typing.Sequence[typing.Sequence[MessageComponents]],
         typing.Sequence[component_api.RichComponent],
@@ -526,11 +511,6 @@ class ComponentManager(component_api.ComponentManager):
         This method is particularly useful if you wish to modify multiple
         components attached to a given message.
 
-        The required reference objects depend on the parsers of the component
-        you are trying to create. If available, a
-        :class:`disnake.MessageInteraction` should always suffice for the
-        parsers provided by disnake-ext-components.
-
         This returns a structure of components that can be directly passed into
         any send method's component parameters, and a separate sequence
         containing all rich components for easier editing.
@@ -539,13 +519,6 @@ class ComponentManager(component_api.ComponentManager):
         ----------
         message:
             The message of which to parse all components.
-        *reference_objects:
-            The objects to use as reference in the parsers. For example,
-            a member object requires a guild as a reference object. This can
-            be provided either directly, or through any object that has a
-            ``.guild`` property, such as an interaction.
-            If nothing is provided, this will default to the provided message
-            and the bot to which this manager is registered.
 
         Returns
         -------
@@ -568,10 +541,6 @@ class ComponentManager(component_api.ComponentManager):
         new_rows: typing.List[typing.List[MessageComponents]] = []
         rich_components: typing.List[component_api.RichComponent] = []
 
-        reference_obj = reference.create_reference(
-            *reference_objects or [message, self.bot]
-        )
-
         current_component, current_component_id = _COMPONENT_CTX.get((None, None))
         should_test = current_component is not None
 
@@ -585,9 +554,7 @@ class ComponentManager(component_api.ComponentManager):
                     new_component = current_component
 
                 else:
-                    new_component = await self.parse_raw_component(
-                        component, reference_obj
-                    )
+                    new_component = await self.parse_raw_component(component)
 
                 if new_component:
                     rich_components.append(new_component)
