@@ -14,7 +14,7 @@ import disnake
 from disnake.ext import commands
 from disnake.ext.components import fields
 from disnake.ext.components.api import component as component_api
-from disnake.ext.components.internal import omit
+from disnake.ext.components.internal import di, omit
 
 if typing.TYPE_CHECKING:
     import typing_extensions
@@ -35,7 +35,17 @@ _COMPONENT_CTX: contextvars.ContextVar[
 T = typing.TypeVar("T")
 
 AnyBot = typing.Union[commands.Bot, commands.InteractionBot]
-# AnyComponent = typing.Union[component_api.RichComponent, disnake.ui.WrappedComponent]
+
+DependencyProviderFunc = typing.Callable[
+    ["ComponentManager", disnake.Interaction],
+    typing.AsyncGenerator[None, None],
+]
+DependencyProvider = typing.Callable[
+    ["ComponentManager", disnake.Interaction],
+    typing.AsyncContextManager[None],
+]
+DependencyProviderFuncT = typing.TypeVar("DependencyProviderFuncT", bound=DependencyProviderFunc)
+
 
 CallbackWrapperFunc = typing.Callable[
     ["ComponentManager", component_api.RichComponent, disnake.Interaction],
@@ -106,6 +116,26 @@ _COUNT_CHARS: typing.Final[typing.Tuple[str, ...]] = tuple(
 _DEFAULT_SEP: typing.Final[str] = sys.intern("|")
 _DEFAULT_COUNT: typing.Final[typing.Literal[True]] = True
 
+
+@contextlib.asynccontextmanager
+async def default_dependency_provider(
+    manager: component_api.ComponentManager,  # noqa: ARG001
+    interaction: disnake.Interaction,
+) -> typing.AsyncGenerator[None, None]:
+    # Provide useful types...
+    tokens = di.register_dependencies(
+        interaction,
+        interaction.guild,
+        interaction.bot,
+        interaction.channel,
+        interaction.author,
+    )
+    if isinstance(interaction, disnake.MessageInteraction):
+        tokens.update(di.register_dependencies(interaction.message))
+
+    yield
+
+    di.reset_dependencies(tokens)
 
 @contextlib.asynccontextmanager
 async def default_callback_wrapper(
@@ -242,6 +272,7 @@ class ComponentManager(component_api.ComponentManager):
         "_module_data",
         "_name",
         "_sep",
+        "provide_dependencies",
         "wrap_callback",
         "handle_exception",
     )
@@ -272,6 +303,7 @@ class ComponentManager(component_api.ComponentManager):
         self._counter = 0
         self._module_data = {}
         self._sep = sep
+        self.provide_dependencies: DependencyProvider = default_dependency_provider
         self.wrap_callback: CallbackWrapper = default_callback_wrapper
         self.handle_exception: ExceptionHandlerFunc = default_exception_handler
 
@@ -433,7 +465,8 @@ class ComponentManager(component_api.ComponentManager):
     ) -> typing.Optional[component_api.RichComponent]:
         # <<docstring inherited from api.components.ComponentManager>>
         if isinstance(interaction, disnake.MessageInteraction):
-            return await self.parse_raw_component(interaction.component)
+            async with self.provide_dependencies(self, interaction):
+                return await self.parse_raw_component(interaction.component)
 
         else:
             raise NotImplementedError
@@ -746,6 +779,10 @@ class ComponentManager(component_api.ComponentManager):
 
         bot.remove_listener(self.invoke_component, _COMPONENT_EVENT)
         # bot.remove_listener(self.invoke_component, _MODAL_EVENT)
+
+    def as_dependency_provider(self, func: DependencyProviderFuncT) -> DependencyProviderFuncT:
+        self.provide_dependencies = contextlib.asynccontextmanager(func)
+        return func
 
     def as_callback_wrapper(self, func: CallbackWrapperFuncT) -> CallbackWrapperFuncT:
         """Register a callback as this managers' callback wrapper.

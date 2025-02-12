@@ -75,6 +75,7 @@ class GuildParser(parser_base.Parser[disnake.Guild]):
         guild_id = await self.int_parser.loads(argument)
 
         maybe_guild = di.resolve_dependency(disnake.Guild, None)
+        print(maybe_guild)
         if maybe_guild and maybe_guild.id == guild_id:
             return maybe_guild
 
@@ -88,7 +89,7 @@ class GuildParser(parser_base.Parser[disnake.Guild]):
                 with contextlib.suppress(disnake.HTTPException):
                     return await maybe_client.fetch_guild(guild_id)
 
-        msg = f"Could not find a guild with id {argument!r}."
+        msg = f"Could not find a guild with id {guild_id}."
         raise LookupError(msg)
 
     async def dumps(self, argument: disnake.Guild) -> str:
