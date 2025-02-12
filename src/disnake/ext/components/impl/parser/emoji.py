@@ -53,11 +53,6 @@ class PartialEmojiParser(parser_base.Parser[disnake.PartialEmoji]):
         ----------
         argument:
             The value that is to be loaded into a partial emoji.
-        source:
-            The source to use for parsing.
-
-            Must be a type that has access to a :class:`bot <commands.Bot>`
-            attribute.
 
         """
         return disnake.PartialEmoji.from_dict({"id": self.int_parser.loads(argument)})
@@ -126,11 +121,6 @@ class EmojiParser(parser_base.Parser[disnake.Emoji]):
         ----------
         argument:
             The value that is to be loaded into an emoji.
-        source:
-            The source to use for parsing.
-
-            Must be a type that has access to a :class:`bot <commands.Bot>`
-            attribute.
 
         Raises
         ------
@@ -212,11 +202,6 @@ class StickerParser(parser_base.Parser[disnake.Sticker]):
         ----------
         argument:
             The value that is to be loaded into a sticker.
-        source:
-            The source to use for parsing.
-
-            Must be a type that has access to a :class:`bot <commands.Bot>`
-            attribute.
 
         Raises
         ------

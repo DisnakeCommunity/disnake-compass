@@ -102,10 +102,6 @@ class ChannelParserBase(parser_base.Parser[_ChannelT]):
             The value that is to be loaded into a channel.
 
             This always matches the channel type of the parser.
-        source:
-            The source to use for parsing.
-
-            Must be a type that has access to a `get_channel` method.
 
         Raises
         ------
@@ -426,11 +422,6 @@ class PartialMessageableParser(parser_base.Parser[disnake.PartialMessageable]):
             The value that is to be loaded into a channel.
 
             This always matches the channel type of the parser.
-        source:
-            The source to use for parsing.
-
-            Must be a type that has access to a :class:`bot <commands.Bot>`
-            attribute.
 
         """
         client = di.resolve_dependency(disnake.Client)

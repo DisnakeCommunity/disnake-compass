@@ -473,11 +473,6 @@ class TupleParser(parser_base.Parser[_TupleT]):
 
             This is split over :attr:`sep` and then each individual substring
             is passed to its respective inner parser.
-        source:
-            The source to use for parsing.
-
-            If any of the inner parsers are sourced, this is automatically
-            passed to them.
 
         Raises
         ------
@@ -622,10 +617,6 @@ class CollectionParser(parser_base.Parser[_CollectionT]):
 
             This is split over :attr:`sep` and then each individual substring
             is passed to its respective inner parser.
-        source:
-            The source to use for parsing.
-
-            If the inner parser is sourced, this is automatically passed to it.
 
         """
         # TODO: Maybe make this a generator instead of a list?
@@ -744,10 +735,6 @@ class UnionParser(parser_base.Parser[_T], typing.Generic[_T]):
             Each inner parser is tried in the order they are provided, and the
             first to load the ``argument`` successfully short-circuits and
             returns.
-        source:
-            The source to use for parsing.
-
-            If the inner parser is sourced, this is automatically passed to it.
 
         Raises
         ------

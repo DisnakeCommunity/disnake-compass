@@ -66,16 +66,6 @@ class PartialMessageParser(parser_base.Parser[disnake.PartialMessage]):
         ----------
         argument:
             The value that is to be loaded into a partial message.
-        source:
-            The source to use for parsing.
-
-            If :attr:`channel` is set, the source is ignored. Otherwise, this
-            must be a channel, or be a type that has access to a
-            :class:`channel <disnake.TextChannel>` attribute.
-
-            .. note::
-                This can be any channel type that supports
-                `get_partial_message`.
 
         Raises
         ------

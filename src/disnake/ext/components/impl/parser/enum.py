@@ -142,11 +142,6 @@ class EnumParser(parser_base.Parser[_EnumT]):
             The value that is to be loaded into a channel.
 
             This always matches the channel type of the parser.
-        source:
-            The source to use for parsing.
-
-            If any of the inner parsers are sourced, this is automatically
-            passed to them.
 
         """
         parsed = await self.value_parser.loads(argument)
