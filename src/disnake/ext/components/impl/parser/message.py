@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 import typing
 
+import attrs
 import disnake
 from disnake.ext.components.impl.parser import base as parser_base
 from disnake.ext.components.impl.parser import builtins as builtins_parsers
@@ -22,6 +23,7 @@ AnyChannel = typing.Union[
 
 
 @parser_base.register_parser_for(disnake.PartialMessage)
+@attrs.define(slots=True)
 class PartialMessageParser(parser_base.Parser[disnake.PartialMessage]):
     r"""Parser type with support for partial messages.
 
@@ -38,24 +40,15 @@ class PartialMessageParser(parser_base.Parser[disnake.PartialMessage]):
 
     """
 
-    int_parser: builtins_parsers.IntParser
+    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
     """The :class:`~components.impl.parser.builtins.IntParser` to use
     internally for this parser.
 
     Since the default integer parser uses base-36 to "compress" numbers, the
-    default message parser will also return compressed results.
+    default guild parser will also return compressed results.
     """
-    channel: typing.Optional[AnyChannel]
+    channel: typing.Optional[AnyChannel] = attrs.field(default=None, kw_only=True)
     """The channel in which to make the partial message."""
-
-    def __init__(
-        self,
-        int_parser: typing.Optional[builtins_parsers.IntParser] = None,
-        *,
-        channel: typing.Optional[AnyChannel] = None,
-    ) -> None:
-        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
-        self.channel = channel
 
     async def loads(self, argument: str, /) -> disnake.PartialMessage:
         """Load a partial message from a string.
@@ -110,6 +103,7 @@ class PartialMessageParser(parser_base.Parser[disnake.PartialMessage]):
 
 
 @parser_base.register_parser_for(disnake.Message)
+@attrs.define(slots=True)
 class MessageParser(parser_base.Parser[disnake.Message]):
     r"""Asynchronous parser type with support for messages.
 
@@ -126,27 +120,18 @@ class MessageParser(parser_base.Parser[disnake.Message]):
 
     """
 
-    int_parser: builtins_parsers.IntParser
+    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
     """The :class:`~components.impl.parser.builtins.IntParser` to use
     internally for this parser.
 
     Since the default integer parser uses base-36 to "compress" numbers, the
-    default message parser will also return compressed results.
+    default guild parser will also return compressed results.
     """
-    allow_api_requests: bool
+    allow_api_requests: bool = attrs.field(default=True, kw_only=True)
     """Whether or not to allow this parser to make API requests.
 
     Parsers will always try getting a result from cache first.
     """
-
-    def __init__(
-        self,
-        int_parser: typing.Optional[builtins_parsers.IntParser] = None,
-        *,
-        allow_api_requests: bool = False,
-    ) -> None:
-        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
-        self.allow_api_requests = allow_api_requests
 
     async def loads(self, argument: str, /) -> disnake.Message:
         """Load a message from a string.

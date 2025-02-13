@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import typing
 
+import attrs
 from disnake.ext.components.api import parser as parser_api
 
 if typing.TYPE_CHECKING:
@@ -15,8 +16,6 @@ __all__: typing.Sequence[str] = (
     "register_parser",
 )
 
-_T = typing.TypeVar("_T")
-_DefaultT = typing.TypeVar("_DefaultT")
 ParserT = typing.TypeVar("ParserT", bound=parser_api.Parser)
 
 _PARSERS: typing.Dict[type, typing.Type[parser_api.Parser[typing.Any]]] = {}
@@ -144,6 +143,7 @@ def get_parser(  # noqa: D417
 
 
 @typing.runtime_checkable
+@attrs.define(slots=True)
 class Parser(
     parser_api.Parser[parser_api.ParserType],
     typing.Protocol[parser_api.ParserType],

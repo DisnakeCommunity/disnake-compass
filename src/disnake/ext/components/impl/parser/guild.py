@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 import typing
 
+import attrs
 import disnake
 from disnake.ext.components.impl.parser import base as parser_base
 from disnake.ext.components.impl.parser import builtins as builtins_parsers
@@ -18,6 +19,7 @@ __all__: typing.Sequence[str] = (
 
 
 @parser_base.register_parser_for(disnake.Guild)
+@attrs.define(slots=True)
 class GuildParser(parser_base.Parser[disnake.Guild]):
     """Parser type with support for guilds.
 
@@ -34,27 +36,18 @@ class GuildParser(parser_base.Parser[disnake.Guild]):
 
     """
 
-    int_parser: builtins_parsers.IntParser
+    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
     """The :class:`~components.impl.parser.builtins.IntParser` to use
     internally for this parser.
 
     Since the default integer parser uses base-36 to "compress" numbers, the
     default guild parser will also return compressed results.
     """
-    allow_api_requests: bool
+    allow_api_requests: bool = attrs.field(default=True, kw_only=True)
     """Whether or not to allow this parser to make API requests.
 
     Parsers will always try getting a result from cache first.
     """
-
-    def __init__(
-        self,
-        int_parser: typing.Optional[builtins_parsers.IntParser] = None,
-        *,
-        allow_api_requests: bool = True,
-    ) -> None:
-        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
-        self.allow_api_requests = allow_api_requests
 
     async def loads(self, argument: str, /) -> disnake.Guild:
         """Load a guild from a string.
@@ -106,6 +99,7 @@ class GuildParser(parser_base.Parser[disnake.Guild]):
 
 
 @parser_base.register_parser_for(disnake.Invite)
+@attrs.define(slots=True, kw_only=True)
 class InviteParser(parser_base.Parser[disnake.Invite]):
     """Parser type with support for guilds.
 
@@ -127,23 +121,12 @@ class InviteParser(parser_base.Parser[disnake.Invite]):
 
     """
 
-    with_counts: bool
+    with_counts: bool = attrs.field(default=True)
     """Whether to include the number of times an invite was used."""
-    with_expiration: bool
+    with_expiration: bool = attrs.field(default=True)
     """Whether to include when the invite expires."""
-    guild_scheduled_event_id: typing.Optional[int]
+    guild_scheduled_event_id: typing.Optional[int] = attrs.field(default=None)
     """The ID of the scheduled event to include in the invite."""
-
-    def __init__(
-        self,
-        *,
-        with_counts: bool = True,
-        with_expiration: bool = True,
-        guild_scheduled_event_id: typing.Optional[int] = None,
-    ) -> None:
-        self.with_counts = with_counts
-        self.with_expiration = with_expiration
-        self.guild_scheduled_event_id = guild_scheduled_event_id
 
     async def loads(self, argument: str) -> disnake.Invite:
         """Load a guild invite from a string.
@@ -185,6 +168,7 @@ class InviteParser(parser_base.Parser[disnake.Invite]):
 
 
 @parser_base.register_parser_for(disnake.Role)
+@attrs.define(slots=True)
 class RoleParser(parser_base.Parser[disnake.Role]):
     r"""Parser type with support for roles.
 
@@ -201,27 +185,18 @@ class RoleParser(parser_base.Parser[disnake.Role]):
 
     """
 
-    int_parser: builtins_parsers.IntParser
+    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
     """The :class:`~components.impl.parser.builtins.IntParser` to use
     internally for this parser.
 
     Since the default integer parser uses base-36 to "compress" numbers, the
-    default role parser will also return compressed results.
+    default guild parser will also return compressed results.
     """
-    allow_api_requests: bool
+    allow_api_requests: bool = attrs.field(default=True, kw_only=True)
     """Whether or not to allow this parser to make API requests.
 
     Parsers will always try getting a result from cache first.
     """
-
-    def __init__(
-        self,
-        int_parser: typing.Optional[builtins_parsers.IntParser] = None,
-        *,
-        allow_api_requests: bool = True,
-    ) -> None:
-        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
-        self.allow_api_requests = allow_api_requests
 
     async def loads(self, argument: str) -> disnake.Role:
         """Load a role from a string.

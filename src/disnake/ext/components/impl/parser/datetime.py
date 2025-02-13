@@ -4,6 +4,7 @@ import datetime
 import enum
 import typing
 
+import attrs
 from disnake.ext.components.impl.parser import base as parser_base
 from disnake.ext.components.impl.parser import builtins as builtins_parsers
 
@@ -53,14 +54,32 @@ class Resolution(float, enum.Enum):
     """
 
 
+def _validate_resolution(
+    _instance: object,
+    _attribute: object,
+    resolution: typing.Union[int, float],
+) -> None:
+    if resolution < 1e-6:
+        msg = f"Resolution must be greater than 1e-6, got {resolution}."
+        raise ValueError(msg)
+
+    if resolution < 1 and resolution not in _VALID_BASE_10:
+        # TODO: Verify whether this doesn't false-negative
+        msg = f"Resolutions smaller than 1 must be a power of 10, got {resolution}."
+        raise ValueError(msg)
+
+
 # TODO: Is forcing the use of timezones on users really a parser_based move?
 #       Probably.
 @parser_base.register_parser_for(datetime.datetime)
+@attrs.define(slots=True)
 class DatetimeParser(parser_base.Parser[datetime.datetime]):
     r"""Parser type with support for datetimes.
 
     Parameters
     ----------
+    int_parser:
+        The :class:`IntParser` to use internally for this parser.
     resolution:
         The resolution with which to store :class:`~datetime.datetime`\s in custom ids.
         Defaults to :obj:`Resolution.SECONDS`.
@@ -70,12 +89,18 @@ class DatetimeParser(parser_base.Parser[datetime.datetime]):
     strict:
         Whether this parser is in strict mode.
         Defaults to ``True``.
-    int_parser:
-        The :class:`IntParser` to use internally for this parser.
 
     """
 
-    resolution: typing.Union[int, float]
+    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
+    """The :class:`IntParser` to use internally for this parser.
+
+    Since the default integer parser uses base-36 to "compress" numbers, the
+    default datetime parser will also return compressed results.
+    """
+    resolution: typing.Union[int, float] = attrs.field(
+        default=Resolution.SECONDS, validator=_validate_resolution, kw_only=True
+    )
     r"""The resolution with which to store :class:`~datetime.datetime`\s in seconds.
 
     .. warning::
@@ -88,49 +113,18 @@ class DatetimeParser(parser_base.Parser[datetime.datetime]):
         applications, this is much more precise than necessary.
         Since custom id space is limited, seconds was chosen as the default.
     """
-
-    timezone: datetime.timezone
+    timezone: datetime.timezone = attrs.field(default=datetime.timezone.utc, kw_only=True)
     """The timezone to use for parsing.
     Datetimes returned by :meth:`loads` will always be of this timezone.
 
     This is *not* stored in the custom id.
     """
-
-    strict: bool
+    strict: bool = attrs.field(default=True, kw_only=True)
     """Whether the parser is in strict mode.
 
     If the parser is in strict mode, :meth:`loads` requires the provided
     datetime object to be of the correct :attr:`timezone`.
     """
-
-    int_parser: builtins_parsers.IntParser
-    """The :class:`IntParser` to use internally for this parser.
-
-    Since the default integer parser uses base-36 to "compress" numbers, the
-    default datetime parser will also return compressed results.
-    """
-
-    def __init__(
-        self,
-        *,
-        resolution: typing.Union[int, float] = Resolution.SECONDS,
-        timezone: datetime.timezone = datetime.timezone.utc,
-        strict: bool = True,
-        int_parser: typing.Optional[builtins_parsers.IntParser] = None,
-    ) -> None:
-        if resolution < 1e-6:
-            msg = f"Resolution must be greater than 1e-6, got {resolution}."
-            raise ValueError(msg)
-
-        if resolution < 1 and resolution not in _VALID_BASE_10:
-            # TODO: Verify whether this doesn't false-negative
-            msg = f"Resolutions smaller than 1 must be a power of 10, got {resolution}."
-            raise ValueError(msg)
-
-        self.resolution = resolution
-        self.timezone = timezone
-        self.strict = strict
-        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
 
     async def loads(self, argument: str, /) -> datetime.datetime:
         """Load a datetime from a string.
@@ -194,26 +188,29 @@ class DatetimeParser(parser_base.Parser[datetime.datetime]):
 
 
 @parser_base.register_parser_for(datetime.timedelta)
+@attrs.define(slots=True)
 class TimedeltaParser(parser_base.Parser[datetime.timedelta]):
     r"""Parser type with support for :class:`datetime.timedelta`\s.
 
     Parameters
     ----------
+    int_parser:
+        The :class:`IntParser` to use internally for this parser.
     resolution:
         The resolution with which to store :class:`~datetime.timedelta`\s in custom ids.
         Defaults to :obj:`Resolution.SECONDS`.
-    timezone:
-        The timezone to use for parsing.
-        Defaults to :obj:`datetime.timezone.utc`.
-    strict:
-        Whether this parser is in strict mode.
-        Defaults to ``True``.
-    int_parser:
-        The :class:`IntParser` to use internally for this parser.
 
     """
 
-    resolution: typing.Union[int, float]
+    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
+    """The :class:`IntParser` to use internally for this parser.
+
+    Since the default integer parser uses base-36 to "compress" numbers, the
+    default datetime parser will also return compressed results.
+    """
+    resolution: typing.Union[int, float] = attrs.field(
+        default=Resolution.SECONDS, validator=_validate_resolution, kw_only=True
+    )
     r"""The resolution with which to store :class:`~datetime.timedelta`\s in seconds.
 
     .. warning::
@@ -226,31 +223,6 @@ class TimedeltaParser(parser_base.Parser[datetime.timedelta]):
         applications, this is much more precise than necessary.
         Since custom id space is limited, seconds was chosen as the default.
     """
-
-    int_parser: builtins_parsers.IntParser
-    """The :class:`IntParser` to use internally for this parser.
-
-    Since the default integer parser uses base-36 to "compress" numbers, the
-    default datetime parser will also return compressed results.
-    """
-
-    def __init__(
-        self,
-        *,
-        resolution: typing.Union[int, float] = Resolution.SECONDS,
-        int_parser: typing.Optional[builtins_parsers.IntParser] = None,
-    ) -> None:
-        if resolution < 1e-6:
-            msg = f"Resolution must be greater than 1e-6, got {resolution}."
-            raise ValueError(msg)
-
-        if resolution < 1 and resolution not in _VALID_BASE_10:
-            # TODO: Verify whether this doesn't false-negative
-            msg = f"Resolutions smaller than 1 must be a power of 10, got {resolution}."
-            raise ValueError(msg)
-
-        self.resolution = resolution
-        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
 
     async def loads(self, argument: str, /) -> datetime.timedelta:
         """Load a timedelta from a string.
@@ -281,6 +253,7 @@ class TimedeltaParser(parser_base.Parser[datetime.timedelta]):
 
 
 @parser_base.register_parser_for(datetime.date)
+@attrs.define(slots=True)
 class DateParser(parser_base.Parser[datetime.date]):
     """Parser type with support for dates.
 
@@ -291,15 +264,12 @@ class DateParser(parser_base.Parser[datetime.date]):
 
     """
 
-    int_parser: builtins_parsers.IntParser
+    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
     """The :class:`IntParser` to use internally for this parser.
 
     Since the default integer parser uses base-36 to "compress" numbers, the
     default date parser will also return compressed results.
     """
-
-    def __init__(self, *, int_parser: typing.Optional[builtins_parsers.IntParser]) -> None:
-        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
 
     async def loads(self, argument: str, /) -> datetime.date:
         """Load a date from a string.
@@ -329,6 +299,7 @@ class DateParser(parser_base.Parser[datetime.date]):
 
 
 @parser_base.register_parser_for(datetime.time)
+@attrs.define(slots=True)
 class TimeParser(parser_base.Parser[datetime.time]):
     r"""Parser type with support for times.
 
@@ -340,50 +311,35 @@ class TimeParser(parser_base.Parser[datetime.time]):
 
     Parameters
     ----------
-    timezone:
-        The timezone to use for parsing.
-        Defaults to :obj:`datetime.timezone.utc`.
+    timedelta_parser:
+        The :class:`TimedeltaParser` to use internally for this parser.
     strict:
         Whether this parser is in strict mode.
         Defaults to ``True``.
-    timedelta_parser:
-        The :class:`TimedeltaParser` to use internally for this parser.
+    timezone:
+        The timezone to use for parsing.
+        Defaults to :obj:`datetime.timezone.utc`.
 
     """
 
-    timezone: datetime.timezone
-    """The timezone to use for parsing.
-    Times returned by :meth:`loads` will always be of this timezone.
-
-    This is *not* stored in the custom id.
-    """
-
-    strict: bool
-    """Whether the parser is in strict mode.
-
-    If the parser is in strict mode, :meth:`loads` requires the provided
-    datetime object to be of the correct :attr:`timezone`.
-    """
-
-    timedelta_parser: TimedeltaParser
+    timedelta_parser: TimedeltaParser = attrs.field(factory=lambda: TimedeltaParser.default(datetime.timedelta))
     """The :class:`TimedeltaParser` to use internally for this parser.
 
     Since the default timedelta parser uses base-36 to "compress" numbers, the
     default datetime parser will also return compressed results.
     """
+    strict: bool = attrs.field(default=True, kw_only=True)
+    """Whether the parser is in strict mode.
 
-    def __init__(
-        self,
-        *,
-        timezone: datetime.timezone = datetime.timezone.utc,
-        timedelta_parser: typing.Optional[TimedeltaParser] = None,
-        strict: bool = True,
-    ) -> None:
-        self.timezone = timezone
-        self.timedelta_parser = (
-            timedelta_parser or TimedeltaParser.default(datetime.timedelta)
-        )
-        self.strict = strict
+    If the parser is in strict mode, :meth:`loads` requires the provided
+    datetime object to be of the correct :attr:`timezone`.
+    """
+    timezone: datetime.timezone = attrs.field(default=datetime.timezone.utc, kw_only=True)
+    """The timezone to use for parsing.
+    Times returned by :meth:`loads` will always be of this timezone.
+
+    This is *not* stored in the custom id.
+    """
 
     @property
     def resolution(self) -> typing.Union[int, float]:
@@ -468,6 +424,7 @@ class TimeParser(parser_base.Parser[datetime.time]):
 
 
 @parser_base.register_parser_for(datetime.timezone)
+@attrs.define(slots=True)
 class TimezoneParser(parser_base.Parser[datetime.timezone]):
     r"""Parser type with support for :class:`~datetime.timezone`\s.
 
@@ -484,15 +441,12 @@ class TimezoneParser(parser_base.Parser[datetime.timezone]):
 
     """
 
-    timedelta_parser: TimedeltaParser
+    timedelta_parser: TimedeltaParser = attrs.field(factory=lambda: TimedeltaParser.default(datetime.timedelta))
     """The :class:`TimedeltaParser` to use internally for this parser.
 
     Since the default timedelta parser uses base-36 to "compress" numbers, the
     default datetime parser will also return compressed results.
     """
-
-    def __init__(self, *, timedelta_parser: typing.Optional[TimedeltaParser] = None) -> None:
-        self.timedelta_parser = timedelta_parser or TimedeltaParser()
 
     @property
     def resolution(self) -> typing.Union[int, float]:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import typing
 
+import attrs
 import disnake
 from disnake.ext.components.impl.parser import base as parser_base
 from disnake.ext.components.impl.parser import builtins as builtins_parsers
@@ -22,6 +23,7 @@ __all__: typing.Sequence[str] = (
 # TODO: Probably need to implement animated, maybe also name
 # TODO: Maybe implement some way of *not* requiring ids for partial emoji
 @parser_base.register_parser_for(disnake.PartialEmoji)
+@attrs.define(slots=True)
 class PartialEmojiParser(parser_base.Parser[disnake.PartialEmoji]):
     r"""Parser type with support for partial emoji.
 
@@ -33,16 +35,13 @@ class PartialEmojiParser(parser_base.Parser[disnake.PartialEmoji]):
 
     """
 
-    int_parser: builtins_parsers.IntParser
+    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
     """The :class:`~components.impl.parser.builtins.IntParser` to use
     internally for this parser.
 
     Since the default integer parser uses base-36 to "compress" numbers, the
     default partial emoji parser will also return compressed results.
     """
-
-    def __init__(self, int_parser: typing.Optional[builtins_parsers.IntParser] = None) -> None:
-        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
 
     async def loads(self, argument: str, /) -> disnake.PartialEmoji:
         """Load a partial emoji from a string.
@@ -76,6 +75,7 @@ class PartialEmojiParser(parser_base.Parser[disnake.PartialEmoji]):
 
 
 @parser_base.register_parser_for(disnake.Emoji)
+@attrs.define(slots=True, kw_only=True)
 class EmojiParser(parser_base.Parser[disnake.Emoji]):
     """Synchronous parser type with support for emoji.
 
@@ -89,28 +89,18 @@ class EmojiParser(parser_base.Parser[disnake.Emoji]):
 
     """
 
-    int_parser: builtins_parsers.IntParser
+    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
     """The :class:`~components.impl.parser.builtins.IntParser` to use
     internally for this parser.
 
     Since the default integer parser uses base-36 to "compress" numbers, the
     default emoji parser will also return compressed results.
     """
-    allow_api_requests: bool
+    allow_api_requests: bool = attrs.field(default=True, kw_only=True)
     """Whether or not to allow this parser to make API requests.
 
     Parsers will always try getting a result from cache first.
     """
-
-
-    def __init__(
-        self,
-        int_parser: typing.Optional[builtins_parsers.IntParser] = None,
-        *,
-        allow_api_requests: bool = True,
-    ) -> None:
-        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
-        self.allow_api_requests = allow_api_requests
 
     async def loads(self, argument: str, /) -> disnake.Emoji:
         """Load an emoji from a string.
@@ -158,6 +148,7 @@ class EmojiParser(parser_base.Parser[disnake.Emoji]):
 
 
 @parser_base.register_parser_for(disnake.Sticker)
+@attrs.define(slots=True, kw_only=True)
 class StickerParser(parser_base.Parser[disnake.Sticker]):
     """Synchronous parser type with support for stickers.
 
@@ -171,27 +162,18 @@ class StickerParser(parser_base.Parser[disnake.Sticker]):
 
     """
 
-    int_parser: builtins_parsers.IntParser
+    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
     """The :class:`~components.impl.parser.builtins.IntParser` to use
     internally for this parser.
 
     Since the default integer parser uses base-36 to "compress" numbers, the
-    default sticker parser will also return compressed results.
+    default emoji parser will also return compressed results.
     """
-    allow_api_requests: bool
+    allow_api_requests: bool = attrs.field(default=True, kw_only=True)
     """Whether or not to allow this parser to make API requests.
 
     Parsers will always try getting a result from cache first.
     """
-
-    def __init__(
-        self,
-        int_parser: typing.Optional[builtins_parsers.IntParser] = None,
-        *,
-        allow_api_requests: bool = True,
-    ) -> None:
-        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
-        self.allow_api_requests = allow_api_requests
 
     async def loads(self, argument: str, /) -> disnake.Sticker:
         """Load a sticker from a string.

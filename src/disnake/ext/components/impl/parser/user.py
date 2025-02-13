@@ -5,18 +5,17 @@ from __future__ import annotations
 import contextlib
 import typing
 
+import attrs
 import disnake
 from disnake.ext.components.impl.parser import base as parser_base
 from disnake.ext.components.impl.parser import builtins as builtins_parsers
 from disnake.ext.components.internal import di
 
-__all__: typing.Sequence[str] = (
-    "MemberParser",
-    "UserParser",
-)
+__all__: typing.Sequence[str] = ("MemberParser", "UserParser")
 
 
 @parser_base.register_parser_for(disnake.User)
+@attrs.define(slots=True)
 class UserParser(parser_base.Parser[disnake.User]):
     r"""Parser type with support for users.
 
@@ -33,27 +32,18 @@ class UserParser(parser_base.Parser[disnake.User]):
 
     """
 
-    int_parser: builtins_parsers.IntParser
+    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
     """The :class:`~components.impl.parser.builtins.IntParser` to use
     internally for this parser.
 
     Since the default integer parser uses base-36 to "compress" numbers, the
-    default user parser will also return compressed results.
+    default guild parser will also return compressed results.
     """
-    allow_api_requests: bool
+    allow_api_requests: bool = attrs.field(default=True, kw_only=True)
     """Whether or not to allow this parser to make API requests.
 
     Parsers will always try getting a result from cache first.
     """
-
-    def __init__(
-        self,
-        int_parser: typing.Optional[builtins_parsers.IntParser] = None,
-        *,
-        allow_api_requests: bool = True,
-    ) -> None:
-        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
-        self.allow_api_requests = allow_api_requests
 
     async def loads(self, argument: str, /) -> disnake.User:
         """Load a user from a string.
@@ -108,6 +98,7 @@ class UserParser(parser_base.Parser[disnake.User]):
 
 
 @parser_base.register_parser_for(disnake.Member)
+@attrs.define(slots=True)
 class MemberParser(parser_base.Parser[disnake.Member]):
     r"""Asynchronous parser type with support for members.
 
@@ -124,27 +115,18 @@ class MemberParser(parser_base.Parser[disnake.Member]):
 
     """
 
-    int_parser: builtins_parsers.IntParser
+    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
     """The :class:`~components.impl.parser.builtins.IntParser` to use
     internally for this parser.
 
     Since the default integer parser uses base-36 to "compress" numbers, the
-    default user parser will also return compressed results.
+    default guild parser will also return compressed results.
     """
-    allow_api_requests: bool
+    allow_api_requests: bool = attrs.field(default=True, kw_only=True)
     """Whether or not to allow this parser to make API requests.
 
     Parsers will always try getting a result from cache first.
     """
-
-    def __init__(
-        self,
-        int_parser: typing.Optional[builtins_parsers.IntParser] = None,
-        *,
-        allow_api_requests: bool = True,
-    ) -> None:
-        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
-        self.allow_api_requests = allow_api_requests
 
     async def loads(self, argument: str, /) -> disnake.Member:
         """Load a member from a string.

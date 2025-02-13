@@ -3,6 +3,7 @@
 import enum
 import typing
 
+import attrs
 import disnake
 from disnake.ext.components.api import parser as parser_api
 from disnake.ext.components.impl.parser import base as parser_base
@@ -43,6 +44,7 @@ def _get_enum_type(enum_class: typing.Type[_AnyEnum]) -> typing.Optional[type]:
     disnake.flags.BaseFlags,
     priority=20,
 )
+@attrs.define(slots=True, init=False)
 class EnumParser(parser_base.Parser[_EnumT]):
     """Parser type for enums and flags.
 

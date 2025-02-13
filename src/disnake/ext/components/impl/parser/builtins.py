@@ -8,6 +8,7 @@ import string
 import typing
 
 import typing_extensions
+import attrs
 from disnake.ext.components.impl.parser import base as parser_base
 
 if typing.TYPE_CHECKING:
@@ -27,7 +28,6 @@ _NoneType: typing.Type[None] = type(None)
 _NONES = (None, _NoneType)
 _INT_CHARS = string.digits + string.ascii_lowercase
 
-_NumberT = typing_extensions.TypeVar("_NumberT", bound=float, default=float)
 _CollectionT = typing_extensions.TypeVar(  # Simplest iterable container object.
     "_CollectionT", bound=typing.Collection[object], default=typing.Collection[str]
 )
@@ -38,6 +38,7 @@ _T = typing_extensions.TypeVar("_T")
 
 
 @parser_base.register_parser_for(_NoneType)
+@attrs.define(slots=True)
 class NoneParser(parser_base.Parser[None]):
     r"""Parser implementation for :obj:`None`.
 
@@ -52,14 +53,11 @@ class NoneParser(parser_base.Parser[None]):
 
     """
 
-    strict: bool
+    strict: bool = attrs.field(default=True, kw_only=True)
     """Whether this parser is set to strict mode.
 
     See :meth:`loads` and :meth:`dumps` for the implications of strict-mode.
     """
-
-    def __init__(self, *, strict: bool = True) -> None:
-        self.strict = strict
 
     async def loads(self, argument: str, /) -> None:
         """Load ``None`` from a string.
@@ -131,6 +129,7 @@ def dumps_float(number: float) -> str:
 
 
 @parser_base.register_parser_for(float)
+@attrs.define(slots=True)
 class FloatParser(parser_base.Parser[float]):
     r"""Parser implementation for :class:`float`\s."""
 
@@ -159,7 +158,14 @@ class FloatParser(parser_base.Parser[float]):
         return dumps_float(argument)
 
 
+def _validate_base(_instance: object, _attribute: object, base: int) -> None:
+    if not 2 <= base <= 36:
+        msg = "Base must be between 2 and 36."
+        raise ValueError(msg)
+
+
 @parser_base.register_parser_for(int)
+@attrs.define(slots=True)
 class IntParser(parser_base.Parser[int]):
     r"""Parser implementation for :class:`int`\s.
 
@@ -175,9 +181,9 @@ class IntParser(parser_base.Parser[int]):
 
     """
 
-    signed: bool
+    signed: bool = attrs.field(default=True)
     """Whether the parser supports signed integers."""
-    base: int
+    base: int = attrs.field(default=36, validator=_validate_base)
     """The base to use to use for storing integers.
     This is limited to ``2 <= base <= 36`` as this is the range supported by
     python's :class:`int` constructor.
@@ -185,19 +191,6 @@ class IntParser(parser_base.Parser[int]):
     If a greater base is required, a custom integer parser will have to be
     implemented.
     """
-
-    def __init__(
-        self,
-        *,
-        signed: bool = True,
-        base: int = 36,
-    ):
-        if not 2 <= base <= 36:
-            msg = "Base must be between 2 and 36."
-            raise ValueError(msg)
-
-        self.signed = signed
-        self.base = base
 
     async def loads(self, argument: str, /) -> int:
         r"""Load an integer from a string.
@@ -259,6 +252,7 @@ _DEFAULT_FALSES = frozenset(["false", "f", "no", "n", "0"])
 
 
 @parser_base.register_parser_for(bool)
+@attrs.define(slots=True)
 class BoolParser(parser_base.Parser[bool]):
     """Parser type with support for bools.
 
@@ -277,18 +271,10 @@ class BoolParser(parser_base.Parser[bool]):
 
     """
 
-    trues: typing.Collection[str]
+    trues: typing.Collection[str] = attrs.field(factory=_DEFAULT_TRUES.copy)
     """A collection of values that should be considered ``True`` by this parser."""
-    falses: typing.Collection[str]
+    falses: typing.Collection[str] = attrs.field(factory=_DEFAULT_FALSES.copy)
     """A collection of values that should be considered ``False`` by this parser."""
-
-    def __init__(
-        self,
-        trues: typing.Optional[typing.Collection[str]] = None,
-        falses: typing.Optional[typing.Collection[str]] = None,
-    ):
-        self.trues = _DEFAULT_TRUES if trues is None else trues
-        self.falses = _DEFAULT_FALSES if falses is None else falses
 
     async def loads(self, argument: str, /) -> bool:
         """Load a boolean from a string.
@@ -329,9 +315,6 @@ class BoolParser(parser_base.Parser[bool]):
             The value that is to be dumped.
 
         """
-        # NOTE: FBT001: Boolean trap is not relevant here, we're quite
-        #               literally just dealing with a boolean.
-
         return "1" if argument else "0"
 
 
@@ -339,6 +322,7 @@ class BoolParser(parser_base.Parser[bool]):
 
 
 @parser_base.register_parser_for(str)
+@attrs.define(slots=True)
 class StringParser(parser_base.Parser[str]):
     """Parser type with support for strings.
 
@@ -396,6 +380,7 @@ def _resolve_collection(type_: typing.Type[_CollectionT]) -> typing.Type[_Collec
 
 
 @parser_base.register_parser_for(tuple, priority=10)
+@attrs.define(slots=True, init=False)
 class TupleParser(parser_base.Parser[_TupleT]):
     r"""Parser type with support for :class:`tuple`\s.
 
@@ -525,6 +510,7 @@ class TupleParser(parser_base.Parser[_TupleT]):
 
 
 @parser_base.register_parser_for(typing.Collection)
+@attrs.define(slots=True, init=False)
 class CollectionParser(parser_base.Parser[_CollectionT]):
     r"""Parser type with support for :class:`typing.Collection`\s.
 
@@ -641,6 +627,7 @@ class CollectionParser(parser_base.Parser[_CollectionT]):
 
 
 @parser_base.register_parser_for(typing.Union)  # pyright: ignore[reportArgumentType]
+@attrs.define(slots=True, init=False)
 class UnionParser(parser_base.Parser[_T], typing.Generic[_T]):
     r"""Parser type with support for :class:`~typing.Union`\s.
 
@@ -789,6 +776,7 @@ class UnionParser(parser_base.Parser[_T], typing.Generic[_T]):
 
 
 @parser_base.register_parser_for(typing.Literal)  # pyright: ignore[reportArgumentType]
+@attrs.define(slots=True, init=False)
 class LiteralParser(parser_base.Parser[_T], typing.Generic[_T]):
     options: typing.Sequence[_T]
     inner_parser: parser_api.Parser[_T]

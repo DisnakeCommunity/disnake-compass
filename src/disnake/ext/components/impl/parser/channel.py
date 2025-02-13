@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 import typing
 
+import attrs
 import disnake
 from disnake.ext.components.impl.parser import base as parser_base
 from disnake.ext.components.impl.parser import builtins as builtins_parsers
@@ -45,6 +46,7 @@ _ChannelT = typing.TypeVar("_ChannelT", bound=_AnyChannel)
 
 # NOTE: Making these protocols messes with documentation of all subclasses'
 #       __init__ methods.
+@attrs.define(slots=True, init=False)
 class ChannelParserBase(parser_base.Parser[_ChannelT]):
     r"""Base class for synchronous parser types with support for channels.
 
@@ -169,6 +171,7 @@ class ChannelParserBase(parser_base.Parser[_ChannelT]):
 
 
 @parser_base.register_parser_for(disnake.abc.GuildChannel)
+@attrs.define(slots=True)
 class GuildChannelParser(ChannelParserBase[disnake.abc.GuildChannel]):
     r"""Parser type with support for guild channels.
 
@@ -187,6 +190,7 @@ class GuildChannelParser(ChannelParserBase[disnake.abc.GuildChannel]):
 
 
 @parser_base.register_parser_for(disnake.abc.PrivateChannel)
+@attrs.define(slots=True)
 class PrivateChannelParser(ChannelParserBase[disnake.abc.PrivateChannel]):
     r"""Parser type with support for private channels.
 
@@ -208,6 +212,7 @@ class PrivateChannelParser(ChannelParserBase[disnake.abc.PrivateChannel]):
 
 
 @parser_base.register_parser_for(disnake.DMChannel)
+@attrs.define(slots=True)
 class DMChannelParser(ChannelParserBase[disnake.DMChannel]):
     r"""Parser type with support for DM channels.
 
@@ -226,6 +231,7 @@ class DMChannelParser(ChannelParserBase[disnake.DMChannel]):
 
 
 @parser_base.register_parser_for(disnake.GroupChannel)
+@attrs.define(slots=True)
 class GroupChannelParser(ChannelParserBase[disnake.GroupChannel]):
     r"""Parser type with support for group channels.
 
@@ -247,6 +253,7 @@ class GroupChannelParser(ChannelParserBase[disnake.GroupChannel]):
 
 
 @parser_base.register_parser_for(disnake.ForumChannel)
+@attrs.define(slots=True)
 class ForumChannelParser(ChannelParserBase[disnake.ForumChannel]):
     r"""Parser type with support for forum channels.
 
@@ -265,6 +272,7 @@ class ForumChannelParser(ChannelParserBase[disnake.ForumChannel]):
 
 
 @parser_base.register_parser_for(disnake.NewsChannel)
+@attrs.define(slots=True)
 class NewsChannelParser(ChannelParserBase[disnake.NewsChannel]):
     r"""Parser type with support for news channels.
 
@@ -283,6 +291,7 @@ class NewsChannelParser(ChannelParserBase[disnake.NewsChannel]):
 
 
 @parser_base.register_parser_for(disnake.VoiceChannel)
+@attrs.define(slots=True)
 class VoiceChannelParser(ChannelParserBase[disnake.VoiceChannel]):
     r"""Parser type with support for voice channels.
 
@@ -301,6 +310,7 @@ class VoiceChannelParser(ChannelParserBase[disnake.VoiceChannel]):
 
 
 @parser_base.register_parser_for(disnake.StageChannel)
+@attrs.define(slots=True)
 class StageChannelParser(ChannelParserBase[disnake.StageChannel]):
     r"""Parser type with support for stage channels.
 
@@ -319,6 +329,7 @@ class StageChannelParser(ChannelParserBase[disnake.StageChannel]):
 
 
 @parser_base.register_parser_for(disnake.TextChannel)
+@attrs.define(slots=True)
 class TextChannelParser(ChannelParserBase[disnake.TextChannel]):
     r"""Parser type with support for text channels.
 
@@ -337,6 +348,7 @@ class TextChannelParser(ChannelParserBase[disnake.TextChannel]):
 
 
 @parser_base.register_parser_for(disnake.Thread)
+@attrs.define(slots=True)
 class ThreadParser(ChannelParserBase[disnake.Thread]):
     r"""Parser type with support for threads.
 
@@ -355,6 +367,7 @@ class ThreadParser(ChannelParserBase[disnake.Thread]):
 
 
 @parser_base.register_parser_for(disnake.CategoryChannel)
+@attrs.define(slots=True)
 class CategoryParser(ChannelParserBase[disnake.CategoryChannel]):
     r"""Parser type with support for categories.
 
@@ -373,6 +386,7 @@ class CategoryParser(ChannelParserBase[disnake.CategoryChannel]):
 
 
 @parser_base.register_parser_for(disnake.PartialMessageable)
+@attrs.define(slots=True)
 class PartialMessageableParser(parser_base.Parser[disnake.PartialMessageable]):
     r"""Parser type with support for partial messageables.
 
@@ -395,21 +409,13 @@ class PartialMessageableParser(parser_base.Parser[disnake.PartialMessageable]):
 
     This determines which operations are valid on the partial messageables.
     """
-    int_parser: builtins_parsers.IntParser
+    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
     """The :class:`~components.impl.parser.builtins.IntParser` to use
     internally for this parser.
 
     Since the default integer parser uses base-36 to "compress" numbers, the
     default channel parser will also return compressed results.
     """
-
-    def __init__(
-        self,
-        channel_type: typing.Optional[disnake.ChannelType] = None,
-        int_parser: typing.Optional[builtins_parsers.IntParser] = None,
-    ) -> None:
-        self.channel_type = channel_type
-        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
 
     async def loads(self, argument: str, /) -> disnake.PartialMessageable:
         """Load a partial messageable from a string.
