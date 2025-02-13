@@ -9,11 +9,6 @@ Guild Parser Implementation
 Classes
 -------
 
-.. attributetable:: components.impl.parser.guild.GetGuildParser
-
-.. autoclass:: components.impl.parser.guild.GetGuildParser
-    :members:
-
 .. attributetable:: components.impl.parser.guild.GuildParser
 
 .. autoclass:: components.impl.parser.guild.GuildParser
@@ -22,11 +17,6 @@ Classes
 .. attributetable:: components.impl.parser.guild.InviteParser
 
 .. autoclass:: components.impl.parser.guild.InviteParser
-    :members:
-
-.. attributetable:: components.impl.parser.guild.GetRoleParser
-
-.. autoclass:: components.impl.parser.guild.GetRoleParser
     :members:
 
 .. attributetable:: components.impl.parser.guild.RoleParser

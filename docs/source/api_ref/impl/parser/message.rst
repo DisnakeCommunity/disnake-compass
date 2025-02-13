@@ -14,11 +14,6 @@ Classes
 .. autoclass:: components.impl.parser.message.PartialMessageParser
     :members:
 
-.. attributetable:: components.impl.parser.message.GetMessageParser
-
-.. autoclass:: components.impl.parser.message.GetMessageParser
-    :members:
-
 .. attributetable:: components.impl.parser.message.MessageParser
 
 .. autoclass:: components.impl.parser.message.MessageParser

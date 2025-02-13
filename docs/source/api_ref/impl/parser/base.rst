@@ -21,8 +21,3 @@ Classes
 
 .. autoclass:: components.impl.parser.base.Parser
     :members: default, default_types, dumps, loads
-
-.. attributetable:: components.impl.parser.base.SourcedParser
-
-.. autoclass:: components.impl.parser.base.SourcedParser
-    :members: default, default_types, dumps, loads

@@ -14,18 +14,6 @@ Classes
 .. autoclass:: components.impl.parser.emoji.PartialEmojiParser
     :members:
 
-.. attributetable:: components.impl.parser.emoji.GetEmojiParser
-
-.. autoclass:: components.impl.parser.emoji.GetEmojiParser
-    :members:
-
-.. attributetable:: components.impl.parser.emoji.GetStickerParser
-
-.. autoclass:: components.impl.parser.emoji.GetStickerParser
-    :members:
-
------
-
 .. attributetable:: components.impl.parser.emoji.EmojiParser
 
 .. autoclass:: components.impl.parser.emoji.EmojiParser

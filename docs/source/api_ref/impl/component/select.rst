@@ -24,11 +24,6 @@ Classes
 .. autoclass:: components.impl.component.select.RichUserSelect
     :members: disabled, factory, max_values, min_values, placeholder, as_ui_component, callback
 
-.. attributetable:: components.impl.component.select.RichUserSelect
-
-.. autoclass:: components.impl.component.select.RichUserSelect
-    :members: disabled, factory, max_values, min_values, placeholder, as_ui_component, callback
-
 .. attributetable:: components.impl.component.select.RichRoleSelect
 
 .. autoclass:: components.impl.component.select.RichRoleSelect

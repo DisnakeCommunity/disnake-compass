@@ -22,4 +22,3 @@ Submodules
    :maxdepth: 1
 
    fields </api_ref/fields>
-   interaction </api_ref/interaction>

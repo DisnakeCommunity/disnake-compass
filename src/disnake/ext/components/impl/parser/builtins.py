@@ -390,12 +390,12 @@ class TupleParser(parser_base.Parser[_TupleT]):
 
     Parameters
     ----------
-    *inner_parsers: components.Parser[object]
+    *inner_parsers:
         The parsers to use to parse the items inside the tuple.
 
         Defaults to a single string parser, i.e. a one-element tuple containing
         exactly one string.
-    sep: str
+    sep:
         The separator to use.
 
         Defaults to ",".
