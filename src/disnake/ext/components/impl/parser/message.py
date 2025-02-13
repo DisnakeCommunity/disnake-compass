@@ -22,6 +22,12 @@ AnyChannel = typing.Union[
 ]
 
 
+@typing.runtime_checkable
+class SupportsGetPartialMessage(typing.Protocol):
+    def get_partial_message(self, message_id: int, /) -> disnake.PartialMessage:
+        ...
+
+
 @parser_base.register_parser_for(disnake.PartialMessage)
 @attrs.define(slots=True)
 class PartialMessageParser(parser_base.Parser[disnake.PartialMessage]):
@@ -47,7 +53,7 @@ class PartialMessageParser(parser_base.Parser[disnake.PartialMessage]):
     Since the default integer parser uses base-36 to "compress" numbers, the
     default guild parser will also return compressed results.
     """
-    channel: typing.Optional[AnyChannel] = attrs.field(default=None, kw_only=True)
+    channel: typing.Optional[SupportsGetPartialMessage] = attrs.field(default=None, kw_only=True)
     """The channel in which to make the partial message."""
 
     async def loads(self, argument: str, /) -> disnake.PartialMessage:
@@ -67,18 +73,7 @@ class PartialMessageParser(parser_base.Parser[disnake.PartialMessage]):
             the ``source``.
 
         """
-        channel = (
-            self.channel
-            # TODO: Check if we can do something with a protocol here,
-            #       I think a protocol with only a `get_partial_message` method
-            #       should work?
-            or di.resolve_dependency(disnake.TextChannel, None)
-            or di.resolve_dependency(disnake.Thread, None)
-            or di.resolve_dependency(disnake.VoiceChannel, None)
-            or di.resolve_dependency(disnake.DMChannel, None)
-            or di.resolve_dependency(disnake.PartialMessageable, None)
-        )
-
+        channel = self.channel or di.resolve_dependency(SupportsGetPartialMessage, None)
         if not channel:
             msg = (
                 "A channel must be provided either through self.channel or"
