@@ -70,7 +70,7 @@ def register_dependencies(*dependencies: object) -> typing.Mapping[typing.Type[t
     return tokens
 
 
-def reset_dependencies(tokens: typing.Dict[typing.Type[typing.Any], contextvars.Token[object]]) -> None:
+def reset_dependencies(tokens: typing.Mapping[typing.Type[typing.Any], contextvars.Token[object]]) -> None:
     """Reset dependencies that are no longer in use.
 
     This is meant to be used in conjunction with :func:`register_dependencies`.
