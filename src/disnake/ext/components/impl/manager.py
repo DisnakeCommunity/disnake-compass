@@ -783,6 +783,51 @@ class ComponentManager(component_api.ComponentManager):
         # bot.remove_listener(self.invoke_component, _MODAL_EVENT)
 
     def as_dependency_provider(self, func: DependencyProviderFuncT) -> DependencyProviderFuncT:
+        """Register a callback as this manager's dependency provider.
+
+        By default, this registers everything passed as a dependency.
+
+        A dependency provider MUST be an async function with ONE yield statement.
+        - Any code before the yield statement is run before the interaction is
+        parsed,
+        - The interaction is parsed at the yield statement,
+        - Any code after the yield statement is run after the interaction has
+        been parsed. This can be used for cleanup.
+
+        It is therefore also possible to use context managers over the yield
+        statement, to automatically handle resource management.
+
+        As this runs *before* we know which manager a component belongs to (if
+        at all!), this is run only for the manager(s) registered to a bot with
+        :meth:`add_to_bot`.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            manager = get_manager()
+
+
+            @manager.as_dependency_provider
+            async def provider(manager, *dependencies):
+                tokens = di.register_dependencies(*dependencies)
+                yield
+                di.reset_dependencies(tokens)
+
+        Parameters
+        ----------
+        func:
+            The callback to register. This must be an async function that takes
+            the component manager as the first argument, and any number of
+            dependencies after. The function must have a single ``yield``
+            statement that yields ``None``.
+
+        Returns
+        -------
+        Callable[[:class:`ComponentManager`, ...], AsyncGenerator[None, None]]
+            The function that was just registered.
+
+        """
         self.set_invocation_dependencies = contextlib.asynccontextmanager(func)
         return func
 

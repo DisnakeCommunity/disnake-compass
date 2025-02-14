@@ -13,6 +13,7 @@ Subpackages
 
    api </api_ref/api/index>
    impl </api_ref/impl/index>
+   internal </api_ref/internal/index>
 
 
 Submodules

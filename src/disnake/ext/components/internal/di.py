@@ -39,7 +39,29 @@ def _get_contextvar_for(dependency_type: typing.Type[_T], /) -> contextvars.Cont
     return context
 
 
-def register_dependencies(*dependencies: object) -> typing.Dict[typing.Type[typing.Any], contextvars.Token[object]]:
+def register_dependencies(*dependencies: object) -> typing.Mapping[typing.Type[typing.Any], contextvars.Token[object]]:
+    r"""Register any number of dependencies.
+
+    This returns a mapping of :class:`contextvars.Token`\s that should be
+    passed to :func:`reset_dependencies` for cleanup.
+
+    While dependencies are registered, :func:`resolve_dependency` can be used
+    to get it for the current async context.
+
+    Parameters
+    ----------
+    *dependencies:
+        Objects to register as dependencies. Their type must be hashable.
+        (This should automatically hold for most classes.)
+
+    Returns
+    -------
+    typing.Dict[typing.Type[typing.Any], contextvars.Token[object]]
+        A mapping of the types of the registered dependencies to contextvar
+        tokens used to reset their respective contextvars. This is meant to be
+        passed to :func:`reset_dependencies` for cleanup.
+
+    """
     tokens: typing.Dict[type, contextvars.Token[object]] = {}
     for dependency in dependencies:
         dependency_type = type(dependency)
@@ -49,6 +71,18 @@ def register_dependencies(*dependencies: object) -> typing.Dict[typing.Type[typi
 
 
 def reset_dependencies(tokens: typing.Dict[typing.Type[typing.Any], contextvars.Token[object]]) -> None:
+    """Reset dependencies that are no longer in use.
+
+    This is meant to be used in conjunction with :func:`register_dependencies`.
+
+    Parameters
+    ----------
+    tokens:
+        A mapping of the types of the registered dependencies to contextvar
+        tokens used to reset their respective contextvars. This mapping is
+        created and returned by :func:`register_dependencies`.
+
+    """
     for dependency_type, token in tokens.items():
         _get_contextvar_for(dependency_type).reset(token)
 
@@ -57,6 +91,31 @@ def resolve_dependency(
     dependency_type: typing.Type[_T],
     default: omit.Omissible[_T] = omit.Omitted,
 ) -> _T:
+    """Resolve a dependency given a type and an optional default.
+
+    If a dependency was set using :func:`register_dependency` in the current
+    context, this function returns it. If it is not found, the default is
+    returned instead. If no default was provided, a :class:`LookupError` is
+    raised instead.
+
+    Parameters
+    ----------
+    dependency_type:
+        The type to resolve to an object.
+    default:
+        The default to use if resolving did not return an object.
+
+    Returns
+    -------
+    object
+        The resolved dependency or the default.
+
+    Raises
+    ------
+    :class:`LookupError`
+        The dependency type could not be resolved and no default was provided.
+
+    """
     context = _get_contextvar_for(dependency_type)
     resolved = context.get(omit.Omitted)
     if not omit.is_omitted(resolved):
