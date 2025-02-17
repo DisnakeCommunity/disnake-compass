@@ -1,22 +1,23 @@
-"""A simple example on the use of component managers with disnake-ext-components."""
+"""A simple example on the use of component managers with disnake-compass."""
 
 import os
 import typing
 
 import disnake
-from disnake.ext import commands, components
+from disnake.ext import commands
+import disnake_compass
 
 bot = commands.InteractionBot()
 
-manager = components.get_manager()
+manager = disnake_compass.get_manager()
 manager.add_to_bot(bot)
 
-foo_manager = components.get_manager("foo")
-deeply_nested_manager = components.get_manager("foo.bar.baz")
+foo_manager = disnake_compass.get_manager("foo")
+deeply_nested_manager = disnake_compass.get_manager("foo.bar.baz")
 
 
 @foo_manager.register
-class FooButton(components.RichButton):
+class FooButton(disnake_compass.RichButton):
     label: typing.Optional[str] = "0"
 
     count: int
@@ -30,7 +31,7 @@ class FooButton(components.RichButton):
 
 
 @deeply_nested_manager.register
-class FooBarBazButton(components.RichButton):
+class FooBarBazButton(disnake_compass.RichButton):
     label: typing.Optional[str] = "0"
 
     count: int
@@ -45,8 +46,8 @@ class FooBarBazButton(components.RichButton):
 
 @manager.as_callback_wrapper
 async def wrapper(
-    manager: components.ComponentManager,
-    component: components.api.RichComponent,
+    manager: disnake_compass.ComponentManager,
+    component: disnake_compass.api.RichComponent,
     interaction: disnake.Interaction,
 ):
     print(
@@ -71,8 +72,8 @@ class InvalidUserError(Exception):
 
 @deeply_nested_manager.as_callback_wrapper
 async def check_wrapper(
-    manager: components.api.ComponentManager,
-    component: components.api.RichComponent,
+    manager: disnake_compass.api.ComponentManager,
+    component: disnake_compass.api.RichComponent,
     interaction: disnake.Interaction,
 ):
     if (
@@ -88,8 +89,8 @@ async def check_wrapper(
 
 @deeply_nested_manager.as_exception_handler
 async def error_handler(
-    manager: components.ComponentManager,
-    component: components.api.RichComponent,
+    manager: disnake_compass.ComponentManager,
+    component: disnake_compass.api.RichComponent,
     interaction: disnake.Interaction,
     exception: Exception,
 ):

@@ -1,7 +1,7 @@
-disnake.ext.components.api
+disnake_compass.api
 ==========================
 
-.. automodule:: components.api
+.. automodule:: disnake_compass.api
 
 Submodules
 ----------

@@ -1,9 +1,9 @@
-.. currentmodule:: disnake.ext.components
+.. currentmodule:: disnake_compass
 
 Parser API
 ==========
 
-.. automodule:: components.api.parser
+.. automodule:: disnake_compass.api.parser
 
 
 Typing
@@ -15,7 +15,7 @@ Typing
 Classes
 -------
 
-.. attributetable:: components.api.parser.Parser
+.. attributetable:: disnake_compass.api.parser.Parser
 
-.. autoclass:: components.api.parser.Parser
+.. autoclass:: disnake_compass.api.parser.Parser
     :members:

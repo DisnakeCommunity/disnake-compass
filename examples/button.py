@@ -1,19 +1,20 @@
-"""A simple example on the use of buttons with disnake-ext-components."""
+"""A simple example on the use of buttons with disnake-compass."""
 
 import os
 import typing
 
 import disnake
-from disnake.ext import commands, components
+from disnake.ext import commands
+import disnake_compass
 
 bot = commands.InteractionBot()
 
-manager = components.get_manager()
+manager = disnake_compass.get_manager()
 manager.add_to_bot(bot)
 
 
 @manager.register
-class MyButton(components.RichButton):
+class MyButton(disnake_compass.RichButton):
     label: typing.Optional[str] = "0"
 
     count: int = 0

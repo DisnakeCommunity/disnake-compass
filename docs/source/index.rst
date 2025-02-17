@@ -1,9 +1,9 @@
-.. disnake-ext-components documentation master file, created by
+.. disnake-compass documentation master file, created by
    sphinx-quickstart on Sun Jul  9 19:20:23 2023.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-disnake-ext-components
+disnake-compass
 ======================
 
 An extension for disnake aimed at making component interactions with listeners somewhat less cumbersome.

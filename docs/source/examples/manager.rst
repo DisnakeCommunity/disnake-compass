@@ -1,4 +1,4 @@
-.. currentmodule:: disnake-ext-components
+.. currentmodule:: disnake-compass
 
 Component Manager
 =================
@@ -6,7 +6,7 @@ Component Manager
 Step-by-Step
 ------------
 
-A simple example on the use of component managers with disnake-ext-components.
+A simple example on the use of component managers with disnake-compass.
 
 First, we create a new component manager.
 A call to :func:`.get_manager` without arguments returns the root manager. You can think of this in much the same way as :py:func:`logging.getLogger`.

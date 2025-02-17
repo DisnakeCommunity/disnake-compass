@@ -1,10 +1,11 @@
-"""An example of having multiple disnake-ext-components components interact."""
+"""An example of having multiple disnake-compass components interact."""
 
 import os
 import typing
 
 import disnake
-from disnake.ext import commands, components
+from disnake.ext import commands
+import disnake_compass
 
 DEFAULT_OPTION = disnake.SelectOption(
     label="Please enable some options.",
@@ -14,12 +15,12 @@ DEFAULT_OPTION = disnake.SelectOption(
 
 bot = commands.Bot()
 
-manager = components.get_manager()
+manager = disnake_compass.get_manager()
 manager.add_to_bot(bot)
 
 
 @manager.register()
-class OptionsToggleButton(components.RichButton):
+class OptionsToggleButton(disnake_compass.RichButton):
     """A button component that enables/disables options on a DynamicSelectMenu."""
 
     style: disnake.ButtonStyle = disnake.ButtonStyle.red
@@ -31,7 +32,7 @@ class OptionsToggleButton(components.RichButton):
 
         return [disnake.SelectOption(label=option) for option in self.options]
 
-    def update_select(self, components: typing.Sequence[components.api.RichComponent]):
+    def update_select(self, components: typing.Sequence[disnake_compass.api.RichComponent]):
         select: typing.Optional[DynamicSelectMenu] = None
         options: list[disnake.SelectOption] = []
 
@@ -73,7 +74,7 @@ class OptionsToggleButton(components.RichButton):
 
 
 @manager.register()
-class DynamicSelectMenu(components.RichStringSelect):
+class DynamicSelectMenu(disnake_compass.RichStringSelect):
     """A select menu that has its options externally managed."""
 
     def __attrs_post_init__(self) -> None:  # See the `attrs.py` example.

@@ -4,7 +4,7 @@ Button
 Step-by-Step
 ------------
 
-A simple example on the use of buttons with disnake-ext-components.
+A simple example on the use of buttons with disnake-compass.
 This component is a button that increments its label each time it is clicked.
 
 .. literalinclude:: ../../../examples/button.py

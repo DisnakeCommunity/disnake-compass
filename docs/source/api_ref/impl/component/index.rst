@@ -1,7 +1,7 @@
-disnake.ext.components.impl.component
+disnake_compass.impl.component
 =====================================
 
-.. automodule:: disnake.ext.components.impl.component
+.. automodule:: disnake_compass.impl.component
 
 Submodules
 ----------

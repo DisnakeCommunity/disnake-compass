@@ -1,9 +1,9 @@
-.. currentmodule:: disnake.ext.components.impl
+.. currentmodule:: disnake_compass.impl
 
 Parser Base Implementation
 ==========================
 
-.. automodule:: components.impl.parser.base
+.. automodule:: disnake_compass.impl.parser.base
 
 
 Functions
@@ -17,7 +17,7 @@ Functions
 Classes
 -------
 
-.. attributetable:: components.impl.parser.base.Parser
+.. attributetable:: disnake_compass.impl.parser.base.Parser
 
-.. autoclass:: components.impl.parser.base.Parser
+.. autoclass:: disnake_compass.impl.parser.base.Parser
     :members: default, default_types, dumps, loads

@@ -1,25 +1,25 @@
-.. currentmodule:: disnake.ext.components.impl
+.. currentmodule:: disnake_compass.impl
 
 Guild Parser Implementation
 ===========================
 
-.. automodule:: components.impl.parser.guild
+.. automodule:: disnake_compass.impl.parser.guild
 
 
 Classes
 -------
 
-.. attributetable:: components.impl.parser.guild.GuildParser
+.. attributetable:: disnake_compass.impl.parser.guild.GuildParser
 
-.. autoclass:: components.impl.parser.guild.GuildParser
+.. autoclass:: disnake_compass.impl.parser.guild.GuildParser
     :members:
 
-.. attributetable:: components.impl.parser.guild.InviteParser
+.. attributetable:: disnake_compass.impl.parser.guild.InviteParser
 
-.. autoclass:: components.impl.parser.guild.InviteParser
+.. autoclass:: disnake_compass.impl.parser.guild.InviteParser
     :members:
 
-.. attributetable:: components.impl.parser.guild.RoleParser
+.. attributetable:: disnake_compass.impl.parser.guild.RoleParser
 
-.. autoclass:: components.impl.parser.guild.RoleParser
+.. autoclass:: disnake_compass.impl.parser.guild.RoleParser
     :members:

@@ -1,4 +1,4 @@
-"""A simple example on the use of selects with disnake-ext-components."""
+"""A simple example on the use of selects with disnake-compass."""
 
 from __future__ import annotations
 
@@ -6,11 +6,12 @@ import os
 import typing
 
 import disnake
-from disnake.ext import commands, components
+from disnake.ext import commands
+import disnake_compass
 
 bot = commands.InteractionBot()
 
-manager = components.get_manager()
+manager = disnake_compass.get_manager()
 manager.add_to_bot(bot)
 
 
@@ -48,7 +49,7 @@ COLOUR_OPTIONS = [
 
 
 @manager.register
-class MySelect(components.RichStringSelect):
+class MySelect(disnake_compass.RichStringSelect):
     placeholder: typing.Optional[str] = "Please select a square."
     options: typing.List[disnake.SelectOption] = SLOT_OPTIONS
 

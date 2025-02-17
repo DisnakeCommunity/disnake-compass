@@ -1,7 +1,7 @@
-disnake.ext.components.impl.parser
+disnake_compass.impl.parser
 ==================================
 
-.. automodule:: disnake.ext.components.impl.parser
+.. automodule:: disnake_compass.impl.parser
 
 Submodules
 ----------

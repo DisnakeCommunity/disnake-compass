@@ -1,40 +1,40 @@
-.. currentmodule:: disnake.ext.components
+.. currentmodule:: disnake_compass
 
 Component API
 =============
 
-.. automodule:: components.api.component
+.. automodule:: disnake_compass.api.component
 
 Typing
 ------
 
-.. autodata:: components.api.component.ComponentT
+.. autodata:: disnake_compass.api.component.ComponentT
 
 
 Classes
 -------
 
-.. attributetable:: components.api.component.RichComponent
+.. attributetable:: disnake_compass.api.component.RichComponent
 
-.. autoclass:: components.api.component.RichComponent
+.. autoclass:: disnake_compass.api.component.RichComponent
     :members:
 
-.. attributetable:: components.api.component.RichButton
+.. attributetable:: disnake_compass.api.component.RichButton
 
-.. autoclass:: components.api.component.RichButton
+.. autoclass:: disnake_compass.api.component.RichButton
     :members:
 
-.. attributetable:: components.api.component.RichSelect
+.. attributetable:: disnake_compass.api.component.RichSelect
 
-.. autoclass:: components.api.component.RichSelect
+.. autoclass:: disnake_compass.api.component.RichSelect
     :members:
 
-.. attributetable:: components.api.component.ComponentManager
+.. attributetable:: disnake_compass.api.component.ComponentManager
 
-.. autoclass:: components.api.component.ComponentManager
+.. autoclass:: disnake_compass.api.component.ComponentManager
     :members:
 
-.. attributetable:: components.api.component.ComponentFactory
+.. attributetable:: disnake_compass.api.component.ComponentFactory
 
-.. autoclass:: components.api.component.ComponentFactory
+.. autoclass:: disnake_compass.api.component.ComponentFactory
     :members:

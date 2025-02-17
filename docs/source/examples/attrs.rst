@@ -4,7 +4,7 @@ Attrs
 Step-by-Step
 ------------
 
-An example showcasing how :attrs:`attrs <>` utilities can be used with disnake-ext-components.
+An example showcasing how :attrs:`attrs <>` utilities can be used with disnake-compass.
 
 Say we wish to create a component, but we do not know the number of options beforehand, and we would like the user to be able to select all of them. It can be cumbersome to manually keep updating the ``max_values`` parameter of the select.
 
@@ -19,7 +19,7 @@ To create an instance of this select where all options are selectable, we would 
     options = [...]
     select = CustomisableSelect(options=options, max_values=len(options))
 
-Luckily, with the knowledge that *disnake-ext-components* is built upon :attrs:`attrs <>`, a few options become available to us.
+Luckily, with the knowledge that *disnake-compass* is built upon :attrs:`attrs <>`, a few options become available to us.
 
 For this example, we will be making use of attrs classes' :attrs:`__attrs_post_init__ <init.html#post-init/>` method, which is called immediately after attrs finishes its normal initialisation logic. If you're more familiar with dataclasses, this is essentially the same as dataclasses' similarly named ``__post_init__`` method.
 

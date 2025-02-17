@@ -23,7 +23,7 @@ NoneType = type(None)
 
 def get_module_path() -> str:
     """Get the filepath for the module."""
-    _spec = importlib.util.find_spec("disnake.ext.components")
+    _spec = importlib.util.find_spec("disnake_compass")
     if not (_spec and _spec.origin):
         raise RuntimeError  # this should never happen
 
@@ -99,9 +99,6 @@ def format_annotation(  # noqa: PLR0911, PLR0912, PLR0915
 
     elif module == "_io":
         module = "io"
-
-    elif module.startswith("disnake.ext.components"):
-        module = module.removeprefix("disnake.ext.")
 
     full_name = f"{module}.{class_name}" if module != "builtins" else class_name
     fully_qualified: bool = getattr(config, "typehints_fully_qualified", False)

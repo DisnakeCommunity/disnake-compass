@@ -1,19 +1,19 @@
-.. currentmodule:: disnake.ext.components
+.. currentmodule:: disnake_compass
 
 Rich Component Base Implementation
 ==================================
 
-.. automodule:: components.impl.component.base
+.. automodule:: disnake_compass.impl.component.base
 
 Classes
 -------
 
-.. attributetable:: components.impl.component.base.ComponentMeta
+.. attributetable:: disnake_compass.impl.component.base.ComponentMeta
 
-.. autoclass:: components.impl.component.base.ComponentMeta
+.. autoclass:: disnake_compass.impl.component.base.ComponentMeta
     :members:
 
-.. attributetable:: components.impl.component.base.ComponentBase
+.. attributetable:: disnake_compass.impl.component.base.ComponentBase
 
-.. autoclass:: components.impl.component.base.ComponentBase
+.. autoclass:: disnake_compass.impl.component.base.ComponentBase
     :members:

@@ -1,21 +1,21 @@
-.. currentmodule:: disnake.ext.components
+.. currentmodule:: disnake_compass
 
 Component Manager Implementation
 ================================
 
-.. automodule:: components.impl.manager
+.. automodule:: disnake_compass.impl.manager
 
 Functions
 ---------
 
-.. autofunction:: components.impl.manager.get_manager
+.. autofunction:: disnake_compass.impl.manager.get_manager
 
-.. autofunction:: components.impl.manager.check_manager
+.. autofunction:: disnake_compass.impl.manager.check_manager
 
 Classes
 -------
 
-.. attributetable:: components.impl.manager.ComponentManager
+.. attributetable:: disnake_compass.impl.manager.ComponentManager
 
-.. autoclass:: components.impl.manager.ComponentManager
+.. autoclass:: disnake_compass.impl.manager.ComponentManager
     :members:

@@ -1,18 +1,20 @@
-"""An example showcasing how attrs utilities can be used with disnake-ext-components."""
+"""An example showcasing how attrs utilities can be used with disnake-compass."""
 
 import os
 
 import disnake
-from disnake.ext import commands, components
+from disnake.ext import commands
+
+import disnake_compass
 
 bot = commands.InteractionBot()
 
-manager = components.get_manager()
+manager = disnake_compass.get_manager()
 manager.add_to_bot(bot)
 
 
 @manager.register
-class CustomisableSelect(components.RichStringSelect):
+class CustomisableSelect(disnake_compass.RichStringSelect):
     def __attrs_post_init__(self) -> None:
         self.max_values = len(self.options)
 

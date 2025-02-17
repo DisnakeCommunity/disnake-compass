@@ -1,25 +1,25 @@
-.. currentmodule:: disnake.ext.components.impl
+.. currentmodule:: disnake_compass.impl
 
 Emoji Parser Implementation
 ===========================
 
-.. automodule:: components.impl.parser.emoji
+.. automodule:: disnake_compass.impl.parser.emoji
 
 
 Classes
 -------
 
-.. attributetable:: components.impl.parser.emoji.PartialEmojiParser
+.. attributetable:: disnake_compass.impl.parser.emoji.PartialEmojiParser
 
-.. autoclass:: components.impl.parser.emoji.PartialEmojiParser
+.. autoclass:: disnake_compass.impl.parser.emoji.PartialEmojiParser
     :members:
 
-.. attributetable:: components.impl.parser.emoji.EmojiParser
+.. attributetable:: disnake_compass.impl.parser.emoji.EmojiParser
 
-.. autoclass:: components.impl.parser.emoji.EmojiParser
+.. autoclass:: disnake_compass.impl.parser.emoji.EmojiParser
     :members:
 
-.. attributetable:: components.impl.parser.emoji.StickerParser
+.. attributetable:: disnake_compass.impl.parser.emoji.StickerParser
 
-.. autoclass:: components.impl.parser.emoji.StickerParser
+.. autoclass:: disnake_compass.impl.parser.emoji.StickerParser
     :members:
