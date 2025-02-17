@@ -13,6 +13,7 @@ import typing
 
 import attr
 import typing_extensions
+
 from disnake.ext.components import fields as fields
 from disnake.ext.components.api import component as component_api
 from disnake.ext.components.api import parser as parser_api
@@ -47,7 +48,7 @@ def _determine_parser(
     overwrite: typing.Optional[_AnyAttr],
     *,
     required: bool = True,
-) -> typing.Optional[parser_api.AnyParser]:
+) -> typing.Optional[parser_api.Parser[typing.Any]]:
     parser = fields.get_parser(attribute)
     if parser:
         return parser

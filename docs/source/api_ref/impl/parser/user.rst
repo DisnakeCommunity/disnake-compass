@@ -9,16 +9,6 @@ User Parser Implementation
 Classes
 -------
 
-.. attributetable:: components.impl.parser.user.GetUserParser
-
-.. autoclass:: components.impl.parser.user.GetUserParser
-    :members:
-
-.. attributetable:: components.impl.parser.user.GetMemberParser
-
-.. autoclass:: components.impl.parser.user.GetMemberParser
-    :members:
-
 .. attributetable:: components.impl.parser.user.UserParser
 
 .. autoclass:: components.impl.parser.user.UserParser

@@ -5,16 +5,13 @@ from __future__ import annotations
 import contextlib
 import typing
 
+import attrs
 import disnake
 from disnake.ext.components.impl.parser import base as parser_base
 from disnake.ext.components.impl.parser import builtins as builtins_parsers
-from disnake.ext.components.impl.parser import source as parser_source
+from disnake.ext.components.internal import di
 
-__all__: typing.Sequence[str] = (
-    "PartialMessageParser",
-    "GetMessageParser",
-    "MessageParser",
-)
+__all__: typing.Sequence[str] = ("MessageParser", "PartialMessageParser")
 
 AnyChannel = typing.Union[
     disnake.TextChannel,
@@ -25,8 +22,15 @@ AnyChannel = typing.Union[
 ]
 
 
+@typing.runtime_checkable
+class SupportsGetPartialMessage(typing.Protocol):
+    def get_partial_message(self, message_id: int, /) -> disnake.PartialMessage:
+        ...
+
+
 @parser_base.register_parser_for(disnake.PartialMessage)
-class PartialMessageParser(parser_base.SourcedParser[disnake.PartialMessage]):
+@attrs.define(slots=True)
+class PartialMessageParser(parser_base.Parser[disnake.PartialMessage]):
     r"""Parser type with support for partial messages.
 
     Parameters
@@ -42,26 +46,17 @@ class PartialMessageParser(parser_base.SourcedParser[disnake.PartialMessage]):
 
     """
 
-    int_parser: builtins_parsers.IntParser
+    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
     """The :class:`~components.impl.parser.builtins.IntParser` to use
     internally for this parser.
 
     Since the default integer parser uses base-36 to "compress" numbers, the
-    default message parser will also return compressed results.
+    default guild parser will also return compressed results.
     """
-    channel: typing.Optional[AnyChannel]
+    channel: typing.Optional[SupportsGetPartialMessage] = attrs.field(default=None, kw_only=True)
     """The channel in which to make the partial message."""
 
-    def __init__(
-        self,
-        int_parser: typing.Optional[builtins_parsers.IntParser] = None,
-        *,
-        channel: typing.Optional[AnyChannel] = None,
-    ) -> None:
-        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
-        self.channel = channel
-
-    def loads(self, argument: str, *, source: object) -> disnake.PartialMessage:
+    async def loads(self, argument: str, /) -> disnake.PartialMessage:
         """Load a partial message from a string.
 
         This uses the underlying :attr:`int_parser`.
@@ -70,16 +65,6 @@ class PartialMessageParser(parser_base.SourcedParser[disnake.PartialMessage]):
         ----------
         argument:
             The value that is to be loaded into a partial message.
-        source:
-            The source to use for parsing.
-
-            If :attr:`channel` is set, the source is ignored. Otherwise, this
-            must be a channel, or be a type that has access to a
-            :class:`channel <disnake.TextChannel>` attribute.
-
-            .. note::
-                This can be any channel type that supports
-                `get_partial_message`.
 
         Raises
         ------
@@ -88,23 +73,17 @@ class PartialMessageParser(parser_base.SourcedParser[disnake.PartialMessage]):
             the ``source``.
 
         """
-        channel = self.channel
-        if not channel:
-            if isinstance(source, parser_source.ChannelAware):
-                channel = source.channel
-            elif isinstance(source, parser_source.PartialMessageAware):
-                channel = source
-
+        channel = self.channel or di.resolve_dependency(SupportsGetPartialMessage, None)
         if not channel:
             msg = (
                 "A channel must be provided either through self.channel or"
-                " source.channel, got neither."
+                " dependency injection, got neither."
             )
             raise RuntimeError(msg)
 
-        return channel.get_partial_message(self.int_parser.loads(argument))
+        return channel.get_partial_message(await self.int_parser.loads(argument))
 
-    def dumps(self, argument: disnake.PartialMessage) -> str:
+    async def dumps(self, argument: disnake.PartialMessage, /) -> str:
         """Dump a partial message into a string.
 
         This uses the underlying :attr:`int_parser`.
@@ -115,113 +94,12 @@ class PartialMessageParser(parser_base.SourcedParser[disnake.PartialMessage]):
             The value that is to be dumped.
 
         """
-        return self.int_parser.dumps(argument.id)
+        return await self.int_parser.dumps(argument.id)
 
 
 @parser_base.register_parser_for(disnake.Message)
-class GetMessageParser(parser_base.SourcedParser[disnake.Message]):
-    r"""Synchronous parser type with support for messages.
-
-    Parameters
-    ----------
-    int_parser:
-        The :class:`~components.impl.parser.builtins.IntParser` to use
-        internally for this parser.
-    allow_fallback:
-        If :meth:`loads` fails to get a result, the ``source`` is checked for
-        a message. If the id of this message matches the provided ``argument``,
-        it is returned. If ``allow_fallback`` is set to ``True``, the id
-        validation is skipped, and the source message is always returned.
-
-    """
-
-    int_parser: builtins_parsers.IntParser
-    """The :class:`~components.impl.parser.builtins.IntParser` to use
-    internally for this parser.
-
-    Since the default integer parser uses base-36 to "compress" numbers, the
-    default message parser will also return compressed results.
-    """
-    allow_fallback: bool
-    """If :meth:`loads` fails to get a result, the ``source`` is checked for
-    a message. If the id of this message matches the provided ``argument``,
-    it is returned. If ``allow_fallback`` is set to ``True``, the id
-    validation is skipped, and the source message is always returned.
-
-    .. warning::
-        This can result in :meth:`loads` returning a message with an id that
-        does not match the ``argument``.
-    """
-
-    def __init__(
-        self,
-        int_parser: typing.Optional[builtins_parsers.IntParser] = None,
-        *,
-        allow_fallback: bool = False,
-    ):
-        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
-        self.allow_fallback = allow_fallback
-
-    def loads(
-        self,
-        argument: str,
-        *,
-        source: typing.Union[parser_source.BotAware, parser_source.MessageAware],
-    ) -> disnake.Message:
-        """Load a message from a string.
-
-        This uses the underlying :attr:`int_parser`.
-
-        Parameters
-        ----------
-        argument:
-            The value that is to be loaded into a message.
-        source:
-            The source to use for parsing.
-
-            Must be a type that has access to a :class:`bot <commands.Bot>`
-            or a :class:`message <disnake.Message>` attribute.
-
-        Raises
-        ------
-        :class:`LookupError`:
-            A message with the id stored in the ``argument`` could not be found.
-
-        """
-        message_id = self.int_parser.loads(argument)
-
-        if isinstance(source, parser_source.BotAware):
-            message = source.bot.get_message(message_id)
-            if message:
-                return message
-
-        # If allow_fallback is True, return the source message regardless of
-        # whether the id is correct. Otherwise, validate the id.
-        if (
-            isinstance(source, parser_source.MessageAware)
-            and (self.allow_fallback or source.message.id == message_id)
-        ):  # fmt: skip
-            return source.message
-
-        msg = f"Could not find a message with id {argument!r}."
-        raise LookupError(msg)
-
-    def dumps(self, argument: disnake.Message) -> str:
-        """Dump a message into a string.
-
-        This uses the underlying :attr:`int_parser`.
-
-        Parameters
-        ----------
-        argument:
-            The value that is to be dumped.
-
-        """
-        return self.int_parser.dumps(argument.id)
-
-
-@parser_base.register_parser_for(disnake.Message)
-class MessageParser(parser_base.SourcedParser[disnake.Message]):
+@attrs.define(slots=True)
+class MessageParser(parser_base.Parser[disnake.Message]):
     r"""Asynchronous parser type with support for messages.
 
     .. warning::
@@ -232,52 +110,26 @@ class MessageParser(parser_base.SourcedParser[disnake.Message]):
     int_parser:
         The :class:`~components.impl.parser.builtins.IntParser` to use
         internally for this parser.
-    allow_fallback:
-        If :meth:`loads` fails to get a result, the ``source`` is checked for
-        a message. If the id of this message matches the provided ``argument``,
-        it is returned. If ``allow_fallback`` is set to ``True``, the id
-        validation is skipped, and the source message is always returned.
+    allow_api_requests:
+        Whether or not to allow this parser to make API requests.
 
     """
 
-    int_parser: builtins_parsers.IntParser
+    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
     """The :class:`~components.impl.parser.builtins.IntParser` to use
     internally for this parser.
 
     Since the default integer parser uses base-36 to "compress" numbers, the
-    default message parser will also return compressed results.
+    default guild parser will also return compressed results.
     """
-    allow_fallback: bool
-    """If :meth:`loads` fails to get a result, the ``source`` is checked for
-    a message. If the id of this message matches the provided ``argument``,
-    it is returned. If ``allow_fallback`` is set to ``True``, the id
-    validation is skipped, and the source message is always returned.
+    allow_api_requests: bool = attrs.field(default=True, kw_only=True)
+    """Whether or not to allow this parser to make API requests.
 
-    .. warning::
-        This can result in :meth:`loads` returning a message with an id that
-        does not match the ``argument``.
+    Parsers will always try getting a result from cache first.
     """
 
-    def __init__(
-        self,
-        int_parser: typing.Optional[builtins_parsers.IntParser] = None,
-        *,
-        allow_fallback: bool = False,
-    ):
-        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
-        self.allow_fallback = allow_fallback
-
-    async def loads(
-        self,
-        argument: str,
-        *,
-        source: typing.Union[
-            parser_source.BotAware,
-            parser_source.ChannelAware,
-            parser_source.MessageAware,
-        ],
-    ) -> disnake.Message:
-        """Asynchronously load a message from a string.
+    async def loads(self, argument: str, /) -> disnake.Message:
+        """Load a message from a string.
 
         This uses the underlying :attr:`int_parser`.
 
@@ -291,12 +143,6 @@ class MessageParser(parser_base.SourcedParser[disnake.Message]):
         ----------
         argument:
             The value that is to be loaded into a message.
-        source:
-            The source to use for parsing.
-
-            Must be a type that has access to a :class:`bot <commands.Bot>`,
-            :class:`channel <disnake.Channel>` and/or
-            :class:`message <disnake.Message>` attribute.
 
         Raises
         ------
@@ -304,30 +150,28 @@ class MessageParser(parser_base.SourcedParser[disnake.Message]):
             A message with the id stored in the ``argument`` could not be found.
 
         """
-        message_id = self.int_parser.loads(argument)
-        if isinstance(source, parser_source.BotAware):
-            message = source.bot.get_message(message_id)
+        message_id = await self.int_parser.loads(argument)
+
+        maybe_message = di.resolve_dependency(disnake.Message, None)
+        if maybe_message and maybe_message.id == message_id:
+            return maybe_message
+
+        maybe_client = di.resolve_dependency(disnake.Client, None)
+        if maybe_client:
+            message = maybe_client.get_message(message_id)
             if message:
                 return message
 
-        if isinstance(source, parser_source.ChannelAware):
-            with contextlib.suppress(disnake.HTTPException):
-                message = await source.channel.fetch_message(message_id)
-                if message:
-                    return message
-
-        # If allow_fallback is True, return the source message regardless of
-        # whether the id is correct. Otherwise, validate the id.
-        if (
-            isinstance(source, parser_source.MessageAware)
-            and (self.allow_fallback or source.message.id == message_id)
-        ):  # fmt: skip
-            return source.message
+        if self.allow_api_requests:
+            maybe_messageable = di.resolve_dependency(disnake.abc.Messageable, None)
+            if maybe_messageable:
+                with contextlib.suppress(disnake.HTTPException):
+                    return await maybe_messageable.fetch_message(message_id)
 
         msg = f"Could not find a message with id {argument!r}."
         raise LookupError(msg)
 
-    def dumps(self, argument: disnake.Message) -> str:
+    async def dumps(self, argument: disnake.Message, /) -> str:
         """Dump a message into a string.
 
         This uses the underlying :attr:`int_parser`.
@@ -338,4 +182,4 @@ class MessageParser(parser_base.SourcedParser[disnake.Message]):
             The value that is to be dumped.
 
         """
-        return self.int_parser.dumps(argument.id)
+        return await self.int_parser.dumps(argument.id)

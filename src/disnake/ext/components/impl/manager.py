@@ -10,16 +10,17 @@ import typing
 import weakref
 
 import attr
+
 import disnake
 from disnake.ext import commands
 from disnake.ext.components import fields
 from disnake.ext.components.api import component as component_api
-from disnake.ext.components.internal import omit, reference
+from disnake.ext.components.internal import di, omit
 
 if typing.TYPE_CHECKING:
     import typing_extensions
 
-__all__: typing.Sequence[str] = ("ComponentManager", "get_manager", "check_manager")
+__all__: typing.Sequence[str] = ("ComponentManager", "check_manager", "get_manager")
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -35,7 +36,25 @@ _COMPONENT_CTX: contextvars.ContextVar[
 T = typing.TypeVar("T")
 
 AnyBot = typing.Union[commands.Bot, commands.InteractionBot]
-# AnyComponent = typing.Union[component_api.RichComponent, disnake.ui.WrappedComponent]
+
+class DependencyProviderFunc(typing.Protocol):
+    def __call__(
+        self,
+        manager: ComponentManager,
+        *dependencies: object,
+    ) -> typing.AsyncGenerator[None, None]:
+        ...
+
+class DependencyProvider(typing.Protocol):
+    def __call__(
+        self,
+        manager: ComponentManager,
+        *dependencies: object,
+    ) -> typing.AsyncContextManager[None]:
+        ...
+
+DependencyProviderFuncT = typing.TypeVar("DependencyProviderFuncT", bound=DependencyProviderFunc)
+
 
 CallbackWrapperFunc = typing.Callable[
     ["ComponentManager", component_api.RichComponent, disnake.Interaction],
@@ -105,6 +124,20 @@ _COUNT_CHARS: typing.Final[typing.Tuple[str, ...]] = tuple(
 )
 _DEFAULT_SEP: typing.Final[str] = sys.intern("|")
 _DEFAULT_COUNT: typing.Final[typing.Literal[True]] = True
+
+
+@contextlib.asynccontextmanager
+async def default_dependency_provider(
+    manager: component_api.ComponentManager,  # noqa: ARG001
+    *dependencies: object,
+) -> typing.AsyncGenerator[None, None]:
+    tokens = di.register_dependencies(
+        *(dependency for dependency in dependencies if dependency is not None)
+    )
+
+    yield
+
+    di.reset_dependencies(tokens)
 
 
 @contextlib.asynccontextmanager
@@ -242,8 +275,9 @@ class ComponentManager(component_api.ComponentManager):
         "_module_data",
         "_name",
         "_sep",
-        "wrap_callback",
         "handle_exception",
+        "set_invocation_dependencies",
+        "wrap_callback",
     )
 
     _bot: typing.Optional[AnyBot]
@@ -263,7 +297,7 @@ class ComponentManager(component_api.ComponentManager):
         count: typing.Optional[bool] = None,
         sep: typing.Optional[str] = None,
         bot: typing.Optional[commands.Bot] = None,
-    ):
+    ) -> None:
         self._name = name
         self._children = set()
         self._components = weakref.WeakValueDictionary()
@@ -272,6 +306,7 @@ class ComponentManager(component_api.ComponentManager):
         self._counter = 0
         self._module_data = {}
         self._sep = sep
+        self.set_invocation_dependencies: DependencyProvider = default_dependency_provider
         self.wrap_callback: CallbackWrapper = default_callback_wrapper
         self.handle_exception: ExceptionHandlerFunc = default_exception_handler
 
@@ -429,14 +464,11 @@ class ComponentManager(component_api.ComponentManager):
         return self.sep.join([identifier, *dumped_params.values()])
 
     async def parse_message_interaction(  # noqa: D102
-        self, interaction: disnake.Interaction
+        self, interaction: disnake.Interaction,
     ) -> typing.Optional[component_api.RichComponent]:
         # <<docstring inherited from api.components.ComponentManager>>
         if isinstance(interaction, disnake.MessageInteraction):
-            return await self.parse_raw_component(
-                interaction.component,
-                interaction,
-            )
+            return await self.parse_raw_component(interaction.component)
 
         else:
             raise NotImplementedError
@@ -444,27 +476,17 @@ class ComponentManager(component_api.ComponentManager):
     async def parse_raw_component(
         self,
         component: typing.Union[disnake.Button, disnake.BaseSelectMenu],
-        *reference_objects: object,
     ) -> typing.Optional[component_api.RichComponent]:
-        """Parse a message component given any number of reference objects.
+        """Parse a rich message component from a disnake raw component.
 
-        The required reference objects depend on the parsers of the component
-        you are trying to create. If available, a
-        :class:`disnake.MessageInteraction` should always suffice for the
-        parsers provided by disnake-ext-components.
-
-        Note that this only works for components registered to this manager.
+        .. note::
+            This method only works for components registered to this manager.
 
         Parameters
         ----------
         component:
             The raw message component that is to be turned into a rich
             component.
-        *reference_objects:
-            The objects to use as reference in the parsers. For example,
-            a member object requires a guild as a reference object. This can
-            be provided either directly, or through any object that has a
-            ``.guild`` property, such as an interaction.
 
         Returns
         -------
@@ -508,15 +530,13 @@ class ComponentManager(component_api.ComponentManager):
             )
         }
 
-        reference_obj = reference.create_reference(*reference_objects)
         return await component_type.factory.build_component(
-            reference_obj, params, component_params=component_params
+            params, component_params=component_params
         )
 
     async def parse_message_components(
         self,
         message: disnake.Message,
-        *reference_objects: object,
     ) -> typing.Tuple[
         typing.Sequence[typing.Sequence[MessageComponents]],
         typing.Sequence[component_api.RichComponent],
@@ -526,11 +546,6 @@ class ComponentManager(component_api.ComponentManager):
         This method is particularly useful if you wish to modify multiple
         components attached to a given message.
 
-        The required reference objects depend on the parsers of the component
-        you are trying to create. If available, a
-        :class:`disnake.MessageInteraction` should always suffice for the
-        parsers provided by disnake-ext-components.
-
         This returns a structure of components that can be directly passed into
         any send method's component parameters, and a separate sequence
         containing all rich components for easier editing.
@@ -539,13 +554,6 @@ class ComponentManager(component_api.ComponentManager):
         ----------
         message:
             The message of which to parse all components.
-        *reference_objects:
-            The objects to use as reference in the parsers. For example,
-            a member object requires a guild as a reference object. This can
-            be provided either directly, or through any object that has a
-            ``.guild`` property, such as an interaction.
-            If nothing is provided, this will default to the provided message
-            and the bot to which this manager is registered.
 
         Returns
         -------
@@ -568,10 +576,6 @@ class ComponentManager(component_api.ComponentManager):
         new_rows: typing.List[typing.List[MessageComponents]] = []
         rich_components: typing.List[component_api.RichComponent] = []
 
-        reference_obj = reference.create_reference(
-            *reference_objects or [message, self.bot]
-        )
-
         current_component, current_component_id = _COMPONENT_CTX.get((None, None))
         should_test = current_component is not None
 
@@ -585,9 +589,7 @@ class ComponentManager(component_api.ComponentManager):
                     new_component = current_component
 
                 else:
-                    new_component = await self.parse_raw_component(
-                        component, reference_obj
-                    )
+                    new_component = await self.parse_raw_component(component)
 
                 if new_component:
                     rich_components.append(new_component)
@@ -780,6 +782,55 @@ class ComponentManager(component_api.ComponentManager):
         bot.remove_listener(self.invoke_component, _COMPONENT_EVENT)
         # bot.remove_listener(self.invoke_component, _MODAL_EVENT)
 
+    def as_dependency_provider(self, func: DependencyProviderFuncT) -> DependencyProviderFuncT:
+        """Register a callback as this manager's dependency provider.
+
+        By default, this registers everything passed as a dependency.
+
+        A dependency provider MUST be an async function with ONE yield statement.
+        - Any code before the yield statement is run before the interaction is
+        parsed,
+        - The interaction is parsed at the yield statement,
+        - Any code after the yield statement is run after the interaction has
+        been parsed. This can be used for cleanup.
+
+        It is therefore also possible to use context managers over the yield
+        statement, to automatically handle resource management.
+
+        As this runs *before* we know which manager a component belongs to (if
+        at all!), this is run only for the manager(s) registered to a bot with
+        :meth:`add_to_bot`.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            manager = get_manager()
+
+
+            @manager.as_dependency_provider
+            async def provider(manager, *dependencies):
+                tokens = di.register_dependencies(*dependencies)
+                yield
+                di.reset_dependencies(tokens)
+
+        Parameters
+        ----------
+        func:
+            The callback to register. This must be an async function that takes
+            the component manager as the first argument, and any number of
+            dependencies after. The function must have a single ``yield``
+            statement that yields ``None``.
+
+        Returns
+        -------
+        Callable[[:class:`ComponentManager`, ...], AsyncGenerator[None, None]]
+            The function that was just registered.
+
+        """
+        self.set_invocation_dependencies = contextlib.asynccontextmanager(func)
+        return func
+
     def as_callback_wrapper(self, func: CallbackWrapperFuncT) -> CallbackWrapperFuncT:
         """Register a callback as this managers' callback wrapper.
 
@@ -891,11 +942,7 @@ class ComponentManager(component_api.ComponentManager):
         self.handle_exception = func
         return func
 
-    async def invoke_component(  # noqa: D102
-        self, interaction: disnake.MessageInteraction
-    ) -> None:
-        # <<docstring inherited from api.components.ComponentManager>>
-
+    async def _invoke_component(self, interaction: disnake.MessageInteraction) -> None:
         # First, we check if the component is managed.
         component = await self.parse_message_interaction(interaction)
         if not (component and component.manager):
@@ -947,6 +994,31 @@ class ComponentManager(component_api.ComponentManager):
 
         finally:
             _COMPONENT_CTX.reset(component_ctx_token)
+
+    async def invoke_component(  # noqa: D102
+        self,
+        interaction: disnake.MessageInteraction,
+        /,
+        *,
+        with_di: bool = True,
+    ) -> None:
+        # <<docstring inherited from api.components.ComponentManager>>
+
+        if with_di:
+            async with self.set_invocation_dependencies(
+                self,
+                interaction,
+                interaction.guild,
+                interaction.bot,
+                interaction.channel,
+                interaction.author,
+                # XXX:  Potential edge-case here where a parser needs a user
+                #       but we can only provide a member.
+            ):
+                await self._invoke_component(interaction)
+
+        else:
+            await self._invoke_component(interaction)
 
     def make_button(  # noqa: PLR0913
         self,

@@ -13,6 +13,9 @@ class OmittedType(enum.Enum):
 
     Omitted = enum.auto()
 
+    def __bool__(self) -> typing.Literal[False]:
+        return False
+
 
 Omitted = OmittedType.Omitted
 """Sentinel value for omissible parameters."""

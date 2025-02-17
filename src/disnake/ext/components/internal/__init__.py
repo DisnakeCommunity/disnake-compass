@@ -7,6 +7,3 @@
 These may also be of help when creating custom implementations of protocols
 detailed in ``disnake.ext.components.api``.
 """
-
-from disnake.ext.components.internal.aio import *
-from disnake.ext.components.internal.reference import *
