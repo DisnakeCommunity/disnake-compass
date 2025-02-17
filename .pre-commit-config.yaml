@@ -38,14 +38,11 @@ repos:
       - id: black
         name: Running black in all files.
 
-  - repo: local
+  - repo: https://github.com/ariebovenberg/slotscheck
+    rev: v0.19.1
     hooks:
-      - id: slotscheck
-        name: Running slotscheck in all files.
-        language: python
-        entry: python -m scripts.slotscheck
-        types: [python]
-        additional_dependencies:
-        - slotscheck >= 0.16.5
-        - disnake >= 2.5.0
-        - typing-extensions >= 4.10
+    - id: slotscheck
+      entry: env PYTHONPATH=src slotscheck
+      language: system
+      exclude: "^(?!src/)"
+      args: ["--verbose", "--require-subclass"]
