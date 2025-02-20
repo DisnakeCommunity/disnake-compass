@@ -11,10 +11,10 @@ import sphinx_autodoc_typehints as original
 from sphinx.util import inspect as sphinx_inspect
 
 __all__ = (
+    "apply_autodoc_typehints_patch",
+    "format_annotation",
     "get_module_path",
     "make_linkcode_resolver",
-    "format_annotation",
-    "apply_autodoc_typehints_patch",
 )
 
 
@@ -31,12 +31,12 @@ def get_module_path() -> str:
 
 
 def make_linkcode_resolver(
-    module_path: str, repo_url: str, git_ref: str
+    module_path: str, repo_url: str, git_ref: str,
 ) -> typing.Callable[[str, typing.Mapping[str, typing.Any]], typing.Optional[str]]:
     """Return a linkcode resolver for the provided module path and repo data."""
 
     def linkcode_resolve(
-        domain: str, info: typing.Mapping[str, typing.Any]
+        domain: str, info: typing.Mapping[str, typing.Any],
     ) -> typing.Optional[str]:
         if domain != "py":
             return None
@@ -64,7 +64,7 @@ def make_linkcode_resolver(
 
 
 def format_annotation(  # noqa: PLR0911, PLR0912, PLR0915
-    annotation: typing.Any, config: sphinx.config.Config  # noqa: ANN401
+    annotation: typing.Any, config: sphinx.config.Config,  # noqa: ANN401
 ) -> str:
     """Format the annotation."""
     if typehints_formatter := getattr(config, "typehints_formatter", None):
@@ -139,7 +139,7 @@ def format_annotation(  # noqa: PLR0911, PLR0912, PLR0915
             args = tuple(x for x in args if x is not type(None))
         else:
             simplify_optional_unions: bool = getattr(
-                config, "simplify_optional_unions", True
+                config, "simplify_optional_unions", True,
             )
             if not simplify_optional_unions:
                 full_name = "typing.Optional"

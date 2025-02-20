@@ -4,8 +4,8 @@ import os
 import typing
 
 import disnake
-from disnake.ext import commands
 import disnake_compass
+from disnake.ext import commands
 
 bot = commands.InteractionBot()
 
@@ -52,19 +52,19 @@ async def wrapper(
 ):
     print(
         f"User {interaction.user.name!r} interacted with component"
-        f" {type(component).__name__!r}..."
+        f" {type(component).__name__!r}...",
     )
 
     yield
 
     print(
         f"User {interaction.user.name!r}s interaction with component"
-        f" {type(component).__name__!r} was successful!"
+        f" {type(component).__name__!r} was successful!",
     )
 
 
 class InvalidUserError(Exception):
-    def __init__(self, message: str, user: typing.Union[disnake.User, disnake.Member]):
+    def __init__(self, message: str, user: typing.Union[disnake.User, disnake.Member]) -> None:
         super().__init__(message)
         self.message = message
         self.user = user

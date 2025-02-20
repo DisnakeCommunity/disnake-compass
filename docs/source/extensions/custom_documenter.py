@@ -160,7 +160,6 @@ class FlagDocumenter(EnumDocumenter):
 
 
 def setup(app: sphinx.application.Sphinx) -> typing.Dict[str, bool]:
-    # app.setup_extension("enum_tools.autoenum")
     app.setup_extension("sphinx.ext.autodoc")
     app.add_autodocumenter(ClassDocumenterWithExtraSteps, override=True)
     app.add_autodocumenter(EnumDocumenter)

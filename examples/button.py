@@ -4,8 +4,8 @@ import os
 import typing
 
 import disnake
-from disnake.ext import commands
 import disnake_compass
+from disnake.ext import commands
 
 bot = commands.InteractionBot()
 

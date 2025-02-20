@@ -86,36 +86,51 @@ ignore = [
 "scripts/*.py" = ["INP001", "T201"]
 "examples/*.py" = ["INP001", "ARG001", "PLR2004"]
 
-"scripts/*" = ["T201", "S603"]
+"scripts/*" = ["T201", "S603", "PTH109"]
 # D: Don't enforce docstrings in examples except for the module,
 # TCH: Don't enforce type-checking 'optimisation', as it's distracting from the example.
 # T201: Allow printing inside examples.
 # ARG001: Allow unused arguments, variables with a name are more clear than a plain underscore.
 # ANN201: Allow functions without explicit return type as this is unnecessary bloat for examples.
 "examples/*" = [
+    "ANN201",
+    "ARG001",
     "D101",
     "D102",
     "D103",
     "D417",
     "EM101",
+    "PGH003",
     "S101",
     "T201",
     "TRY003",
     "UP006",
-    "ARG001",
-    "ANN201",
 ]
+# C901: Sorry McCabe.
+# D: We don't care about documenting the documentation internals.
 # E402: Imports at top of file.
+# INP001: Sphinx docs are meant to be namespace packages.
 # PGH003: Blanket type ignores.
+# PLR2004: Magic values are OK in documentation internals.
+# PTH: Needless complexity for documentation internals.
 # S: Subprocess calls, input is predefined.
+# SLF001: Sphinx hackery needs access to internals.
 "docs/*" = [
+    "C901",
+    "D",
     "E402",
+    "INP001",
     "PGH003",
+    "PLR2004",
+    "PTH",
     "S",
+    "SLF001",
 ]
-"docs/source/extensions/*" = [
-    "D"
+# N801: Absolutely agree but if it ain't broke, don't fix it.
+"docs/source/extensions/attributetable.py" = [
+    "N801"
 ]
+
 
 [tool.ruff.lint.pep8-naming]
 extend-ignore-names = ["metacls"]

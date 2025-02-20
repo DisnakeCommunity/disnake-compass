@@ -3,9 +3,8 @@
 import os
 
 import disnake
-from disnake.ext import commands
-
 import disnake_compass
+from disnake.ext import commands
 
 bot = commands.InteractionBot()
 
@@ -26,7 +25,7 @@ class CustomisableSelect(disnake_compass.RichStringSelect):
         )
 
         await interaction.response.send_message(
-            f"You selected:\n{selection}", ephemeral=True
+            f"You selected:\n{selection}", ephemeral=True,
         )
 
 

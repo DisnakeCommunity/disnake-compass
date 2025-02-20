@@ -4,8 +4,8 @@ import os
 import typing
 
 import disnake
-from disnake.ext import commands
 import disnake_compass
+from disnake.ext import commands
 
 DEFAULT_OPTION = disnake.SelectOption(
     label="Please enable some options.",
@@ -111,7 +111,7 @@ async def test_components(interaction: disnake.CommandInteraction) -> None:
                 OptionsToggleButton(label="symbols", options=["*", "&", "#", "+", "-"]),
             ],
             [DynamicSelectMenu()],
-        ]
+        ],
     )
 
     await interaction.response.send_message(components=layout)

@@ -14,11 +14,10 @@ import subprocess
 import sys
 import typing
 
-import disnake
 import sphinx.config
-from disnake.ext import commands
 
-import disnake_compass
+import disnake
+from disnake.ext import commands
 
 
 def git(*args: str) -> str:
@@ -35,11 +34,9 @@ sys.modules["commands"] = commands
 sys.path.append(os.path.abspath("./extensions"))
 
 project = "disnake-compass"
-copyright = "2023, Sharp-Eyes"
+copyright = "2023, Sharp-Eyes"  # noqa: A001
 author = "Sharp-Eyes"
 release = "0.5.0a1"
-
-# nitpicky = True
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -63,7 +60,6 @@ extensions = [
 ]
 exclude_patterns = []
 
-# add_module_names = False
 pygments_style = "friendly"
 
 # -- Options for HTML output -------------------------------------------------
