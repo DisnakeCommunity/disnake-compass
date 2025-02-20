@@ -78,7 +78,7 @@ def _eval_type(cls: type, annotation: typing.Any) -> typing.Any:  # noqa: ANN401
         annotation = typing.ForwardRef(annotation, is_argument=False)
 
     # Evaluate the typehint with the provided globals.
-    return typing._eval_type(annotation, cls_globals, None)  # pyright: ignore
+    return typing._eval_type(annotation, cls_globals, None)  # pyright: ignore  # noqa: PGH003, SLF001
 
 
 def _assert_valid_overwrite(attribute: _AnyAttr, overwrite: _AnyAttr) -> None:
@@ -109,7 +109,7 @@ def _is_custom_id_field(field: _AnyAttr) -> bool:
 
 
 def _field_transformer(
-    cls: type, attributes: typing.List[_AnyAttr]
+    cls: type, attributes: typing.List[_AnyAttr],
 ) -> typing.List[_AnyAttr]:
     super_attributes: typing.Dict[str, _AnyAttr] = (
         {field.name: field for field in fields.get_fields(cls)} if attr.has(cls) else {}
@@ -157,9 +157,9 @@ def _field_transformer(
 
 
 @typing_extensions.dataclass_transform(
-    kw_only_default=True, field_specifiers=(fields.field, fields.internal)
+    kw_only_default=True, field_specifiers=(fields.field, fields.internal),
 )
-class ComponentMeta(typing._ProtocolMeta):  # pyright: ignore
+class ComponentMeta(typing._ProtocolMeta):  # pyright: ignore[reportPrivateUsage]  # noqa: SLF001
     """Metaclass for all disnake-compass component types.
 
     It is **highly** recommended to use this metaclass for any class that
@@ -174,10 +174,10 @@ class ComponentMeta(typing._ProtocolMeta):  # pyright: ignore
     # HACK: Pyright doesn't like this but it does seem to work with typechecking
     #       down the line. I might change this later (e.g. define it on
     #       BaseComponent instead, but that comes with its own challenges).
-    factory: component_api.ComponentFactory[typing_extensions.Self]  # pyright: ignore
+    factory: component_api.ComponentFactory[typing_extensions.Self]  # pyright: ignore[reportGeneralTypeIssues, reportUnknownMemberType]
 
-    def __new__(
-        mcls,  # pyright: ignore[reportSelfClsParameterName]
+    def __new__(  # noqa: PYI034
+        metacls,
         name: str,
         bases: tuple[type, ...],
         namespace: typing.Dict[str, typing.Any],
@@ -191,7 +191,7 @@ class ComponentMeta(typing._ProtocolMeta):  # pyright: ignore
 
         cls = typing.cast(
             "typing.Type[ComponentBase]",
-            super().__new__(mcls, name, bases, namespace),
+            super().__new__(metacls, name, bases, namespace),
         )
 
         # If this is attrs' pass, return immediately after it has worked its magic.
@@ -215,7 +215,7 @@ class ComponentMeta(typing._ProtocolMeta):  # pyright: ignore
 
 @typing.runtime_checkable
 class ComponentBase(
-    component_api.RichComponent, typing.Protocol, metaclass=ComponentMeta
+    component_api.RichComponent, typing.Protocol, metaclass=ComponentMeta,
 ):
     """Overarching base class for any kind of component."""
 
@@ -270,7 +270,7 @@ class ComponentBase(
         return await self.manager.make_custom_id(self)
 
     async def callback(  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: D102
-        self, inter: disnake.MessageInteraction, /
+        self, inter: disnake.MessageInteraction, /,
     ) -> None:
         # <<docstring inherited from component_api.RichButton>>
 

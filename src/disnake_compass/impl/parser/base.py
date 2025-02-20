@@ -5,6 +5,7 @@ from __future__ import annotations
 import typing
 
 import attrs
+
 from disnake_compass.api import parser as parser_api
 
 if typing.TYPE_CHECKING:
@@ -20,13 +21,13 @@ ParserT = typing.TypeVar("ParserT", bound=parser_api.Parser)
 
 _PARSERS: typing.Dict[type, typing.Type[parser_api.Parser[typing.Any]]] = {}
 _REV_PARSERS: typing.Dict[
-    typing.Type[parser_api.Parser[typing.Any]], typing.Tuple[type, ...]
+    typing.Type[parser_api.Parser[typing.Any]], typing.Tuple[type, ...],
 ] = {}
 _PARSER_PRIORITY: typing.Dict[typing.Type[parser_api.Parser[typing.Any]], int] = {}
 
 
 def _issubclass(
-    cls: type, class_or_tuple: typing.Union[type, typing.Tuple[type, ...]]
+    cls: type, class_or_tuple: typing.Union[type, typing.Tuple[type, ...]],
 ) -> bool:
     try:
         return issubclass(cls, class_or_tuple)
@@ -158,7 +159,7 @@ class Parser(
 
     @classmethod
     def default(  # noqa: D102
-        cls, target_type: type[parser_api.ParserType], /  # noqa: ARG003
+        cls, target_type: type[parser_api.ParserType], /,  # noqa: ARG003
     ) -> typing_extensions.Self:
         # <<Docstring inherited from parser_api.Parser>>
         return cls()

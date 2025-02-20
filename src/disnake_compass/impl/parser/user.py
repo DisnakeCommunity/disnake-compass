@@ -6,6 +6,7 @@ import contextlib
 import typing
 
 import attrs
+
 import disnake
 from disnake_compass.impl.parser import base as parser_base
 from disnake_compass.impl.parser import builtins as builtins_parsers
@@ -32,7 +33,9 @@ class UserParser(parser_base.Parser[disnake.User]):
 
     """
 
-    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
+    int_parser: builtins_parsers.IntParser = attrs.field(
+        factory=lambda: builtins_parsers.IntParser.default(int),
+    )
     """The :class:`~disnake_compass.impl.parser.builtins.IntParser` to use
     internally for this parser.
 
@@ -63,12 +66,12 @@ class UserParser(parser_base.Parser[disnake.User]):
         """
         user_id = await self.int_parser.loads(argument)
 
-        maybe_author = di.resolve_dependency(disnake.member._UserTag, None)  # type: ignore
+        maybe_author = di.resolve_dependency(disnake.member._UserTag, None)  # pyright: ignore[reportPrivateUsage]  # noqa: SLF001
         if maybe_author and maybe_author.id == user_id:
             if isinstance(maybe_author, disnake.User):
                 return maybe_author
             if isinstance(maybe_author, disnake.Member):
-                return maybe_author._user  # type: ignore
+                return maybe_author._user  # pyright: ignore[reportPrivateUsage]  # noqa: SLF001
 
         maybe_client = di.resolve_dependency(disnake.Client, None)
         if maybe_client:
@@ -115,7 +118,9 @@ class MemberParser(parser_base.Parser[disnake.Member]):
 
     """
 
-    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
+    int_parser: builtins_parsers.IntParser = attrs.field(
+        factory=lambda: builtins_parsers.IntParser.default(int),
+    )
     """The :class:`~disnake_compass.impl.parser.builtins.IntParser` to use
     internally for this parser.
 

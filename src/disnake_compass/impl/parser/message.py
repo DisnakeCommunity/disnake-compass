@@ -6,6 +6,7 @@ import contextlib
 import typing
 
 import attrs
+
 import disnake
 from disnake_compass.impl.parser import base as parser_base
 from disnake_compass.impl.parser import builtins as builtins_parsers
@@ -46,7 +47,9 @@ class PartialMessageParser(parser_base.Parser[disnake.PartialMessage]):
 
     """
 
-    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
+    int_parser: builtins_parsers.IntParser = attrs.field(
+        factory=lambda: builtins_parsers.IntParser.default(int),
+    )
     """The :class:`~disnake_compass.impl.parser.builtins.IntParser` to use
     internally for this parser.
 
@@ -115,7 +118,9 @@ class MessageParser(parser_base.Parser[disnake.Message]):
 
     """
 
-    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
+    int_parser: builtins_parsers.IntParser = attrs.field(
+        factory=lambda: builtins_parsers.IntParser.default(int),
+    )
     """The :class:`~disnake_compass.impl.parser.builtins.IntParser` to use
     internally for this parser.
 

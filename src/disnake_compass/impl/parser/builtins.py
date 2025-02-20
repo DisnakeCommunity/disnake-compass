@@ -7,19 +7,20 @@ import inspect
 import string
 import typing
 
-import typing_extensions
 import attrs
+import typing_extensions
+
 from disnake_compass.impl.parser import base as parser_base
 
 if typing.TYPE_CHECKING:
     from disnake_compass.api import parser as parser_api
 
 __all__: typing.Sequence[str] = (
+    "BoolParser",
+    "CollectionParser",
     "FloatParser",
     "IntParser",
-    "BoolParser",
     "StringParser",
-    "CollectionParser",
     "TupleParser",
     "UnionParser",
 )
@@ -29,7 +30,7 @@ _NONES = (None, _NoneType)
 _INT_CHARS = string.digits + string.ascii_lowercase
 
 _CollectionT = typing_extensions.TypeVar(  # Simplest iterable container object.
-    "_CollectionT", bound=typing.Collection[object], default=typing.Collection[str]
+    "_CollectionT", bound=typing.Collection[object], default=typing.Collection[str],
 )
 _TupleT = typing_extensions.TypeVar("_TupleT", bound=typing.Tuple[typing.Any, ...])
 _T = typing_extensions.TypeVar("_T")
@@ -159,7 +160,7 @@ class FloatParser(parser_base.Parser[float]):
 
 
 def _validate_base(_instance: object, _attribute: object, base: int) -> None:
-    if not 2 <= base <= 36:
+    if not 2 <= base <= 36:  # noqa: PLR2004
         msg = "Base must be between 2 and 36."
         raise ValueError(msg)
 
@@ -227,13 +228,13 @@ class IntParser(parser_base.Parser[int]):
         # Try to short-circuit as much as possible
         if argument < self.base:
             return str(argument)
-        if self.base == 2:
+        if self.base == 2:  # noqa: PLR2004
             return f"{argument:b}"
-        if self.base == 8:
+        if self.base == 8:  # noqa: PLR2004
             return f"{argument:o}"
-        if self.base == 10:
+        if self.base == 10:  # noqa: PLR2004
             return str(argument)
-        if self.base == 16:
+        if self.base == 16:  # noqa: PLR2004
             return f"{argument:x}"
 
         # Can't short-circuit, convert to string manually.
@@ -292,7 +293,7 @@ class BoolParser(parser_base.Parser[bool]):
         """
         if argument in self.trues:
             return True
-        elif argument in self.falses:
+        if argument in self.falses:
             return False
 
         trues_str = ", ".join(map(repr, self.trues))
@@ -369,7 +370,7 @@ def _resolve_collection(type_: typing.Type[_CollectionT]) -> typing.Type[_Collec
     if issubclass(type_, typing.Sequence):
         return typing.cast(typing.Type[_CollectionT], list)
 
-    elif issubclass(type_, typing.AbstractSet):
+    if issubclass(type_, typing.AbstractSet):
         return typing.cast(typing.Type[_CollectionT], set)
 
     msg = f"Cannot infer a concrete type for abstract type {type_.__name__!r}."
@@ -479,7 +480,7 @@ class TupleParser(parser_base.Parser[_TupleT]):
             [
                 await parser.loads(part)
                 for parser, part in zip(self.inner_parsers, parts)
-            ]
+            ],
         )
 
     async def dumps(self, argument: _TupleT, /) -> str:
@@ -505,7 +506,7 @@ class TupleParser(parser_base.Parser[_TupleT]):
             [
                 await parser.dumps(part)
                 for parser, part in zip(self.inner_parsers, argument)
-            ]
+            ],
         )
 
 
@@ -584,7 +585,7 @@ class CollectionParser(parser_base.Parser[_CollectionT]):
 
     @classmethod
     def default(  # noqa: D102
-        cls, type_: type[_CollectionT], /
+        cls, type_: type[_CollectionT], /,
     ) -> typing_extensions.Self:
         origin = typing.get_origin(type_)
         args = typing.get_args(type_)
@@ -659,7 +660,7 @@ class UnionParser(parser_base.Parser[_T], typing.Generic[_T]):
         self,
         *inner_parsers: typing.Optional[parser_api.Parser[typing.Any]],
     ) -> None:
-        if len(inner_parsers) < 2:
+        if len(inner_parsers) < 2:  # noqa: PLR2004
             msg = "A Union requires two or more type arguments."
             raise TypeError(msg)
 
@@ -785,7 +786,7 @@ class LiteralParser(parser_base.Parser[_T], typing.Generic[_T]):
         self,
         *options: _T,
         inner_parser: parser_api.Parser[_T],
-    ):
+    ) -> None:
         self.options = options
         self.inner_parser = inner_parser
 

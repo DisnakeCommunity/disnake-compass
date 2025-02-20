@@ -22,7 +22,7 @@ internal = fields.internal
 
 @typing.runtime_checkable
 class RichButton(
-    component_api.RichButton, component_base.ComponentBase, typing.Protocol
+    component_api.RichButton, component_base.ComponentBase, typing.Protocol,
 ):
     """The default implementation of a disnake-compass button.
 

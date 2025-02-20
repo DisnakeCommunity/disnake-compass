@@ -50,7 +50,7 @@ class FieldType(enum.Flag):
     """Field parsed from a modal component's modal values."""
 
     @classmethod
-    def ALL(cls) -> FieldType:
+    def ALL(cls) -> FieldType:  # noqa: N802
         """Meta-value for all field types.
 
         Mainly intended for use in :func:`get_fields`.
@@ -84,7 +84,7 @@ def get_parser(
 
 
 def get_field_type(
-    field: attrs.Attribute[typing.Any], default: typing.Optional[FieldType] = None
+    field: attrs.Attribute[typing.Any], default: typing.Optional[FieldType] = None,
 ) -> FieldType:
     """Get the :class:`FieldType` of the field.
 

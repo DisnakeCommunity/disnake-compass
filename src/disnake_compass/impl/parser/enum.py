@@ -4,6 +4,7 @@ import enum
 import typing
 
 import attrs
+
 import disnake
 from disnake_compass.api import parser as parser_api
 from disnake_compass.impl.parser import base as parser_base
@@ -25,12 +26,12 @@ def _get_enum_type(enum_class: typing.Type[_AnyEnum]) -> typing.Optional[type]:
     # Get first member's type
     member_iter = iter(enum_class)
     maybe_type = typing.cast(  # python typing sucks.
-        typing.Type[typing.Any], type(next(member_iter).value)
+        typing.Type[typing.Any], type(next(member_iter).value),
     )
 
     # TODO: Check if this can be `is` instead of `==`.
     # If all members match this type, return it.
-    if all(type(member.value) == maybe_type for member in member_iter):
+    if all(type(member.value) == maybe_type for member in member_iter):  # noqa: E721
         return maybe_type
 
     # No single type; store by name instead.
@@ -150,8 +151,7 @@ class EnumParser(parser_base.Parser[_EnumT]):
 
         if self.store_by_value:
             return self.enum_class(parsed)  # pyright: ignore[reportCallIssue]
-        else:
-            return self.enum_class[parsed]  # pyright: ignore[reportInvalidTypeArguments]
+        return self.enum_class[parsed]  # pyright: ignore[reportInvalidTypeArguments]
 
     async def dumps(self, argument: _EnumT) -> str:
         """Dump an enum member into a string.
@@ -169,11 +169,10 @@ class EnumParser(parser_base.Parser[_EnumT]):
         """
         if self.store_by_value:
             return await self.value_parser.dumps(argument.value)
-        else:
-            # Baseflags members are always integers. This should never error
-            # due to the check in __init__.
-            assert not isinstance(argument, disnake.flags.BaseFlags)
-            return await self.value_parser.dumps(argument.name)
+        # Baseflags members are always integers. This should never error
+        # due to the check in __init__.
+        assert not isinstance(argument, disnake.flags.BaseFlags)
+        return await self.value_parser.dumps(argument.name)
 
 
 FlagParser = EnumParser

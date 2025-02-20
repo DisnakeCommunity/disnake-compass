@@ -5,7 +5,7 @@ import typing
 
 import typing_extensions
 
-__all__: typing.Sequence[str] = ("Omitted", "Omissible", "OmittedNoneOr", "is_omitted")
+__all__: typing.Sequence[str] = ("Omissible", "Omitted", "OmittedNoneOr", "is_omitted")
 
 
 class OmittedType(enum.Enum):

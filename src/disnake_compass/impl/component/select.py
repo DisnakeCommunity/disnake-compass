@@ -5,27 +5,23 @@ from __future__ import annotations
 import typing
 
 import attr
+
 import disnake
 from disnake_compass import fields
 from disnake_compass.api import component as component_api
 from disnake_compass.impl.component import base as component_base
 
 __all__: typing.Sequence[str] = (
+    "RichChannelSelect",
+    "RichMentionableSelect",
+    "RichRoleSelect",
     "RichStringSelect",
     "RichUserSelect",
-    "RichRoleSelect",
-    "RichMentionableSelect",
-    "RichChannelSelect",
 )
-
-# God knows why this is needed, but if I don't do this, classes inheriting from
-# RichSelect see e.g. `placeholder: str = fields.internal(default=None)` in the
-# init signature.
-# internal = fields.internal
 
 
 class BaseSelect(
-    component_api.RichSelect, component_base.ComponentBase, typing.Protocol
+    component_api.RichSelect, component_base.ComponentBase, typing.Protocol,
 ):
     """The base class of a disnake-compass select menu.
 
@@ -64,7 +60,7 @@ class RichStringSelect(BaseSelect, typing.Protocol):
     """
 
     options: typing.List[disnake.SelectOption] = fields.internal(
-        default=attr.Factory(list)  # pyright: ignore
+        default=attr.Factory(list),  # pyright: ignore[reportUnknownArgumentType]
     )
     """The options for this select menu.
 
@@ -221,7 +217,7 @@ class RichChannelSelect(BaseSelect, typing.Protocol):
     """
 
     channel_types: typing.Optional[typing.List[disnake.ChannelType]] = fields.internal(
-        default=None
+        default=None,
     )
     """The channel types to allow for this select menu.
 

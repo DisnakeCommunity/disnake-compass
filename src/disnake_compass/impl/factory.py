@@ -6,6 +6,7 @@ import types
 import typing
 
 import attr
+
 from disnake_compass import fields
 from disnake_compass.api import component as component_api
 from disnake_compass.api import parser as parser_api
@@ -32,7 +33,7 @@ class ComponentFactory(
     component factory can simply be created using :meth:`from_component`.
     """
 
-    parsers: ParserMapping = attr.field(converter=types.MappingProxyType)  # type: ignore
+    parsers: ParserMapping = attr.field(converter=types.MappingProxyType)  # pyright: ignore[reportGeneralTypeIssues]
     """A mapping of custom id field name to that field's parser."""
     component: typing.Type[component_api.ComponentT]
     """The component type that this factory builds."""
@@ -82,7 +83,7 @@ class ComponentFactory(
         }
 
     async def dump_params(  # noqa: D102
-        self, component: component_api.ComponentT
+        self, component: component_api.ComponentT,
     ) -> typing.Mapping[str, str]:
         # <<docstring inherited from api.components.ComponentFactory>>
 
@@ -123,7 +124,7 @@ class NoopFactory(component_api.ComponentFactory[typing.Any]):
 
     @classmethod
     def from_component(
-        cls, _: typing.Type[component_api.RichComponent]
+        cls, _: typing.Type[component_api.RichComponent],
     ) -> typing_extensions.Self:
         # <<docstring inherited from api.components.ComponentFactory>>
 

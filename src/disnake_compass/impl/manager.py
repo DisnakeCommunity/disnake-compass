@@ -72,7 +72,7 @@ ExceptionHandlerFunc = typing.Callable[
     typing.Coroutine[typing.Any, typing.Any, typing.Optional[bool]],
 ]
 ExceptionHandlerFuncT = typing.TypeVar(
-    "ExceptionHandlerFuncT", bound=ExceptionHandlerFunc
+    "ExceptionHandlerFuncT", bound=ExceptionHandlerFunc,
 )
 
 RichComponentT = typing.TypeVar("RichComponentT", bound=component_api.RichComponent)
@@ -95,19 +95,22 @@ def _to_ui_component(
 ) -> disnake.ui.MessageUIComponent:
     if isinstance(component, disnake.Button):
         return disnake.ui.Button[None].from_component(component)
-    elif isinstance(component, disnake.StringSelectMenu):
+    if isinstance(component, disnake.StringSelectMenu):
         return disnake.ui.StringSelect[None].from_component(component)
-    elif isinstance(component, disnake.UserSelectMenu):
+    if isinstance(component, disnake.UserSelectMenu):
         return disnake.ui.UserSelect[None].from_component(component)
-    elif isinstance(component, disnake.RoleSelectMenu):
+    if isinstance(component, disnake.RoleSelectMenu):
         return disnake.ui.RoleSelect[None].from_component(component)
-    elif isinstance(component, disnake.MentionableSelectMenu):
+    if isinstance(component, disnake.MentionableSelectMenu):
         return disnake.ui.MentionableSelect[None].from_component(component)
-    elif isinstance(component, disnake.ChannelSelectMenu):
+    if isinstance(component, disnake.ChannelSelectMenu):
         return disnake.ui.ChannelSelect[None].from_component(component)
 
     msg = f"Expected a message component type, got {type(component).__name__!r}."
     raise TypeError(msg)
+
+
+_MAX_COUNT = 1 << 8 - 1  # 1 byte, starting at 0
 
 
 def _minimise_count(count: int) -> str:
@@ -120,10 +123,10 @@ def _minimise_count(count: int) -> str:
 
 
 _COUNT_CHARS: typing.Final[typing.Tuple[str, ...]] = tuple(
-    map(_minimise_count, range(25))
+    map(_minimise_count, range(25)),
 )
 _DEFAULT_SEP: typing.Final[str] = sys.intern("|")
-_DEFAULT_COUNT: typing.Final[typing.Literal[True]] = True
+_DEFAULT_COUNT: typing.Final = True
 
 
 @contextlib.asynccontextmanager
@@ -132,7 +135,7 @@ async def default_dependency_provider(
     *dependencies: object,
 ) -> typing.AsyncGenerator[None, None]:
     tokens = di.register_dependencies(
-        *(dependency for dependency in dependencies if dependency is not None)
+        *(dependency for dependency in dependencies if dependency is not None),
     )
 
     yield
@@ -428,7 +431,7 @@ class ComponentManager(component_api.ComponentManager):
         return component_type.__name__
 
     def get_identifier(  # noqa: D102
-        self, custom_id: str
+        self, custom_id: str,
     ) -> typing.Tuple[str, typing.Sequence[str]]:
         # <<docstring inherited from api.components.ComponentManager>>
 
@@ -444,13 +447,13 @@ class ComponentManager(component_api.ComponentManager):
         count = _minimise_count(self._counter)
 
         self._counter += 1
-        if self._counter > 24:
+        if self._counter > _MAX_COUNT:
             self._counter = 0
 
         return count
 
     async def make_custom_id(  # noqa: D102
-        self, component: component_api.RichComponent
+        self, component: component_api.RichComponent,
     ) -> str:
         # <<docstring inherited from api.components.ComponentManager>>
 
@@ -470,8 +473,7 @@ class ComponentManager(component_api.ComponentManager):
         if isinstance(interaction, disnake.MessageInteraction):
             return await self.parse_raw_component(interaction.component)
 
-        else:
-            raise NotImplementedError
+        raise NotImplementedError
 
     async def parse_raw_component(
         self,
@@ -526,12 +528,12 @@ class ComponentManager(component_api.ComponentManager):
         component_params = {
             field.name: getattr(component, field.name)
             for field in fields.get_fields(
-                component_type, kind=fields.FieldType.INTERNAL
+                component_type, kind=fields.FieldType.INTERNAL,
             )
         }
 
         return await component_type.factory.build_component(
-            params, component_params=component_params
+            params, component_params=component_params,
         )
 
     async def parse_message_components(
@@ -624,7 +626,7 @@ class ComponentManager(component_api.ComponentManager):
         disnake.ui.Components[disnake.ui.MessageUIComponent]:
             A disnake-compatible structure of sendable components.
 
-        """  # noqa: E501
+        """
         finalised: typing.List[typing.List[disnake.ui.MessageUIComponent]] = []
 
         for row in components:
@@ -633,9 +635,9 @@ class ComponentManager(component_api.ComponentManager):
 
             for component in row:
                 if isinstance(
-                    component, (component_api.RichButton, component_api.RichSelect)
+                    component, (component_api.RichButton, component_api.RichSelect),
                 ):
-                    new_row.append(await component.as_ui_component())  # type: ignore
+                    new_row.append(await component.as_ui_component())  # pyright: ignore[reportArgumentType]
                 else:
                     new_row.append(component)
 
@@ -655,7 +657,7 @@ class ComponentManager(component_api.ComponentManager):
     # returns the component.
     @typing.overload
     def register(
-        self, *, identifier: typing.Optional[str] = None
+        self, *, identifier: typing.Optional[str] = None,
     ) -> typing.Callable[[typing.Type[RichComponentT]], typing.Type[RichComponentT]]:
         ...
 
@@ -694,7 +696,7 @@ class ComponentManager(component_api.ComponentManager):
 
         root_manager = get_manager(_ROOT)
 
-        if resolved_identifier in root_manager._components:
+        if resolved_identifier in root_manager._components:  # noqa: SLF001
             # NOTE: This occurs when a component is registered while another
             #       component with the same identifier already exists.
             #
@@ -705,7 +707,7 @@ class ComponentManager(component_api.ComponentManager):
             #       - This is an actual user error. If we were to silently
             #         overwrite the old component, it would unexpectedly go
             #         unresponsive. Instead, we raise an exception to the user.
-            old_module_data = root_manager._module_data[resolved_identifier]
+            old_module_data = root_manager._module_data[resolved_identifier]  # noqa: SLF001
             if not module_data.is_reload_of(old_module_data):
                 message = (
                     "Cannot register component with duplicate identifier"
@@ -719,14 +721,14 @@ class ComponentManager(component_api.ComponentManager):
         component_type.manager = self
 
         for manager in _recurse_parents(self):
-            manager._components[resolved_identifier] = component_type
-            manager._identifiers[component_type.__name__] = resolved_identifier
-            manager._module_data[resolved_identifier] = module_data
+            manager._components[resolved_identifier] = component_type  # noqa: SLF001
+            manager._identifiers[component_type.__name__] = resolved_identifier  # noqa: SLF001
+            manager._module_data[resolved_identifier] = module_data  # noqa: SLF001
 
         return component_type
 
     def deregister_component(  # noqa: D102
-        self, component_type: RichComponentType
+        self, component_type: RichComponentType,
     ) -> None:
         # <<docstring inherited from api.components.ComponentManager>>
 
@@ -748,8 +750,8 @@ class ComponentManager(component_api.ComponentManager):
 
         # Deregister from the current manager and all parent managers.
         for manager in _recurse_parents(component.manager):
-            manager._components.pop(identifier)
-            manager._module_data.pop(identifier)
+            manager._components.pop(identifier)  # noqa: SLF001
+            manager._module_data.pop(identifier)  # noqa: SLF001
 
     def add_to_bot(self, bot: AnyBot) -> None:  # noqa: D102
         # <<docstring inherited from api.components.ComponentManager>>
@@ -763,7 +765,7 @@ class ComponentManager(component_api.ComponentManager):
             raise RuntimeError(message)
 
         bot.add_listener(self.invoke_component, _COMPONENT_EVENT)
-        # bot.add_listener(self.invoke, _MODAL_EVENT)
+        # bot.add_listener(self.invoke, _MODAL_EVENT)  # noqa: ERA001
 
         self._bot = bot
 
@@ -780,7 +782,7 @@ class ComponentManager(component_api.ComponentManager):
             raise RuntimeError(message)
 
         bot.remove_listener(self.invoke_component, _COMPONENT_EVENT)
-        # bot.remove_listener(self.invoke_component, _MODAL_EVENT)
+        # bot.remove_listener(self.invoke_component, _MODAL_EVENT)  # noqa: ERA001
 
     def as_dependency_provider(self, func: DependencyProviderFuncT) -> DependencyProviderFuncT:
         """Register a callback as this manager's dependency provider.
@@ -882,12 +884,12 @@ class ComponentManager(component_api.ComponentManager):
         Callable[[:class:`RichComponent`, :class:`disnake.Interaction`], AsyncGenerator[None, None]]
             The function that was just registered.
 
-        """  # noqa: E501
+        """
         self.wrap_callback = contextlib.asynccontextmanager(func)
         return func
 
     def as_exception_handler(
-        self, func: ExceptionHandlerFuncT
+        self, func: ExceptionHandlerFuncT,
     ) -> ExceptionHandlerFuncT:
         """Register a callback as this managers' error handler.
 
@@ -938,7 +940,7 @@ class ComponentManager(component_api.ComponentManager):
         Callable[[:class:`RichComponent`, :class:`disnake.Interaction`, :class:`Exception`], None]
             The function that was just registered.
 
-        """  # noqa: E501
+        """
         self.handle_exception = func
         return func
 
@@ -974,7 +976,7 @@ class ComponentManager(component_api.ComponentManager):
                 # Enter all the context managers...
                 for manager in reversed(managers):
                     await stack.enter_async_context(
-                        manager.wrap_callback(manager, component, interaction)
+                        manager.wrap_callback(manager, component, interaction),
                     )
 
                 # If none raised, we run the callback.
@@ -986,7 +988,7 @@ class ComponentManager(component_api.ComponentManager):
 
             for manager in managers:
                 if await manager.handle_exception(
-                    manager, component, interaction, exception
+                    manager, component, interaction, exception,
                 ):
                     # If an error handler returns True, consider the error
                     # handled and skip the remaining handlers.
@@ -1184,7 +1186,7 @@ def _recurse_parents(manager: ComponentManager) -> typing.Iterator[ComponentMana
 
 
 def _recurse_parents_getattr(
-    manager: ComponentManager, attribute: str, default: T
+    manager: ComponentManager, attribute: str, default: T,
 ) -> T:
     for parent in _recurse_parents(manager):
         value = getattr(parent, attribute)
