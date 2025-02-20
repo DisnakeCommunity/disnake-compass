@@ -38,7 +38,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run:
+        run: |
           poetry env use ${{ matrix.python-version }}
           poetry install --no-interaction --no-root --without docs
 
