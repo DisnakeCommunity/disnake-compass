@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
     steps:
       - name: Check out repository
@@ -29,9 +29,11 @@ jobs:
       - name: Install dependencies
         run: poetry install --without docs
 
-      - name: Symlink ext-components
-        continue-on-error: true
-        run: poetry run dev-symlink
-
       - name: Run pyright
         run: poetry run pyright . --pythonversion ${{ matrix.python-version }}
+
+      - name: Run ruff linter
+        run: poetry run ruff check --fix --exit-non-zero-on-fix
+
+      - name: Run ruff formatter
+        run: poetry run ruff format --check
