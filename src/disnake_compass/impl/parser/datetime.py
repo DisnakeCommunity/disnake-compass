@@ -102,7 +102,9 @@ class DatetimeParser(parser_base.Parser[datetime.datetime]):
     default datetime parser will also return compressed results.
     """
     resolution: typing.Union[int, float] = attrs.field(
-        default=Resolution.SECONDS, validator=_validate_resolution, kw_only=True,
+        default=Resolution.SECONDS,
+        validator=_validate_resolution,
+        kw_only=True,
     )
     r"""The resolution with which to store :class:`~datetime.datetime`\s in seconds.
 
@@ -214,7 +216,9 @@ class TimedeltaParser(parser_base.Parser[datetime.timedelta]):
     default datetime parser will also return compressed results.
     """
     resolution: typing.Union[int, float] = attrs.field(
-        default=Resolution.SECONDS, validator=_validate_resolution, kw_only=True,
+        default=Resolution.SECONDS,
+        validator=_validate_resolution,
+        kw_only=True,
     )
     r"""The resolution with which to store :class:`~datetime.timedelta`\s in seconds.
 

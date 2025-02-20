@@ -2,7 +2,6 @@
 
 # pyright: reportUnknownMemberType = false
 
-
 from __future__ import annotations
 
 import asyncio
@@ -95,7 +94,8 @@ def depart_attributetable_node(self: HTMLTranslator, _node: nodes.Element) -> No
 
 
 def depart_attributetablecolumn_node(
-    self: HTMLTranslator, _node: nodes.Element,
+    self: HTMLTranslator,
+    _node: nodes.Element,
 ) -> None:
     self.body.append("</div>")
 
@@ -182,7 +182,8 @@ def process_attributetable(app: Sphinx, doctree: nodes.document, _docname: str) 
 
     lookup = build_lookup_table(env)
     doc_iter = typing.cast(
-        typing.Iterator[nodes.document], doctree.findall(attributetableplaceholder),
+        typing.Iterator[nodes.document],
+        doctree.findall(attributetableplaceholder),
     )
     for node in doc_iter:
         modulename = typing.cast(str, node["python-module"])

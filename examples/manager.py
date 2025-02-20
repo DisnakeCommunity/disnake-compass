@@ -51,8 +51,7 @@ async def wrapper(
     interaction: disnake.Interaction,
 ):
     print(
-        f"User {interaction.user.name!r} interacted with component"
-        f" {type(component).__name__!r}...",
+        f"User {interaction.user.name!r} interacted with component {type(component).__name__!r}...",
     )
 
     yield

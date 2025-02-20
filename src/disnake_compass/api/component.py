@@ -242,7 +242,8 @@ class ComponentManager(typing.Protocol):
         ...
 
     async def parse_message_interaction(
-        self, interaction: disnake.MessageInteraction,
+        self,
+        interaction: disnake.MessageInteraction,
     ) -> typing.Optional[RichComponent]:
         """Parse an interaction and construct a rich component from it.
 
@@ -268,7 +269,8 @@ class ComponentManager(typing.Protocol):
         ...
 
     def register_component(
-        self, component_type: typing.Type[ComponentT],
+        self,
+        component_type: typing.Type[ComponentT],
     ) -> typing.Type[ComponentT]:
         r"""Register a component to this component manager.
 

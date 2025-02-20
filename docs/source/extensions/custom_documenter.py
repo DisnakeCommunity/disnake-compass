@@ -42,9 +42,7 @@ class ClassDocumenterWithExtraSteps(autodoc.ClassDocumenter):
             self.env.temp_data["autodoc:class"] = self.objpath[0]
 
         want_all = (
-            all_members
-            or self.options.inherited_members
-            or self.options.members is autodoc.ALL
+            all_members or self.options.inherited_members or self.options.members is autodoc.ALL
         )
         # find out which members are documentable
         members_check_module, members = self.get_object_members(want_all)

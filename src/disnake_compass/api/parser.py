@@ -21,6 +21,7 @@ A parser of a given type takes (any subclass of) that type as argument to
 :meth:`.Parser.loads`.
 """
 
+
 class Parser(typing.Protocol[ParserType]):
     """The baseline protocol for any kind of parser.
 

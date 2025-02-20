@@ -21,13 +21,15 @@ ParserT = typing.TypeVar("ParserT", bound=parser_api.Parser)
 
 _PARSERS: typing.Dict[type, typing.Type[parser_api.Parser[typing.Any]]] = {}
 _REV_PARSERS: typing.Dict[
-    typing.Type[parser_api.Parser[typing.Any]], typing.Tuple[type, ...],
+    typing.Type[parser_api.Parser[typing.Any]],
+    typing.Tuple[type, ...],
 ] = {}
 _PARSER_PRIORITY: typing.Dict[typing.Type[parser_api.Parser[typing.Any]], int] = {}
 
 
 def _issubclass(
-    cls: type, class_or_tuple: typing.Union[type, typing.Tuple[type, ...]],
+    cls: type,
+    class_or_tuple: typing.Union[type, typing.Tuple[type, ...]],
 ) -> bool:
     try:
         return issubclass(cls, class_or_tuple)
@@ -68,7 +70,7 @@ def register_parser(
     # This allows e.g. is_default_for=(Tuple[Any, ...],) so pyright doesn't complain.
     # The stored type will then still be tuple, as intended.
     types = tuple(typing.get_origin(type_) or type_ for type_ in types)
-    setter = (dict.__setitem__ if force else dict.setdefault)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+    setter = dict.__setitem__ if force else dict.setdefault  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
 
     setter(_REV_PARSERS, parser, types)
     setter(_PARSER_PRIORITY, parser, priority)
@@ -96,11 +98,7 @@ def _get_parser_type(
 
     # Slow lookup for subclasses of existing types...
     best_entry = max(
-        (
-            entry
-            for entry, parser_types in _REV_PARSERS.items()
-            if _issubclass(type_, parser_types)
-        ),
+        (entry for entry, parser_types in _REV_PARSERS.items() if _issubclass(type_, parser_types)),
         default=None,
         key=_PARSER_PRIORITY.__getitem__,
     )
@@ -159,7 +157,9 @@ class Parser(
 
     @classmethod
     def default(  # noqa: D102
-        cls, target_type: type[parser_api.ParserType], /,  # noqa: ARG003
+        cls,
+        target_type: type[parser_api.ParserType],  # noqa: ARG003
+        /,
     ) -> typing_extensions.Self:
         # <<Docstring inherited from parser_api.Parser>>
         return cls()

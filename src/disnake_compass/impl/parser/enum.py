@@ -26,7 +26,8 @@ def _get_enum_type(enum_class: typing.Type[_AnyEnum]) -> typing.Optional[type]:
     # Get first member's type
     member_iter = iter(enum_class)
     maybe_type = typing.cast(  # python typing sucks.
-        typing.Type[typing.Any], type(next(member_iter).value),
+        typing.Type[typing.Any],
+        type(next(member_iter).value),
     )
 
     # TODO: Check if this can be `is` instead of `==`.
@@ -93,10 +94,7 @@ class EnumParser(parser_base.Parser[_EnumT]):
         store_by_value: typing.Optional[bool] = None,
     ) -> None:
         if issubclass(enum_class, disnake.flags.BaseFlags) and store_by_value is False:
-            msg = (
-                "Cannot store disnake flags by name, as their members do not have"
-                " names."
-            )
+            msg = "Cannot store disnake flags by name, as their members do not have names."
             raise ValueError(msg)
 
         value_type = _get_enum_type(enum_class)

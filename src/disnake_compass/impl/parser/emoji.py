@@ -137,7 +137,6 @@ class EmojiParser(parser_base.Parser[disnake.Emoji]):
         msg = f"Could not find an emoji with id {emoji_id}."
         raise LookupError(msg)
 
-
     async def dumps(self, argument: disnake.Emoji, /) -> str:
         """Dump an emoji into a string.
 
@@ -211,7 +210,6 @@ class StickerParser(parser_base.Parser[disnake.Sticker]):
 
         msg = f"Could not find an emoji with id {sticker_id}."
         raise LookupError(msg)
-
 
     async def dumps(self, argument: disnake.Sticker, /) -> str:
         """Dump a sticker into a string.

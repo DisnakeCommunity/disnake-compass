@@ -102,14 +102,12 @@ def _assert_valid_overwrite(attribute: _AnyAttr, overwrite: _AnyAttr) -> None:
 
 
 def _is_custom_id_field(field: _AnyAttr) -> bool:
-    return (
-        fields.get_field_type(field, fields.FieldType.CUSTOM_ID)
-        is fields.FieldType.CUSTOM_ID
-    )
+    return fields.get_field_type(field, fields.FieldType.CUSTOM_ID) is fields.FieldType.CUSTOM_ID
 
 
 def _field_transformer(
-    cls: type, attributes: typing.List[_AnyAttr],
+    cls: type,
+    attributes: typing.List[_AnyAttr],
 ) -> typing.List[_AnyAttr]:
     super_attributes: typing.Dict[str, _AnyAttr] = (
         {field.name: field for field in fields.get_fields(cls)} if attr.has(cls) else {}
@@ -157,7 +155,8 @@ def _field_transformer(
 
 
 @typing_extensions.dataclass_transform(
-    kw_only_default=True, field_specifiers=(fields.field, fields.internal),
+    kw_only_default=True,
+    field_specifiers=(fields.field, fields.internal),
 )
 class ComponentMeta(typing._ProtocolMeta):  # pyright: ignore[reportPrivateUsage]  # noqa: SLF001
     """Metaclass for all disnake-compass component types.
@@ -215,7 +214,9 @@ class ComponentMeta(typing._ProtocolMeta):  # pyright: ignore[reportPrivateUsage
 
 @typing.runtime_checkable
 class ComponentBase(
-    component_api.RichComponent, typing.Protocol, metaclass=ComponentMeta,
+    component_api.RichComponent,
+    typing.Protocol,
+    metaclass=ComponentMeta,
 ):
     """Overarching base class for any kind of component."""
 
@@ -270,7 +271,9 @@ class ComponentBase(
         return await self.manager.make_custom_id(self)
 
     async def callback(  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: D102
-        self, inter: disnake.MessageInteraction, /,
+        self,
+        inter: disnake.MessageInteraction,
+        /,
     ) -> None:
         # <<docstring inherited from component_api.RichButton>>
 

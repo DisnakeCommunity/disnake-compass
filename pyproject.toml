@@ -67,6 +67,7 @@ select = [
 ]
 ignore = [
     "A005",  # Internally shadowing builtins is probably okay. Probably.
+    "COM812",  # Disabled for linter compatibility.
     "D105",  # __magic_method__ docstrings.
     "D107",  # __init__ docstrings.
     "D203",  # Style, we don't want a newline before class docstrings.

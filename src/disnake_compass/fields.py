@@ -78,7 +78,8 @@ def get_parser(
 
 
 def get_field_type(
-    field: attrs.Attribute[typing.Any], default: typing.Optional[FieldType] = None,
+    field: attrs.Attribute[typing.Any],
+    default: typing.Optional[FieldType] = None,
 ) -> FieldType:
     """Get the :class:`FieldType` of the field.
 

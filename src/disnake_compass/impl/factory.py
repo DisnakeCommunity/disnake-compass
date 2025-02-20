@@ -83,7 +83,8 @@ class ComponentFactory(
         }
 
     async def dump_params(  # noqa: D102
-        self, component: component_api.ComponentT,
+        self,
+        component: component_api.ComponentT,
     ) -> typing.Mapping[str, str]:
         # <<docstring inherited from api.components.ComponentFactory>>
 
@@ -124,7 +125,8 @@ class NoopFactory(component_api.ComponentFactory[typing.Any]):
 
     @classmethod
     def from_component(
-        cls, _: typing.Type[component_api.RichComponent],
+        cls,
+        _: typing.Type[component_api.RichComponent],
     ) -> typing_extensions.Self:
         # <<docstring inherited from api.components.ComponentFactory>>
 

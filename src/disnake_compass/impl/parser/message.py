@@ -25,8 +25,7 @@ AnyChannel = typing.Union[
 
 @typing.runtime_checkable
 class SupportsGetPartialMessage(typing.Protocol):
-    def get_partial_message(self, message_id: int, /) -> disnake.PartialMessage:
-        ...
+    def get_partial_message(self, message_id: int, /) -> disnake.PartialMessage: ...
 
 
 @parser_base.register_parser_for(disnake.PartialMessage)

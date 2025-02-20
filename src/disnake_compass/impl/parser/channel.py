@@ -40,7 +40,9 @@ __all__: typing.Sequence[str] = (
 
 
 _AnyChannel = typing.Union[
-    disnake.abc.GuildChannel, disnake.abc.PrivateChannel, disnake.Thread,
+    disnake.abc.GuildChannel,
+    disnake.abc.PrivateChannel,
+    disnake.Thread,
 ]
 _ChannelT = typing.TypeVar("_ChannelT", bound=_AnyChannel)
 
@@ -85,10 +87,7 @@ class ChannelParserBase(parser_base.Parser[_ChannelT]):
         allow_api_requests: bool = True,
     ) -> None:
         if type(self) is ChannelParserBase:
-            msg = (
-                "'GetChannelParserBase' is a base class and should not be"
-                " instantiated directly."
-            )
+            msg = "'GetChannelParserBase' is a base class and should not be instantiated directly."
             raise TypeError(msg)
 
         self.int_parser = int_parser or builtins_parsers.IntParser.default(int)

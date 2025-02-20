@@ -28,30 +28,31 @@ _ROOT = sys.intern("root")
 _COMPONENT_EVENT = sys.intern("on_message_interaction")
 _MODAL_EVENT = sys.intern("on_modal_submit")
 
-_COMPONENT_CTX: contextvars.ContextVar[
-    tuple[component_api.RichComponent, str]
-] = contextvars.ContextVar("_COMPONENT_CTX")
+_COMPONENT_CTX: contextvars.ContextVar[tuple[component_api.RichComponent, str]] = (
+    contextvars.ContextVar("_COMPONENT_CTX")
+)
 
 
 T = typing.TypeVar("T")
 
 AnyBot = typing.Union[commands.Bot, commands.InteractionBot]
 
+
 class DependencyProviderFunc(typing.Protocol):
     def __call__(
         self,
         manager: ComponentManager,
         *dependencies: object,
-    ) -> typing.AsyncGenerator[None, None]:
-        ...
+    ) -> typing.AsyncGenerator[None, None]: ...
+
 
 class DependencyProvider(typing.Protocol):
     def __call__(
         self,
         manager: ComponentManager,
         *dependencies: object,
-    ) -> typing.AsyncContextManager[None]:
-        ...
+    ) -> typing.AsyncContextManager[None]: ...
+
 
 DependencyProviderFuncT = typing.TypeVar("DependencyProviderFuncT", bound=DependencyProviderFunc)
 
@@ -72,7 +73,8 @@ ExceptionHandlerFunc = typing.Callable[
     typing.Coroutine[typing.Any, typing.Any, typing.Optional[bool]],
 ]
 ExceptionHandlerFuncT = typing.TypeVar(
-    "ExceptionHandlerFuncT", bound=ExceptionHandlerFunc,
+    "ExceptionHandlerFuncT",
+    bound=ExceptionHandlerFunc,
 )
 
 RichComponentT = typing.TypeVar("RichComponentT", bound=component_api.RichComponent)
@@ -431,7 +433,8 @@ class ComponentManager(component_api.ComponentManager):
         return component_type.__name__
 
     def get_identifier(  # noqa: D102
-        self, custom_id: str,
+        self,
+        custom_id: str,
     ) -> typing.Tuple[str, typing.Sequence[str]]:
         # <<docstring inherited from api.components.ComponentManager>>
 
@@ -453,7 +456,8 @@ class ComponentManager(component_api.ComponentManager):
         return count
 
     async def make_custom_id(  # noqa: D102
-        self, component: component_api.RichComponent,
+        self,
+        component: component_api.RichComponent,
     ) -> str:
         # <<docstring inherited from api.components.ComponentManager>>
 
@@ -467,7 +471,8 @@ class ComponentManager(component_api.ComponentManager):
         return self.sep.join([identifier, *dumped_params.values()])
 
     async def parse_message_interaction(  # noqa: D102
-        self, interaction: disnake.Interaction,
+        self,
+        interaction: disnake.Interaction,
     ) -> typing.Optional[component_api.RichComponent]:
         # <<docstring inherited from api.components.ComponentManager>>
         if isinstance(interaction, disnake.MessageInteraction):
@@ -528,12 +533,14 @@ class ComponentManager(component_api.ComponentManager):
         component_params = {
             field.name: getattr(component, field.name)
             for field in fields.get_fields(
-                component_type, kind=fields.FieldType.INTERNAL,
+                component_type,
+                kind=fields.FieldType.INTERNAL,
             )
         }
 
         return await component_type.factory.build_component(
-            params, component_params=component_params,
+            params,
+            component_params=component_params,
         )
 
     async def parse_message_components(
@@ -635,7 +642,8 @@ class ComponentManager(component_api.ComponentManager):
 
             for component in row:
                 if isinstance(
-                    component, (component_api.RichButton, component_api.RichSelect),
+                    component,
+                    (component_api.RichButton, component_api.RichSelect),
                 ):
                     new_row.append(await component.as_ui_component())  # pyright: ignore[reportArgumentType]
                 else:
@@ -650,16 +658,16 @@ class ComponentManager(component_api.ComponentManager):
         component_type: typing.Type[RichComponentT],
         *,
         identifier: typing.Optional[str] = None,
-    ) -> typing.Type[RichComponentT]:
-        ...
+    ) -> typing.Type[RichComponentT]: ...
 
     # Only identifier: nested decorator, return callable that registers and
     # returns the component.
     @typing.overload
     def register(
-        self, *, identifier: typing.Optional[str] = None,
-    ) -> typing.Callable[[typing.Type[RichComponentT]], typing.Type[RichComponentT]]:
-        ...
+        self,
+        *,
+        identifier: typing.Optional[str] = None,
+    ) -> typing.Callable[[typing.Type[RichComponentT]], typing.Type[RichComponentT]]: ...
 
     def register(
         self,
@@ -728,7 +736,8 @@ class ComponentManager(component_api.ComponentManager):
         return component_type
 
     def deregister_component(  # noqa: D102
-        self, component_type: RichComponentType,
+        self,
+        component_type: RichComponentType,
     ) -> None:
         # <<docstring inherited from api.components.ComponentManager>>
 
@@ -737,8 +746,7 @@ class ComponentManager(component_api.ComponentManager):
 
         if not component.manager:
             message = (
-                f"Component {component_type.__name__!r} is not registered to a"
-                " component manager."
+                f"Component {component_type.__name__!r} is not registered to a component manager."
             )
             raise TypeError(message)
 
@@ -889,7 +897,8 @@ class ComponentManager(component_api.ComponentManager):
         return func
 
     def as_exception_handler(
-        self, func: ExceptionHandlerFuncT,
+        self,
+        func: ExceptionHandlerFuncT,
     ) -> ExceptionHandlerFuncT:
         """Register a callback as this managers' error handler.
 
@@ -988,7 +997,10 @@ class ComponentManager(component_api.ComponentManager):
 
             for manager in managers:
                 if await manager.handle_exception(
-                    manager, component, interaction, exception,
+                    manager,
+                    component,
+                    interaction,
+                    exception,
                 ):
                     # If an error handler returns True, consider the error
                     # handled and skip the remaining handlers.
@@ -1186,7 +1198,9 @@ def _recurse_parents(manager: ComponentManager) -> typing.Iterator[ComponentMana
 
 
 def _recurse_parents_getattr(
-    manager: ComponentManager, attribute: str, default: T,
+    manager: ComponentManager,
+    attribute: str,
+    default: T,
 ) -> T:
     for parent in _recurse_parents(manager):
         value = getattr(parent, attribute)

@@ -21,7 +21,9 @@ __all__: typing.Sequence[str] = (
 
 
 class BaseSelect(
-    component_api.RichSelect, component_base.ComponentBase, typing.Protocol,
+    component_api.RichSelect,
+    component_base.ComponentBase,
+    typing.Protocol,
 ):
     """The base class of a disnake-compass select menu.
 

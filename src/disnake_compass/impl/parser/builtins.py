@@ -30,7 +30,9 @@ _NONES = (None, _NoneType)
 _INT_CHARS = string.digits + string.ascii_lowercase
 
 _CollectionT = typing_extensions.TypeVar(  # Simplest iterable container object.
-    "_CollectionT", bound=typing.Collection[object], default=typing.Collection[str],
+    "_CollectionT",
+    bound=typing.Collection[object],
+    default=typing.Collection[str],
 )
 _TupleT = typing_extensions.TypeVar("_TupleT", bound=typing.Tuple[typing.Any, ...])
 _T = typing_extensions.TypeVar("_T")
@@ -477,10 +479,7 @@ class TupleParser(parser_base.Parser[_TupleT]):
         # NamedTuples should be instantiated using _make.
         initialiser = getattr(self.tuple_cls, "_make", self.tuple_cls)
         return initialiser(
-            [
-                await parser.loads(part)
-                for parser, part in zip(self.inner_parsers, parts)
-            ],
+            [await parser.loads(part) for parser, part in zip(self.inner_parsers, parts)],
         )
 
     async def dumps(self, argument: _TupleT, /) -> str:
@@ -503,10 +502,7 @@ class TupleParser(parser_base.Parser[_TupleT]):
             raise RuntimeError(msg)
 
         return self.sep.join(
-            [
-                await parser.dumps(part)
-                for parser, part in zip(self.inner_parsers, argument)
-            ],
+            [await parser.dumps(part) for parser, part in zip(self.inner_parsers, argument)],
         )
 
 
@@ -579,13 +575,13 @@ class CollectionParser(parser_base.Parser[_CollectionT]):
             typing.Type[_CollectionT],
             list if collection_type is None else _resolve_collection(collection_type),
         )
-        self.inner_parser = (
-            StringParser.default(str) if inner_parser is None else inner_parser
-        )
+        self.inner_parser = StringParser.default(str) if inner_parser is None else inner_parser
 
     @classmethod
     def default(  # noqa: D102
-        cls, type_: type[_CollectionT], /,
+        cls,
+        type_: type[_CollectionT],
+        /,
     ) -> typing_extensions.Self:
         origin = typing.get_origin(type_)
         args = typing.get_args(type_)
@@ -800,8 +796,7 @@ class LiteralParser(parser_base.Parser[_T], typing.Generic[_T]):
         for arg in args_iter:
             if not isinstance(arg, arg_type):
                 msg = (
-                    "Literal parsers only support literals where all options"
-                    " are of the same type."
+                    "Literal parsers only support literals where all options are of the same type."
                 )
                 raise TypeError(msg)
 
