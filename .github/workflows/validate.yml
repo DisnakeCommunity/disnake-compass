@@ -1,10 +1,10 @@
-name: lint
+name: validate
 
 on:
   pull_request:
 
 jobs:
-  pyright:
+  validate:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -15,7 +15,9 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up python ${{ matrix.python-version }}
+      # Always use python 3.12 to manage poetry, then use matrix python version
+      # for the actual poetry venv.
+      - name: Set up python 3.12
         id: setup-python
         uses: actions/setup-python@v5
         with:
@@ -36,7 +38,9 @@ jobs:
 
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root --without docs
+        run:
+          poetry env use ${{ matrix.python-version }}
+          poetry install --no-interaction --no-root --without docs
 
       - name: Install disnake_compass
         run: poetry install --no-interaction --only-root
@@ -47,8 +51,11 @@ jobs:
       - name: Run pyright
         run: poetry run pyright . --pythonversion ${{ matrix.python-version }}
 
+        # Only run ruff once.
       - name: Run ruff linter
-        run: poetry run ruff check --fix --exit-non-zero-on-fix
+        if: matrix.python-version == '3.8'
+        run: poetry run ruff check --fix --exit-non-zero-on-fix --target-version py38
 
       - name: Run ruff formatter
-        run: poetry run ruff format --check
+        if: matrix.python-version == '3.8'
+        run: poetry run ruff format --check --target-version py38
