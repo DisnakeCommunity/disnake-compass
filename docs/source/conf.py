@@ -165,13 +165,10 @@ simplify_optional_unions = True
 always_use_bars_union = True
 typehints_fully_qualified = False
 
-import disnake_compass.fields
-
 # Customise display for specific types.
 aliases: typing.Dict[object, str] = {
     # Idk why this is needed, but it is...
     disnake.ButtonStyle: ":class:`~disnake.ButtonStyle`",
-    disnake_compass.fields.NOTHING: ":obj:`~attrs.NOTHING`",
 }
 
 

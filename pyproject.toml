@@ -12,6 +12,7 @@ packages = [{include = "disnake_compass", from="src"}]
 python = "^3.8"
 typing-extensions = "^4.10.0"
 disnake = "^2.5.0"
+attrs = ">=24.3"
 
 
 [tool.poetry.group.dev.dependencies]
