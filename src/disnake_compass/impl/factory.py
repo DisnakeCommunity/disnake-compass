@@ -66,19 +66,9 @@ class ComponentFactory(
         params: typing.Sequence[str],
     ) -> typing.Mapping[str, object]:
         # <<docstring inherited from api.components.ComponentFactory>>
-
-        if len(params) != len(self.parsers):
-            # Ensure params and parsers are of the same length before zipping them.
-            # Equivalent to `zip(..., strict=True)` in py >= 3.10.
-            message = (
-                "Component parameter count mismatch."
-                f" Expected {len(self.parsers)}, got {len(params)}."
-            )
-            raise ValueError(message)
-
         return {
             param: await self.parsers[param].loads(value)
-            for param, value in zip(self.parsers, params, strict=False)
+            for param, value in zip(self.parsers, params, strict=True)
             if value  # TODO: Check this, I think this is wrong.
         }
 

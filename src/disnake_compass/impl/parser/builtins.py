@@ -471,17 +471,12 @@ class TupleParser(parser_base.Parser[_TupleT]):
         """
         parts = argument.split(self.sep)
 
-        if len(parts) != len(self.inner_parsers):
-            # TODO: Custom exception
-            msg = f"Expected {len(self.inner_parsers)} arguments, got {len(parts)}."
-            raise RuntimeError(msg)
-
         # NamedTuples should be instantiated using _make.
         initialiser = getattr(self.tuple_cls, "_make", self.tuple_cls)
         return initialiser(
             [
                 await parser.loads(part)
-                for parser, part in zip(self.inner_parsers, parts, strict=False)
+                for parser, part in zip(self.inner_parsers, parts, strict=True)
             ],
         )
 
@@ -500,14 +495,10 @@ class TupleParser(parser_base.Parser[_TupleT]):
             inner parsers.
 
         """
-        if len(argument) != len(self.inner_parsers):
-            msg = f"Expected {len(self.inner_parsers)} arguments, got {len(argument)}."
-            raise RuntimeError(msg)
-
         return self.sep.join(
             [
                 await parser.dumps(part)
-                for parser, part in zip(self.inner_parsers, argument, strict=False)
+                for parser, part in zip(self.inner_parsers, argument, strict=True)
             ],
         )
 
