@@ -50,7 +50,7 @@ COLOUR_OPTIONS = [
 
 @manager.register
 class MySelect(disnake_compass.RichStringSelect):
-    placeholder: typing.Optional[str] = "Please select a square."
+    placeholder: str | None = "Please select a square."
     options: typing.List[disnake.SelectOption] = SLOT_OPTIONS
 
     slot: str = "0"

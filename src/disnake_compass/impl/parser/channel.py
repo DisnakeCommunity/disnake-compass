@@ -12,17 +12,6 @@ from disnake_compass.impl.parser import base as parser_base
 from disnake_compass.impl.parser import builtins as builtins_parsers
 from disnake_compass.internal import di
 
-if typing.TYPE_CHECKING:
-    from disnake.ext import commands
-
-    _AnyBot = typing.Union[
-        commands.Bot,
-        commands.InteractionBot,
-        commands.AutoShardedBot,
-        commands.AutoShardedInteractionBot,
-    ]
-
-
 __all__: typing.Sequence[str] = (
     "CategoryParser",
     "DMChannelParser",
@@ -39,11 +28,9 @@ __all__: typing.Sequence[str] = (
 )
 
 
-_AnyChannel = typing.Union[
-    disnake.abc.GuildChannel,
-    disnake.abc.PrivateChannel,
-    disnake.Thread,
-]
+_AnyChannel: typing.TypeAlias = (
+    disnake.abc.GuildChannel | disnake.abc.PrivateChannel | disnake.Thread
+)
 _ChannelT = typing.TypeVar("_ChannelT", bound=_AnyChannel)
 
 
@@ -66,7 +53,7 @@ class ChannelParserBase(parser_base.Parser[_ChannelT]):
 
     """
 
-    parser_type: typing.Type[_ChannelT]  # NOTE: Intentionally undocumented.
+    parser_type: type[_ChannelT]  # NOTE: Intentionally undocumented.
     int_parser: builtins_parsers.IntParser
     """The :class:`~disnake_compass.impl.parser.builtins.IntParser` to use
     internally for this parser.
@@ -82,7 +69,7 @@ class ChannelParserBase(parser_base.Parser[_ChannelT]):
 
     def __init__(
         self,
-        int_parser: typing.Optional[builtins_parsers.IntParser] = None,
+        int_parser: builtins_parsers.IntParser | None = None,
         *,
         allow_api_requests: bool = True,
     ) -> None:
@@ -403,7 +390,7 @@ class PartialMessageableParser(parser_base.Parser[disnake.PartialMessageable]):
 
     """
 
-    channel_type: typing.Optional[disnake.ChannelType]
+    channel_type: disnake.ChannelType | None
     r"""The channel type to use for :class:`disnake.PartialMessageable`\s
     created by this class.
 

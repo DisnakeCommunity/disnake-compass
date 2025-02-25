@@ -14,13 +14,13 @@ from disnake_compass.internal import di
 
 __all__: typing.Sequence[str] = ("MessageParser", "PartialMessageParser")
 
-AnyChannel = typing.Union[
-    disnake.TextChannel,
-    disnake.Thread,
-    disnake.VoiceChannel,
-    disnake.DMChannel,
-    disnake.PartialMessageable,
-]
+AnyChannel: typing.TypeAlias = (
+    disnake.TextChannel
+    | disnake.Thread
+    | disnake.VoiceChannel
+    | disnake.DMChannel
+    | disnake.PartialMessageable
+)
 
 
 @typing.runtime_checkable
@@ -55,7 +55,7 @@ class PartialMessageParser(parser_base.Parser[disnake.PartialMessage]):
     Since the default integer parser uses base-36 to "compress" numbers, the
     default guild parser will also return compressed results.
     """
-    channel: typing.Optional[SupportsGetPartialMessage] = attrs.field(default=None, kw_only=True)
+    channel: SupportsGetPartialMessage | None = attrs.field(default=None, kw_only=True)
     """The channel in which to make the partial message."""
 
     async def loads(self, argument: str, /) -> disnake.PartialMessage:

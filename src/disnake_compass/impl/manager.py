@@ -35,7 +35,7 @@ _COMPONENT_CTX: contextvars.ContextVar[tuple[component_api.RichComponent, str]] 
 
 T = typing.TypeVar("T")
 
-AnyBot = typing.Union[commands.Bot, commands.InteractionBot]
+AnyBot: typing.TypeAlias = commands.Bot | commands.InteractionBot
 
 
 class DependencyProviderFunc(typing.Protocol):
@@ -57,20 +57,20 @@ class DependencyProvider(typing.Protocol):
 DependencyProviderFuncT = typing.TypeVar("DependencyProviderFuncT", bound=DependencyProviderFunc)
 
 
-CallbackWrapperFunc = typing.Callable[
+CallbackWrapperFunc: typing.TypeAlias = typing.Callable[
     ["ComponentManager", component_api.RichComponent, disnake.Interaction],
     typing.AsyncGenerator[None, None],
 ]
-CallbackWrapper = typing.Callable[
+CallbackWrapper: typing.TypeAlias = typing.Callable[
     ["ComponentManager", component_api.RichComponent, disnake.Interaction],
     typing.AsyncContextManager[None],
 ]
 CallbackWrapperFuncT = typing.TypeVar("CallbackWrapperFuncT", bound=CallbackWrapperFunc)
 
 
-ExceptionHandlerFunc = typing.Callable[
+ExceptionHandlerFunc: typing.TypeAlias = typing.Callable[
     ["ComponentManager", component_api.RichComponent, disnake.Interaction, Exception],
-    typing.Coroutine[typing.Any, typing.Any, typing.Optional[bool]],
+    typing.Coroutine[typing.Any, typing.Any, bool | None],
 ]
 ExceptionHandlerFuncT = typing.TypeVar(
     "ExceptionHandlerFuncT",
@@ -78,22 +78,22 @@ ExceptionHandlerFuncT = typing.TypeVar(
 )
 
 RichComponentT = typing.TypeVar("RichComponentT", bound=component_api.RichComponent)
-RichComponentType = typing.Type[component_api.RichComponent]
+RichComponentType: typing.TypeAlias = type[component_api.RichComponent]
 
-MessageComponents = typing.Union[
-    component_api.RichButton,
-    disnake.ui.Button[typing.Any],
-    component_api.RichSelect,
-    disnake.ui.StringSelect[typing.Any],
-    disnake.ui.ChannelSelect[typing.Any],
-    disnake.ui.RoleSelect[typing.Any],
-    disnake.ui.UserSelect[typing.Any],
-    disnake.ui.MentionableSelect[typing.Any],
-]
+MessageComponents: typing.TypeAlias = (
+    component_api.RichButton
+    | disnake.ui.Button[typing.Any]
+    | component_api.RichSelect
+    | disnake.ui.StringSelect[typing.Any]
+    | disnake.ui.ChannelSelect[typing.Any]
+    | disnake.ui.RoleSelect[typing.Any]
+    | disnake.ui.UserSelect[typing.Any]
+    | disnake.ui.MentionableSelect[typing.Any]
+)
 
 
 def _to_ui_component(
-    component: typing.Union[disnake.Button, disnake.BaseSelectMenu],
+    component: disnake.Button | disnake.BaseSelectMenu,
 ) -> disnake.ui.MessageUIComponent:
     if isinstance(component, disnake.Button):
         return disnake.ui.Button[None].from_component(component)
@@ -124,7 +124,7 @@ def _minimise_count(count: int) -> str:
     return byte.decode("latin-1")
 
 
-_COUNT_CHARS: typing.Final[typing.Tuple[str, ...]] = tuple(
+_COUNT_CHARS: typing.Final[tuple[str, ...]] = tuple(
     map(_minimise_count, range(25)),
 )
 _DEFAULT_SEP: typing.Final[str] = sys.intern("|")
@@ -285,23 +285,23 @@ class ComponentManager(component_api.ComponentManager):
         "wrap_callback",
     )
 
-    _bot: typing.Optional[AnyBot]
-    _children: typing.Set[ComponentManager]
+    _bot: AnyBot | None
+    _children: set[ComponentManager]
     _components: weakref.WeakValueDictionary[str, RichComponentType]
-    _count: typing.Optional[bool]
+    _count: bool | None
     _counter: int
     _identifiers: dict[str, str]
-    _module_data: typing.Dict[str, _ModuleData]
+    _module_data: dict[str, _ModuleData]
     _name: str
-    _sep: typing.Optional[str]
+    _sep: str | None
 
     def __init__(
         self,
         name: str,
         *,
-        count: typing.Optional[bool] = None,
-        sep: typing.Optional[str] = None,
-        bot: typing.Optional[commands.Bot] = None,
+        count: bool | None = None,
+        sep: str | None = None,
+        bot: commands.Bot | None = None,
     ) -> None:
         self._name = name
         self._children = set()
@@ -350,7 +350,7 @@ class ComponentManager(component_api.ComponentManager):
         return self._name
 
     @property
-    def children(self) -> typing.Set[ComponentManager]:  # noqa: D102
+    def children(self) -> set[ComponentManager]:  # noqa: D102
         # <<docstring inherited from api.components.ComponentManager>>
 
         return self._children
@@ -405,7 +405,7 @@ class ComponentManager(component_api.ComponentManager):
         return _recurse_parents_getattr(self, "_sep", _DEFAULT_SEP)
 
     @property
-    def parent(self) -> typing.Optional[ComponentManager]:  # noqa: D102
+    def parent(self) -> ComponentManager | None:  # noqa: D102
         # <<docstring inherited from api.components.ComponentManager>>
 
         if "." not in self.name:
@@ -435,7 +435,7 @@ class ComponentManager(component_api.ComponentManager):
     def get_identifier(  # noqa: D102
         self,
         custom_id: str,
-    ) -> typing.Tuple[str, typing.Sequence[str]]:
+    ) -> tuple[str, typing.Sequence[str]]:
         # <<docstring inherited from api.components.ComponentManager>>
 
         name, *params = custom_id.split(self.sep)
@@ -473,7 +473,7 @@ class ComponentManager(component_api.ComponentManager):
     async def parse_message_interaction(  # noqa: D102
         self,
         interaction: disnake.Interaction,
-    ) -> typing.Optional[component_api.RichComponent]:
+    ) -> component_api.RichComponent | None:
         # <<docstring inherited from api.components.ComponentManager>>
         if isinstance(interaction, disnake.MessageInteraction):
             return await self.parse_raw_component(interaction.component)
@@ -482,8 +482,8 @@ class ComponentManager(component_api.ComponentManager):
 
     async def parse_raw_component(
         self,
-        component: typing.Union[disnake.Button, disnake.BaseSelectMenu],
-    ) -> typing.Optional[component_api.RichComponent]:
+        component: disnake.Button | disnake.BaseSelectMenu,
+    ) -> component_api.RichComponent | None:
         """Parse a rich message component from a disnake raw component.
 
         .. note::
@@ -546,7 +546,7 @@ class ComponentManager(component_api.ComponentManager):
     async def parse_message_components(
         self,
         message: disnake.Message,
-    ) -> typing.Tuple[
+    ) -> tuple[
         typing.Sequence[typing.Sequence[MessageComponents]],
         typing.Sequence[component_api.RichComponent],
     ]:
@@ -582,14 +582,14 @@ class ComponentManager(component_api.ComponentManager):
             on the nested structure.
 
         """  # noqa: E501
-        new_rows: typing.List[typing.List[MessageComponents]] = []
-        rich_components: typing.List[component_api.RichComponent] = []
+        new_rows: list[list[MessageComponents]] = []
+        rich_components: list[component_api.RichComponent] = []
 
         current_component, current_component_id = _COMPONENT_CTX.get((None, None))
         should_test = current_component is not None
 
         for row in message.components:
-            new_row: typing.List[MessageComponents] = []
+            new_row: list[MessageComponents] = []
             new_rows.append(new_row)
 
             for component in row.children:
@@ -604,7 +604,7 @@ class ComponentManager(component_api.ComponentManager):
                     rich_components.append(new_component)
                     assert isinstance(
                         new_component,
-                        (component_api.RichButton, component_api.RichSelect),
+                        component_api.RichButton | component_api.RichSelect,
                     )
 
                 else:
@@ -634,17 +634,14 @@ class ComponentManager(component_api.ComponentManager):
             A disnake-compatible structure of sendable components.
 
         """
-        finalised: typing.List[typing.List[disnake.ui.MessageUIComponent]] = []
+        finalised: list[list[disnake.ui.MessageUIComponent]] = []
 
         for row in components:
-            new_row: typing.List[disnake.ui.MessageUIComponent] = []
+            new_row: list[disnake.ui.MessageUIComponent] = []
             finalised.append(new_row)
 
             for component in row:
-                if isinstance(
-                    component,
-                    (component_api.RichButton, component_api.RichSelect),
-                ):
+                if isinstance(component, component_api.RichButton | component_api.RichSelect):
                     new_row.append(await component.as_ui_component())  # pyright: ignore[reportArgumentType]
                 else:
                     new_row.append(component)
@@ -655,10 +652,10 @@ class ComponentManager(component_api.ComponentManager):
     @typing.overload
     def register(
         self,
-        component_type: typing.Type[RichComponentT],
+        component_type: type[RichComponentT],
         *,
-        identifier: typing.Optional[str] = None,
-    ) -> typing.Type[RichComponentT]: ...
+        identifier: str | None = None,
+    ) -> type[RichComponentT]: ...
 
     # Only identifier: nested decorator, return callable that registers and
     # returns the component.
@@ -666,18 +663,15 @@ class ComponentManager(component_api.ComponentManager):
     def register(
         self,
         *,
-        identifier: typing.Optional[str] = None,
-    ) -> typing.Callable[[typing.Type[RichComponentT]], typing.Type[RichComponentT]]: ...
+        identifier: str | None = None,
+    ) -> typing.Callable[[type[RichComponentT]], type[RichComponentT]]: ...
 
     def register(
         self,
-        component_type: typing.Optional[typing.Type[RichComponentT]] = None,
+        component_type: type[RichComponentT] | None = None,
         *,
-        identifier: typing.Optional[str] = None,
-    ) -> typing.Union[
-        typing.Type[RichComponentT],
-        typing.Callable[[typing.Type[RichComponentT]], typing.Type[RichComponentT]],
-    ]:
+        identifier: str | None = None,
+    ) -> type[RichComponentT] | typing.Callable[[type[RichComponentT]], type[RichComponentT]]:
         """Register a component to this component manager.
 
         This is the decorator interface to :meth:`register_component`.
@@ -686,18 +680,18 @@ class ComponentManager(component_api.ComponentManager):
             return self.register_component(component_type, identifier=identifier)
 
         def wrapper(
-            component_type: typing.Type[RichComponentT],
-        ) -> typing.Type[RichComponentT]:
+            component_type: type[RichComponentT],
+        ) -> type[RichComponentT]:
             return self.register_component(component_type, identifier=identifier)
 
         return wrapper
 
     def register_component(  # noqa: D102
         self,
-        component_type: typing.Type[RichComponentT],
+        component_type: type[RichComponentT],
         *,
-        identifier: typing.Optional[str] = None,
-    ) -> typing.Type[RichComponentT]:
+        identifier: str | None = None,
+    ) -> type[RichComponentT]:
         # <<docstring inherited from api.components.ComponentManager>>
         resolved_identifier = identifier or self.make_identifier(component_type)
         module_data = _ModuleData.from_object(component_type)
@@ -1039,9 +1033,9 @@ class ComponentManager(component_api.ComponentManager):
         identifier: str,
         *,
         as_root: bool = True,
-        label: omit.Omissible[typing.Optional[str]] = omit.Omitted,
+        label: omit.Omissible[str | None] = omit.Omitted,
         style: omit.Omissible[disnake.ButtonStyle] = omit.Omitted,
-        emoji: omit.Omissible[typing.Optional[component_api.AnyEmoji]] = omit.Omitted,
+        emoji: omit.Omissible[component_api.AnyEmoji | None] = omit.Omitted,
         disabled: omit.Omissible[bool] = omit.Omitted,
         **kwargs: object,
     ) -> component_api.RichButton:
@@ -1111,11 +1105,11 @@ class ComponentManager(component_api.ComponentManager):
         identifier: str,
         *,
         as_root: bool = True,
-        placeholder: omit.Omissible[typing.Optional[str]] = omit.Omitted,
+        placeholder: omit.Omissible[str | None] = omit.Omitted,
         min_values: omit.Omissible[int] = omit.Omitted,
         max_values: omit.Omissible[int] = omit.Omitted,
         disabled: omit.Omissible[bool] = omit.Omitted,
-        options: omit.Omissible[typing.List[disnake.SelectOption]] = omit.Omitted,
+        options: omit.Omissible[list[disnake.SelectOption]] = omit.Omitted,
         **kwargs: object,
     ) -> component_api.RichSelect:
         """Make an instance of the string select class with the provided identifier.
@@ -1188,7 +1182,7 @@ class ComponentManager(component_api.ComponentManager):
         raise TypeError(msg)
 
 
-_MANAGER_STORE: typing.Final[typing.Dict[str, ComponentManager]] = {}
+_MANAGER_STORE: typing.Final[dict[str, ComponentManager]] = {}
 
 
 def _recurse_parents(manager: ComponentManager) -> typing.Iterator[ComponentManager]:
@@ -1210,7 +1204,7 @@ def _recurse_parents_getattr(
     return default
 
 
-def get_manager(name: typing.Optional[str] = None) -> ComponentManager:
+def get_manager(name: str | None = None) -> ComponentManager:
     """Get a manager by name, or create one if it does not yet exist.
 
     Calling :func:`get_manager` without specifying a name returns the root

@@ -32,7 +32,7 @@ class Parser(typing.Protocol[ParserType]):
     __slots__: typing.Sequence[str] = ()
 
     @classmethod
-    def default(cls, target_type: typing.Type[ParserType], /) -> typing_extensions.Self:
+    def default(cls, target_type: type[ParserType], /) -> typing_extensions.Self:
         """Return the default implementation of this parser type.
 
         By default, this will just create the parser class with no arguments,

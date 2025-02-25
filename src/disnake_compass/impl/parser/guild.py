@@ -128,7 +128,7 @@ class InviteParser(parser_base.Parser[disnake.Invite]):
     """Whether to include the number of times an invite was used."""
     with_expiration: bool = attrs.field(default=True)
     """Whether to include when the invite expires."""
-    guild_scheduled_event_id: typing.Optional[int] = attrs.field(default=None)
+    guild_scheduled_event_id: int | None = attrs.field(default=None)
     """The ID of the scheduled event to include in the invite."""
 
     async def loads(self, argument: str) -> disnake.Invite:

@@ -34,13 +34,13 @@ def make_linkcode_resolver(
     module_path: str,
     repo_url: str,
     git_ref: str,
-) -> typing.Callable[[str, typing.Mapping[str, typing.Any]], typing.Optional[str]]:
+) -> typing.Callable[[str, typing.Mapping[str, typing.Any]], str | None]:
     """Return a linkcode resolver for the provided module path and repo data."""
 
     def linkcode_resolve(
         domain: str,
         info: typing.Mapping[str, typing.Any],
-    ) -> typing.Optional[str]:
+    ) -> str | None:
         if domain != "py":
             return None
 

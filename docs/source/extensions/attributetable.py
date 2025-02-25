@@ -79,7 +79,7 @@ def visit_attributetablebadge_node(self: HTMLTranslator, node: nodes.Element) ->
     ):
         msg = f"badge_type {badge_type} is currently unsupported"
         raise RuntimeError(msg)
-    attributes: typing.Dict[typing.Literal["class"], str] = {
+    attributes: dict[typing.Literal["class"], str] = {
         "class": f"badge-{badge_type}",
     }
     self.body.append(self.starttag(node, "span", **attributes))
@@ -122,7 +122,7 @@ class PyAttributeTable(SphinxDirective):
     final_argument_whitespace = False
     option_spec = {}  # noqa: RUF012
 
-    def parse_name(self, content: str) -> typing.Tuple[str, typing.Optional[str]]:
+    def parse_name(self, content: str) -> tuple[str, str | None]:
         match = _name_parser_regex.match(content)
         path, name = match.groups() if match else (None, None)
         if path:
@@ -137,7 +137,7 @@ class PyAttributeTable(SphinxDirective):
 
         return modulename, name
 
-    def run(self) -> typing.List[nodes.Node]:
+    def run(self) -> list[nodes.Node]:
         content = typing.cast(str, self.arguments[0]).strip()
         node = attributetableplaceholder("")
         modulename, name = self.parse_name(content)
@@ -148,10 +148,10 @@ class PyAttributeTable(SphinxDirective):
         return [node]
 
 
-def build_lookup_table(env: BuildEnvironment) -> typing.Dict[str, typing.List[str]]:
+def build_lookup_table(env: BuildEnvironment) -> dict[str, list[str]]:
     # Given an environment, load up a lookup table of
     # full-class-name: objects
-    result: typing.DefaultDict[str, typing.List[str]] = collections.defaultdict(list)
+    result: collections.defaultdict[str, list[str]] = collections.defaultdict(list)
     domain = env.domains["py"]
 
     ignored = {
@@ -174,7 +174,7 @@ def build_lookup_table(env: BuildEnvironment) -> typing.Dict[str, typing.List[st
 class TableElement(typing.NamedTuple):
     fullname: str
     label: str
-    badge: typing.Optional[attributetablebadge]
+    badge: attributetablebadge | None
 
 
 def process_attributetable(app: Sphinx, doctree: nodes.document, _docname: str) -> None:
@@ -210,7 +210,7 @@ def process_attributetable(app: Sphinx, doctree: nodes.document, _docname: str) 
             node.replace_self([table])
 
 
-def _is_classvar(ann: typing.Union[str, type]) -> bool:
+def _is_classvar(ann: str | type) -> bool:
     if isinstance(ann, str):
         return ann.startswith(("typing.ClassVar", "typing_extensions.ClassVar"))
 
@@ -218,15 +218,15 @@ def _is_classvar(ann: typing.Union[str, type]) -> bool:
 
 
 def get_class_results(
-    lookup: typing.Dict[str, typing.List[str]],
+    lookup: dict[str, list[str]],
     modulename: str,
     name: str,
     fullname: str,
-) -> typing.Dict[str, typing.List[TableElement]]:
+) -> dict[str, list[TableElement]]:
     module = importlib.import_module(modulename)
     cls: type = getattr(module, name)
 
-    groups: typing.Dict[str, typing.List[TableElement]] = {
+    groups: dict[str, list[TableElement]] = {
         "Attributes": [],
         "Methods": [],
     }
@@ -236,7 +236,7 @@ def get_class_results(
     except KeyError:
         return groups
 
-    anns: typing.Dict[str, typing.Any] = {}
+    anns: dict[str, typing.Any] = {}
 
     for attr in members:
         attrlookup = f"{fullname}.{attr}"
@@ -287,7 +287,7 @@ def get_class_results(
 
 def class_results_to_node(
     key: str,
-    elements: typing.List[TableElement],
+    elements: list[TableElement],
     fullname: str,
 ) -> attributetablecolumn:
     titleref = nodes.reference(
@@ -319,7 +319,7 @@ def class_results_to_node(
     return attributetablecolumn("", title, ul)
 
 
-def setup(app: Sphinx) -> typing.Dict[str, bool]:
+def setup(app: Sphinx) -> dict[str, bool]:
     app.add_directive("attributetable", PyAttributeTable)
     app.add_node(
         attributetable,

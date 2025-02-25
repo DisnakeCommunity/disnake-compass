@@ -20,9 +20,9 @@ __all__: typing.Sequence[str] = (
 
 _T = typing.TypeVar("_T")
 
-AnyBot = typing.Union[commands.Bot, commands.InteractionBot]
-AnyEmoji = typing.Union[str, disnake.PartialEmoji, disnake.Emoji]
-MaybeCoroutine = typing.Union[_T, typing.Coroutine[None, None, _T]]
+AnyBot: typing.TypeAlias = commands.Bot | commands.InteractionBot
+AnyEmoji: typing.TypeAlias = str | disnake.PartialEmoji | disnake.Emoji
+MaybeCoroutine: typing.TypeAlias = _T | typing.Coroutine[None, None, _T]
 
 ComponentT = typing.TypeVar("ComponentT", bound="RichComponent")
 """A type hint for a (subclass of) a disnake-compass component.
@@ -44,7 +44,7 @@ class RichComponent(typing.Protocol):
 
     event: typing.ClassVar[str]
     factory: typing.ClassVar[ComponentFactory[RichComponent]]
-    manager: typing.ClassVar[typing.Optional[ComponentManager]]
+    manager: typing.ClassVar[ComponentManager | None]
 
     async def callback(self, interaction: disnake.Interaction, /) -> None:
         """Run the component callback.
@@ -78,7 +78,7 @@ class RichButton(RichComponent, typing.Protocol):
 
     __slots__: typing.Sequence[str] = ()
 
-    label: typing.Optional[str]
+    label: str | None
     """The label of the component.
 
     Either or both this field or the ``emoji`` field must be set.
@@ -88,7 +88,7 @@ class RichButton(RichComponent, typing.Protocol):
 
     This dictates how the button is displayed on discord.
     """
-    emoji: typing.Optional[AnyEmoji]
+    emoji: AnyEmoji | None
     """The emoji that is to be displayed on this button.
 
     Either or both this field or the ``emoji`` field must be set.
@@ -111,7 +111,7 @@ class RichSelect(RichComponent, typing.Protocol):
 
     __slots__: typing.Sequence[str] = ()
 
-    placeholder: typing.Optional[str]
+    placeholder: str | None
     """The placeholder of the component.
 
     This shows when nothing is selected, or shows nothing if set to
@@ -172,7 +172,7 @@ class ComponentManager(typing.Protocol):
         ...
 
     @property
-    def components(self) -> typing.Mapping[str, typing.Type[RichComponent]]:
+    def components(self) -> typing.Mapping[str, type[RichComponent]]:
         """The components registered to this manager or any of its children.
 
         In case a custom implementation is made, special care must be taken to
@@ -181,14 +181,14 @@ class ComponentManager(typing.Protocol):
         ...
 
     @property
-    def parent(self) -> typing.Optional[ComponentManager]:
+    def parent(self) -> ComponentManager | None:
         """The parent of this manager.
 
         Returns :data:`None` in case this is the root manager.
         """
         ...
 
-    def make_identifier(self, component_type: typing.Type[RichComponent]) -> str:
+    def make_identifier(self, component_type: type[RichComponent]) -> str:
         """Make an identifier for the provided component class.
 
         This is used to store the component in :attr:`components`, and to
@@ -208,7 +208,7 @@ class ComponentManager(typing.Protocol):
         """
         ...
 
-    def get_identifier(self, custom_id: str) -> typing.Tuple[str, typing.Sequence[str]]:
+    def get_identifier(self, custom_id: str) -> tuple[str, typing.Sequence[str]]:
         """Extract the identifier and parameters from a custom id.
 
         This is used to check whether the identifier is registered in
@@ -244,7 +244,7 @@ class ComponentManager(typing.Protocol):
     async def parse_message_interaction(
         self,
         interaction: disnake.MessageInteraction,
-    ) -> typing.Optional[RichComponent]:
+    ) -> RichComponent | None:
         """Parse an interaction and construct a rich component from it.
 
         In case the interaction does not match any component registered to this
@@ -270,8 +270,8 @@ class ComponentManager(typing.Protocol):
 
     def register_component(
         self,
-        component_type: typing.Type[ComponentT],
-    ) -> typing.Type[ComponentT]:
+        component_type: type[ComponentT],
+    ) -> type[ComponentT]:
         r"""Register a component to this component manager.
 
         This returns the provided class, such that this method can serve as a
@@ -290,7 +290,7 @@ class ComponentManager(typing.Protocol):
         """
         ...
 
-    def deregister_component(self, component_type: typing.Type[RichComponent]) -> None:
+    def deregister_component(self, component_type: type[RichComponent]) -> None:
         """Deregister a component from this component manager.
 
         After deregistration, the component will no be tracked, and its
@@ -388,7 +388,7 @@ class ComponentFactory(typing.Protocol[ComponentT]):
     @classmethod
     def from_component(
         cls,
-        component: typing.Type[ComponentT],
+        component: type[ComponentT],
         /,
     ) -> typing_extensions.Self:
         """Create a component factory from the provided component.
@@ -444,7 +444,7 @@ class ComponentFactory(typing.Protocol[ComponentT]):
     async def build_component(
         self,
         params: typing.Sequence[str],
-        component_params: typing.Optional[typing.Mapping[str, object]],
+        component_params: typing.Mapping[str, object] | None,
     ) -> ComponentT:
         """Create a new component instance from the provided interaction.
 

@@ -1,7 +1,6 @@
 """A simple example on the use of component managers with disnake-compass."""
 
 import os
-import typing
 
 import disnake
 import disnake_compass
@@ -18,7 +17,7 @@ deeply_nested_manager = disnake_compass.get_manager("foo.bar.baz")
 
 @foo_manager.register
 class FooButton(disnake_compass.RichButton):
-    label: typing.Optional[str] = "0"
+    label: str | None = "0"
 
     count: int
 
@@ -32,7 +31,7 @@ class FooButton(disnake_compass.RichButton):
 
 @deeply_nested_manager.register
 class FooBarBazButton(disnake_compass.RichButton):
-    label: typing.Optional[str] = "0"
+    label: str | None = "0"
 
     count: int
 
@@ -63,7 +62,7 @@ async def wrapper(
 
 
 class InvalidUserError(Exception):
-    def __init__(self, message: str, user: typing.Union[disnake.User, disnake.Member]) -> None:
+    def __init__(self, message: str, user: disnake.User | disnake.Member) -> None:
         super().__init__(message)
         self.message = message
         self.user = user

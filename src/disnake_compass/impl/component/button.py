@@ -12,7 +12,7 @@ from disnake_compass.impl.component import base as component_base
 __all__: typing.Sequence[str] = ("RichButton",)
 
 
-_AnyEmoji = typing.Union[str, disnake.PartialEmoji, disnake.Emoji]
+_AnyEmoji: typing.TypeAlias = str | disnake.PartialEmoji | disnake.Emoji
 
 
 # God knows why this is needed, but if I don't do this, classes inheriting from
@@ -47,9 +47,9 @@ class RichButton(
 
     event: typing.ClassVar[str] = "on_button_click"
 
-    label: typing.Optional[str] = fields.internal(default=None)
+    label: str | None = fields.internal(default=None)
     style: disnake.ButtonStyle = fields.internal(default=disnake.ButtonStyle.secondary)
-    emoji: typing.Optional[_AnyEmoji] = fields.internal(default=None)
+    emoji: _AnyEmoji | None = fields.internal(default=None)
     disabled: bool = fields.internal(default=False)
 
     async def as_ui_component(self) -> disnake.ui.Button[None]:  # noqa: D102

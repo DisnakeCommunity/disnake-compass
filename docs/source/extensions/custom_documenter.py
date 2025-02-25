@@ -20,7 +20,7 @@ from sphinx.locale import _
 class ClassDocumenterWithExtraSteps(autodoc.ClassDocumenter):
     priority = autodoc.ClassDocumenter.priority + 1
 
-    order_display_map: typing.ClassVar[typing.Dict[int, str]] = {
+    order_display_map: typing.ClassVar[dict[int, str]] = {
         50: _("Methods"),
         60: _("Attributes"),
     }
@@ -109,7 +109,7 @@ class EnumDocumenter(ClassDocumenterWithExtraSteps):
     priority = 20
     class_xref = ":class:`~enum.Enum`"
 
-    order_display_map: typing.ClassVar[typing.Dict[int, str]] = {
+    order_display_map: typing.ClassVar[dict[int, str]] = {
         50: "METHODS",
         60: "MEMBERS",
     }
@@ -129,7 +129,7 @@ class EnumDocumenter(ClassDocumenterWithExtraSteps):
     ) -> bool:
         return isinstance(member, enum.EnumMeta) and not issubclass(member, enum.Flag)
 
-    def add_content(self, more_content: typing.Optional[autodoc.StringList]) -> None:
+    def add_content(self, more_content: autodoc.StringList | None) -> None:
         super().add_content(more_content)
 
         source_name = self.get_sourcename()
@@ -157,7 +157,7 @@ class FlagDocumenter(EnumDocumenter):
         return isinstance(member, enum.EnumMeta) and issubclass(member, enum.Flag)
 
 
-def setup(app: sphinx.application.Sphinx) -> typing.Dict[str, bool]:
+def setup(app: sphinx.application.Sphinx) -> dict[str, bool]:
     app.setup_extension("sphinx.ext.autodoc")
     app.add_autodocumenter(ClassDocumenterWithExtraSteps, override=True)
     app.add_autodocumenter(EnumDocumenter)

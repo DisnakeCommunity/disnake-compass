@@ -1,7 +1,6 @@
 """A simple example on the use of buttons with disnake-compass."""
 
 import os
-import typing
 
 import disnake
 import disnake_compass
@@ -15,7 +14,7 @@ manager.add_to_bot(bot)
 
 @manager.register
 class MyButton(disnake_compass.RichButton):
-    label: typing.Optional[str] = "0"
+    label: str | None = "0"
 
     count: int = 0
 

@@ -33,7 +33,7 @@ class OptionsToggleButton(disnake_compass.RichButton):
         return [disnake.SelectOption(label=option) for option in self.options]
 
     def update_select(self, components: typing.Sequence[disnake_compass.api.RichComponent]):
-        select: typing.Optional[DynamicSelectMenu] = None
+        select: DynamicSelectMenu | None = None
         options: list[disnake.SelectOption] = []
 
         for component in components:

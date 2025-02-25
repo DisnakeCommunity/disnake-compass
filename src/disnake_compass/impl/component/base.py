@@ -28,11 +28,11 @@ __all__: typing.Sequence[str] = ("ComponentBase",)
 
 _T = typing.TypeVar("_T")
 
-MaybeCoroutine = typing.Union[_T, typing.Coroutine[None, None, _T]]
+MaybeCoroutine: typing.TypeAlias = _T | typing.Coroutine[None, None, _T]
 _AnyAttr: typing_extensions.TypeAlias = "attr.Attribute[typing.Any]"
 
 
-def _is_attrs_pass(namespace: typing.Dict[str, typing.Any]) -> bool:
+def _is_attrs_pass(namespace: dict[str, typing.Any]) -> bool:
     """Check if attrs has already influenced the class' namespace.
 
     Note that we check the namespace instead of using `attr.has`, because
@@ -45,10 +45,10 @@ def _is_attrs_pass(namespace: typing.Dict[str, typing.Any]) -> bool:
 
 def _determine_parser(
     attribute: _AnyAttr,
-    overwrite: typing.Optional[_AnyAttr],
+    overwrite: _AnyAttr | None,
     *,
     required: bool = True,
-) -> typing.Optional[parser_api.Parser[typing.Any]]:
+) -> parser_api.Parser[typing.Any] | None:
     parser = fields.get_parser(attribute)
     if parser:
         return parser
@@ -107,13 +107,13 @@ def _is_custom_id_field(field: _AnyAttr) -> bool:
 
 def _field_transformer(
     cls: type,
-    attributes: typing.List[_AnyAttr],
-) -> typing.List[_AnyAttr]:
-    super_attributes: typing.Dict[str, _AnyAttr] = (
+    attributes: list[_AnyAttr],
+) -> list[_AnyAttr]:
+    super_attributes: dict[str, _AnyAttr] = (
         {field.name: field for field in fields.get_fields(cls)} if attr.has(cls) else {}
     )
 
-    finalised_attributes: typing.List[_AnyAttr] = []
+    finalised_attributes: list[_AnyAttr] = []
     for attribute in attributes:
         super_attribute = super_attributes.get(attribute.name)
 
@@ -179,7 +179,7 @@ class ComponentMeta(typing._ProtocolMeta):  # pyright: ignore[reportPrivateUsage
         metacls,
         name: str,
         bases: tuple[type, ...],
-        namespace: typing.Dict[str, typing.Any],
+        namespace: dict[str, typing.Any],
     ) -> ComponentMeta:
         # NOTE: This is run twice for each new class; once for the actual class
         #       definition, and once more by attr.define(). We ensure we only
@@ -189,7 +189,7 @@ class ComponentMeta(typing._ProtocolMeta):  # pyright: ignore[reportPrivateUsage
         namespace.setdefault("__slots__", ())
 
         cls = typing.cast(
-            "typing.Type[ComponentBase]",
+            "type[ComponentBase]",
             super().__new__(metacls, name, bases, namespace),
         )
 
@@ -220,8 +220,8 @@ class ComponentBase(
 ):
     """Overarching base class for any kind of component."""
 
-    _parent: typing.ClassVar[typing.Optional[typing.Type[typing.Any]]] = None
-    manager: typing.ClassVar[typing.Optional[component_api.ComponentManager]] = None
+    _parent: typing.ClassVar[type[typing.Any] | None] = None
+    manager: typing.ClassVar[component_api.ComponentManager | None] = None
     """The manager to which this component is registered.
 
     Defaults to :obj:`None` if this component is not registered to any manager.
