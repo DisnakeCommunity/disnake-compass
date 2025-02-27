@@ -59,7 +59,9 @@ class MySelect(disnake_compass.RichStringSelect):
     colour_middle: str = BLACK_SQUARE
     colour_right: str = BLACK_SQUARE
 
-    async def callback(self, interaction: disnake.MessageInteraction[disnake.Client]) -> None:
+    async def callback(
+        self, interaction: disnake.MessageInteraction[disnake.Client]
+    ) -> None:
         assert interaction.values is not None
         selected = interaction.values[0]
 

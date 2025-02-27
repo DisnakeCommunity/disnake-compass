@@ -4,8 +4,8 @@ import enum
 import typing
 
 import attrs
-
 import disnake
+
 from disnake_compass.api import parser as parser_api
 from disnake_compass.impl.parser import base as parser_base
 

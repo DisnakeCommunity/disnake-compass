@@ -9,10 +9,10 @@ import sys
 import typing
 import weakref
 
-import attr
+import attrs
+import disnake
 import typing_extensions
 
-import disnake
 from disnake_compass import fields
 from disnake_compass.api import component as component_api
 from disnake_compass.internal import di, omit
@@ -194,7 +194,7 @@ async def default_exception_handler(
     return True
 
 
-@attr.define
+@attrs.define
 class _ModuleData:
     name: str
     id: int

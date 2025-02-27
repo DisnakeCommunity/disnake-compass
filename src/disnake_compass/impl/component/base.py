@@ -11,7 +11,7 @@ from __future__ import annotations
 import sys
 import typing
 
-import attr
+import attrs
 import typing_extensions
 
 from disnake_compass import fields as fields
@@ -29,14 +29,14 @@ __all__: typing.Sequence[str] = ("ComponentBase",)
 _T = typing.TypeVar("_T")
 
 MaybeCoroutine: typing.TypeAlias = _T | typing.Coroutine[None, None, _T]
-_AnyAttr: typing_extensions.TypeAlias = "attr.Attribute[typing.Any]"
+_AnyAttr: typing_extensions.TypeAlias = "attrs.Attribute[typing.Any]"
 
 
 def _is_attrs_pass(namespace: dict[str, typing.Any]) -> bool:
     """Check if attrs has already influenced the class' namespace.
 
-    Note that we check the namespace instead of using `attr.has`, because
-    `attr.has` would always return `True` for a class inheriting an attrs class,
+    Note that we check the namespace instead of using `attrs.has`, because
+    `attrs.has` would always return `True` for a class inheriting an attrs class,
     and we specifically need to distinguish between the two passes inside
     `ComponentMeta.__new__`.
     """
@@ -110,7 +110,7 @@ def _field_transformer(
     attributes: list[_AnyAttr],
 ) -> list[_AnyAttr]:
     super_attributes: dict[str, _AnyAttr] = (
-        {field.name: field for field in fields.get_fields(cls)} if attr.has(cls) else {}
+        {field.name: field for field in fields.get_fields(cls)} if attrs.has(cls) else {}
     )
 
     finalised_attributes: list[_AnyAttr] = []
@@ -182,7 +182,7 @@ class ComponentMeta(typing._ProtocolMeta):  # pyright: ignore[reportPrivateUsage
         namespace: dict[str, typing.Any],
     ) -> ComponentMeta:
         # NOTE: This is run twice for each new class; once for the actual class
-        #       definition, and once more by attr.define(). We ensure we only
+        #       definition, and once more by attrs.define(). We ensure we only
         #       run the full class creation logic once.
 
         # Set slots if attrs hasn't already done so.
@@ -197,7 +197,7 @@ class ComponentMeta(typing._ProtocolMeta):  # pyright: ignore[reportPrivateUsage
         if _is_attrs_pass(namespace):
             return cls
 
-        cls = attr.define(
+        cls = attrs.define(
             cls,
             slots=True,
             kw_only=True,

@@ -13,9 +13,8 @@ import re
 import subprocess
 import sys
 
-import sphinx.config
-
 import disnake
+import sphinx.config
 from disnake.ext import commands
 
 

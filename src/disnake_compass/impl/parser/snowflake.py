@@ -5,8 +5,8 @@ from __future__ import annotations
 import typing
 
 import attrs
-
 import disnake
+
 from disnake_compass.impl.parser import base as parser_base
 from disnake_compass.impl.parser import builtins as builtins_parsers
 

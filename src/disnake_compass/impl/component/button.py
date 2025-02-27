@@ -5,6 +5,7 @@ from __future__ import annotations
 import typing
 
 import disnake
+
 from disnake_compass import fields
 from disnake_compass.api import component as component_api
 from disnake_compass.impl.component import base as component_base
