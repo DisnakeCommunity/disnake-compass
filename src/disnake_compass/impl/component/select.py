@@ -5,8 +5,8 @@ from __future__ import annotations
 import typing
 
 import attr
-
 import disnake
+
 from disnake_compass import fields
 from disnake_compass.api import component as component_api
 from disnake_compass.impl.component import base as component_base
@@ -34,7 +34,7 @@ class BaseSelect(
 
     event: typing.ClassVar[str] = "on_dropdown"
 
-    placeholder: typing.Optional[str] = fields.internal(default=None)
+    placeholder: str | None = fields.internal(default=None)
     min_values: int = fields.internal(default=1)
     max_values: int = fields.internal(default=1)
     disabled: bool = fields.internal(default=False)
@@ -61,8 +61,8 @@ class RichStringSelect(BaseSelect, typing.Protocol):
     keyword-only arguments.
     """
 
-    options: typing.List[disnake.SelectOption] = fields.internal(
-        default=attr.Factory(list),  # pyright: ignore[reportUnknownArgumentType]
+    options: list[disnake.SelectOption] = fields.internal(
+        default=attr.Factory(list[disnake.SelectOption]),
     )
     """The options for this select menu.
 
@@ -218,7 +218,7 @@ class RichChannelSelect(BaseSelect, typing.Protocol):
     keyword-only arguments.
     """
 
-    channel_types: typing.Optional[typing.List[disnake.ChannelType]] = fields.internal(
+    channel_types: list[disnake.ChannelType] | None = fields.internal(
         default=None,
     )
     """The channel types to allow for this select menu.

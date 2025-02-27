@@ -12,11 +12,9 @@ import os
 import re
 import subprocess
 import sys
-import typing
-
-import sphinx.config
 
 import disnake
+import sphinx.config
 from disnake.ext import commands
 
 
@@ -162,13 +160,13 @@ always_use_bars_union = True
 typehints_fully_qualified = False
 
 # Customise display for specific types.
-aliases: typing.Dict[object, str] = {
+aliases: dict[object, str] = {
     # Idk why this is needed, but it is...
     disnake.ButtonStyle: ":class:`~disnake.ButtonStyle`",
 }
 
 
-def typehints_formatter(ann: object, _: sphinx.config.Config) -> typing.Optional[str]:
+def typehints_formatter(ann: object, _: sphinx.config.Config) -> str | None:
     """Format typehints."""
     if typehint := aliases.get(ann):
         return typehint

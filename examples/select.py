@@ -12,7 +12,7 @@ from disnake.ext import commands
 bot = commands.InteractionBot()
 
 manager = disnake_compass.get_manager()
-manager.add_to_bot(bot)
+manager.add_to_client(bot)
 
 
 LEFT = "\N{BLACK LEFT-POINTING TRIANGLE}\N{VARIATION SELECTOR-16}"
@@ -50,7 +50,7 @@ COLOUR_OPTIONS = [
 
 @manager.register
 class MySelect(disnake_compass.RichStringSelect):
-    placeholder: typing.Optional[str] = "Please select a square."
+    placeholder: str | None = "Please select a square."
     options: typing.List[disnake.SelectOption] = SLOT_OPTIONS
 
     slot: str = "0"
@@ -59,7 +59,7 @@ class MySelect(disnake_compass.RichStringSelect):
     colour_middle: str = BLACK_SQUARE
     colour_right: str = BLACK_SQUARE
 
-    async def callback(self, interaction: disnake.MessageInteraction) -> None:
+    async def callback(self, interaction: disnake.MessageInteraction[disnake.Client]) -> None:
         assert interaction.values is not None
         selected = interaction.values[0]
 
@@ -95,8 +95,8 @@ class MySelect(disnake_compass.RichStringSelect):
         return f"{self.colour_left}{self.colour_middle}{self.colour_right}\n"
 
 
-@bot.slash_command()  # pyright: ignore  # still some unknowns in disnake
-async def test_select(interaction: disnake.CommandInteraction) -> None:
+@bot.slash_command()
+async def test_select(interaction: disnake.CommandInteraction[disnake.Client]) -> None:
     my_select = MySelect()
     await interaction.response.send_message(
         my_select.render_colours(),

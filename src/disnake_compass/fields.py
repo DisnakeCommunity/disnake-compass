@@ -58,7 +58,7 @@ _ALL_FIELD_TYPES._name_ = "ALL()"  # This makes it render nicer in docs.
 
 def get_parser(
     field: attrs.Attribute[typing.Any],
-) -> typing.Optional[parser_api.Parser[typing.Any]]:
+) -> parser_api.Parser[typing.Any] | None:
     """Get the user-provided parser of the provided field.
 
     Parameters
@@ -79,7 +79,7 @@ def get_parser(
 
 def get_field_type(
     field: attrs.Attribute[typing.Any],
-    default: typing.Optional[FieldType] = None,
+    default: FieldType | None = None,
 ) -> FieldType:
     """Get the :class:`FieldType` of the field.
 
@@ -164,9 +164,9 @@ def get_fields(
 
 
 def field(
-    default: typing.Union[_T, attrs.NothingType] = attrs.NOTHING,
+    default: _T | attrs.NothingType = attrs.NOTHING,
     *,
-    parser: typing.Optional[parser_api.Parser[_T]] = None,
+    parser: parser_api.Parser[_T] | None = None,
 ) -> _T:
     r"""Define a custom ID field for the component.
 

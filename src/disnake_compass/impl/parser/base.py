@@ -19,17 +19,17 @@ __all__: typing.Sequence[str] = (
 
 ParserT = typing.TypeVar("ParserT", bound=parser_api.Parser)
 
-_PARSERS: typing.Dict[type, typing.Type[parser_api.Parser[typing.Any]]] = {}
-_REV_PARSERS: typing.Dict[
-    typing.Type[parser_api.Parser[typing.Any]],
-    typing.Tuple[type, ...],
+_PARSERS: dict[type, type[parser_api.Parser[typing.Any]]] = {}
+_REV_PARSERS: dict[
+    type[parser_api.Parser[typing.Any]],
+    tuple[type, ...],
 ] = {}
-_PARSER_PRIORITY: typing.Dict[typing.Type[parser_api.Parser[typing.Any]], int] = {}
+_PARSER_PRIORITY: dict[type[parser_api.Parser[typing.Any]], int] = {}
 
 
 def _issubclass(
     cls: type,
-    class_or_tuple: typing.Union[type, typing.Tuple[type, ...]],
+    class_or_tuple: type | tuple[type, ...],
 ) -> bool:
     try:
         return issubclass(cls, class_or_tuple)
@@ -42,8 +42,8 @@ def _issubclass(
 
 
 def register_parser(
-    parser: typing.Type[parser_api.Parser[parser_api.ParserType]],
-    *types: typing.Type[parser_api.ParserType],
+    parser: type[parser_api.Parser[parser_api.ParserType]],
+    *types: type[parser_api.ParserType],
     priority: int = 0,
     force: bool = True,
 ) -> None:
@@ -79,10 +79,10 @@ def register_parser(
 
 
 def register_parser_for(
-    *is_default_for: typing.Type[typing.Any],
+    *is_default_for: type[typing.Any],
     priority: int = 0,
-) -> typing.Callable[[typing.Type[ParserT]], typing.Type[ParserT]]:
-    def wrapper(cls: typing.Type[ParserT]) -> typing.Type[ParserT]:
+) -> typing.Callable[[type[ParserT]], type[ParserT]]:
+    def wrapper(cls: type[ParserT]) -> type[ParserT]:
         register_parser(cls, *is_default_for, priority=priority)
         return cls
 
@@ -90,8 +90,8 @@ def register_parser_for(
 
 
 def _get_parser_type(
-    type_: typing.Type[parser_api.ParserType],
-) -> typing.Type[parser_api.Parser[parser_api.ParserType]]:
+    type_: type[parser_api.ParserType],
+) -> type[parser_api.Parser[parser_api.ParserType]]:
     # Fast lookup...
     if type_ in _PARSERS:
         return _PARSERS[type_]
@@ -111,7 +111,7 @@ def _get_parser_type(
 
 # TODO: Maybe cache this?
 def get_parser(  # noqa: D417
-    type_: typing.Type[parser_api.ParserType],
+    type_: type[parser_api.ParserType],
 ) -> parser_api.Parser[parser_api.ParserType]:
     r"""Get the default parser for the provided type.
 
@@ -165,7 +165,7 @@ class Parser(
         return cls()
 
     @classmethod
-    def default_types(cls) -> typing.Tuple[type, ...]:
+    def default_types(cls) -> tuple[type, ...]:
         """Return the types for which this parser type is the default implementation.
 
         Returns

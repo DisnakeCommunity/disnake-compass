@@ -9,7 +9,7 @@ from disnake.ext import commands
 bot = commands.InteractionBot()
 
 manager = disnake_compass.get_manager()
-manager.add_to_bot(bot)
+manager.add_to_client(bot)
 
 
 @manager.register
@@ -17,7 +17,7 @@ class CustomisableSelect(disnake_compass.RichStringSelect):
     def __attrs_post_init__(self) -> None:
         self.max_values = len(self.options)
 
-    async def callback(self, interaction: disnake.MessageInteraction) -> None:
+    async def callback(self, interaction: disnake.MessageInteraction[disnake.Client]) -> None:
         selection = (
             "\n".join(f"- {value}" for value in interaction.values)
             if interaction.values
@@ -30,8 +30,10 @@ class CustomisableSelect(disnake_compass.RichStringSelect):
         )
 
 
-@bot.slash_command()  # pyright: ignore
-async def make_select(interaction: disnake.CommandInteraction, options: str) -> None:
+@bot.slash_command()
+async def make_select(
+    interaction: disnake.CommandInteraction[disnake.Client], options: str
+) -> None:
     if not options.strip():
         await interaction.response.send_message("You must specify at least one option!")
         return

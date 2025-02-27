@@ -4,58 +4,52 @@ on:
   pull_request:
 
 jobs:
-  validate:
+  pyright:
     runs-on: ubuntu-latest
+
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      # Always use python 3.12 to manage poetry, then use matrix python version
-      # for the actual poetry venv.
-      - name: Set up python 3.12
-        id: setup-python
-        uses: actions/setup-python@v5
+      - name: Bootstrap disnake-compass
+        uses: ./.github/actions/bootstrap
         with:
-          python-version: 3.12
-
-      - name: Install poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: |
-          poetry env use ${{ matrix.python-version }}
-          poetry install --no-interaction --no-root --without docs
-
-      - name: Install disnake_compass
-        run: poetry install --no-interaction --only-root
-
-      - name: Activate venv
-        run: source .venv/bin/activate
+          python-version: ${{ matrix.python-version }}
 
       - name: Run pyright
-        run: poetry run pyright . --pythonversion ${{ matrix.python-version }}
+        run: poetry run pyright .
 
-        # Only run ruff once.
+  ruff-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Bootstrap disnake-compass
+        uses: ./.github/actions/bootstrap
+        with:
+          python-version: '3.10'
+
       - name: Run ruff linter
-        if: matrix.python-version == '3.8'
-        run: poetry run ruff check --fix --exit-non-zero-on-fix --target-version py38
+        run: poetry run ruff check --fix --exit-non-zero-on-fix
+
+  ruff-format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Bootstrap disnake-compass
+        uses: ./.github/actions/bootstrap
+        with:
+          python-version: '3.10'
 
       - name: Run ruff formatter
-        if: matrix.python-version == '3.8'
-        run: poetry run ruff format --check --target-version py38
+        run: poetry run ruff format --check

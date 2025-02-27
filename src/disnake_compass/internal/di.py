@@ -17,7 +17,7 @@ __all__: typing.Sequence[str] = (
 
 _T = typing.TypeVar("_T")
 TokenMap: typing_extensions.TypeAlias = typing.Mapping[
-    typing.Type[typing.Any],
+    type[typing.Any],
     contextvars.Token[object],
 ]
 
@@ -26,10 +26,10 @@ TokenMap: typing_extensions.TypeAlias = typing.Mapping[
 #       reloading in production environments is ill-advised anyway, I don't
 #       think it's worth adding a lot more complexity to circumvent it.
 #       ...Unless, of course, someone can come up with a better approach.
-DEPENDENCY_MAP: typing.Dict[typing.Type[typing.Any], contextvars.ContextVar[typing.Any]] = {}
+DEPENDENCY_MAP: dict[type[typing.Any], contextvars.ContextVar[typing.Any]] = {}
 
 
-def _get_contextvar_for(dependency_type: typing.Type[_T], /) -> contextvars.ContextVar[_T]:
+def _get_contextvar_for(dependency_type: type[_T], /) -> contextvars.ContextVar[_T]:
     if dependency_type in DEPENDENCY_MAP:
         return DEPENDENCY_MAP[dependency_type]
 
@@ -68,7 +68,7 @@ def register_dependencies(*dependencies: object) -> TokenMap:
         passed to :func:`reset_dependencies` for cleanup.
 
     """
-    tokens: typing.Dict[type, contextvars.Token[object]] = {}
+    tokens: dict[type, contextvars.Token[object]] = {}
     for dependency in dependencies:
         dependency_type = type(dependency)
         tokens[dependency_type] = _get_contextvar_for(dependency_type).set(dependency)
@@ -94,7 +94,7 @@ def reset_dependencies(tokens: TokenMap) -> None:
 
 
 def resolve_dependency(
-    dependency_type: typing.Type[_T],
+    dependency_type: type[_T],
     default: omit.Omissible[_T] = omit.Omitted,
 ) -> _T:
     """Resolve a dependency given a type and an optional default.

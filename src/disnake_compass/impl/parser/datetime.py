@@ -58,7 +58,7 @@ class Resolution(float, enum.Enum):
 def _validate_resolution(
     _instance: object,
     _attribute: object,
-    resolution: typing.Union[int, float],
+    resolution: float,
 ) -> None:
     if resolution < Resolution.MICROS:
         msg = f"Resolution must be greater than 1e-6, got {resolution}."
@@ -101,7 +101,7 @@ class DatetimeParser(parser_base.Parser[datetime.datetime]):
     Since the default integer parser uses base-36 to "compress" numbers, the
     default datetime parser will also return compressed results.
     """
-    resolution: typing.Union[int, float] = attrs.field(
+    resolution: int | float = attrs.field(
         default=Resolution.SECONDS,
         validator=_validate_resolution,
         kw_only=True,
@@ -215,7 +215,7 @@ class TimedeltaParser(parser_base.Parser[datetime.timedelta]):
     Since the default integer parser uses base-36 to "compress" numbers, the
     default datetime parser will also return compressed results.
     """
-    resolution: typing.Union[int, float] = attrs.field(
+    resolution: int | float = attrs.field(
         default=Resolution.SECONDS,
         validator=_validate_resolution,
         kw_only=True,
@@ -355,7 +355,7 @@ class TimeParser(parser_base.Parser[datetime.time]):
     """
 
     @property
-    def resolution(self) -> typing.Union[int, float]:
+    def resolution(self) -> int | float:
         r"""The resolution with which to store :class:`~datetime.time`\s in seconds.
 
         .. warning::
@@ -371,7 +371,7 @@ class TimeParser(parser_base.Parser[datetime.time]):
         return self.timedelta_parser.resolution
 
     @resolution.setter
-    def resolution(self, resolution: typing.Union[int, float]) -> None:
+    def resolution(self, resolution: float) -> None:
         self.timedelta_parser.resolution = resolution
 
     async def loads(self, argument: str, /) -> datetime.time:
@@ -464,7 +464,7 @@ class TimezoneParser(parser_base.Parser[datetime.timezone]):
     """
 
     @property
-    def resolution(self) -> typing.Union[int, float]:
+    def resolution(self) -> int | float:
         r"""The resolution with which to store :class:`~datetime.time`\s in seconds.
 
         .. warning::
@@ -480,7 +480,7 @@ class TimezoneParser(parser_base.Parser[datetime.timezone]):
         return self.timedelta_parser.resolution
 
     @resolution.setter
-    def resolution(self, resolution: typing.Union[int, float]) -> None:
+    def resolution(self, resolution: float) -> None:
         self.timedelta_parser.resolution = resolution
 
     async def loads(self, argument: str, /) -> datetime.timezone:

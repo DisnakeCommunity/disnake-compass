@@ -9,9 +9,9 @@ packages = [{include = "disnake_compass", from="src"}]
 
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.10"
 typing-extensions = "^4.10.0"
-disnake = "^2.5.0"
+disnake = "^2.10"
 attrs = ">=24.3"
 
 
@@ -26,11 +26,11 @@ python-dotenv = "^1.0.0"
 
 [tool.poetry.group.docs.dependencies]
 furo = {git = "https://github.com/sharp-eyes/furo"}
-Sphinx = {version="^7.0.1", python = "^3.9"}
+Sphinx = "^7.0.1"
 sphinx-autobuild = "^2021.3.14"
 sphinxcontrib-trio = "^1.1.2"
 sphinx-inline-tabs = "^2023.4.21"
-sphinx-autodoc-typehints = {version = "^2.2.3", python = "^3.9"}
+sphinx-autodoc-typehints = "^2.2.3"
 sphinx-hoverxref = "^1.3.0"
 sphinx-copybutton = "^0.5.2"
 
@@ -46,7 +46,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pyright]
 typeCheckingMode = "strict"
-pythonVersion = "3.8"
+pythonVersion = "3.10"
 reportMissingTypeStubs = false
 exclude = [
     # Default options
@@ -59,7 +59,7 @@ exclude = [
 
 [tool.ruff]
 line-length = 100
-target-version = "py38"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = [
@@ -76,7 +76,6 @@ ignore = [
     "FIX",  # TODO-comments are to-do for a reason.
     "PD",  # No pandas to be seen here.
     "PLC0414",  # reexports through 'from x import y as y'.
-    "PYI041",  # int | float typehints.
     "S101",  # Assert statements; we use these mainly for type assertions.
     "TD",  # TODO-comments are to-do for a reason.
 ]
@@ -140,7 +139,7 @@ extend-ignore-names = ["metacls"]
 keep-runtime-typing = true
 
 [tool.taskipy.tasks]
-pre-commit = "pre-commit install --install-hooks"
+precommit = "pre-commit install --install-hooks"
 lint = "pre-commit run --all-files"
 ruff = "task lint ruff"
 slotscheck = "task lint slotscheck"

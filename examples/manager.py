@@ -1,7 +1,6 @@
 """A simple example on the use of component managers with disnake-compass."""
 
 import os
-import typing
 
 import disnake
 import disnake_compass
@@ -10,7 +9,7 @@ from disnake.ext import commands
 bot = commands.InteractionBot()
 
 manager = disnake_compass.get_manager()
-manager.add_to_bot(bot)
+manager.add_to_client(bot)
 
 foo_manager = disnake_compass.get_manager("foo")
 deeply_nested_manager = disnake_compass.get_manager("foo.bar.baz")
@@ -18,11 +17,11 @@ deeply_nested_manager = disnake_compass.get_manager("foo.bar.baz")
 
 @foo_manager.register
 class FooButton(disnake_compass.RichButton):
-    label: typing.Optional[str] = "0"
+    label: str | None = "0"
 
     count: int
 
-    async def callback(self, interaction: disnake.MessageInteraction) -> None:
+    async def callback(self, interaction: disnake.MessageInteraction[disnake.Client]) -> None:
         self.count += 1
         self.label = str(self.count)
 
@@ -32,11 +31,11 @@ class FooButton(disnake_compass.RichButton):
 
 @deeply_nested_manager.register
 class FooBarBazButton(disnake_compass.RichButton):
-    label: typing.Optional[str] = "0"
+    label: str | None = "0"
 
     count: int
 
-    async def callback(self, interaction: disnake.MessageInteraction) -> None:
+    async def callback(self, interaction: disnake.MessageInteraction[disnake.Client]) -> None:
         self.count += 1
         self.label = str(self.count)
 
@@ -48,7 +47,7 @@ class FooBarBazButton(disnake_compass.RichButton):
 async def wrapper(
     manager: disnake_compass.ComponentManager,
     component: disnake_compass.api.RichComponent,
-    interaction: disnake.Interaction,
+    interaction: disnake.Interaction[disnake.Client],
 ):
     print(
         f"User {interaction.user.name!r} interacted with component {type(component).__name__!r}...",
@@ -63,7 +62,7 @@ async def wrapper(
 
 
 class InvalidUserError(Exception):
-    def __init__(self, message: str, user: typing.Union[disnake.User, disnake.Member]) -> None:
+    def __init__(self, message: str, user: disnake.User | disnake.Member) -> None:
         super().__init__(message)
         self.message = message
         self.user = user
@@ -73,7 +72,7 @@ class InvalidUserError(Exception):
 async def check_wrapper(
     manager: disnake_compass.api.ComponentManager,
     component: disnake_compass.api.RichComponent,
-    interaction: disnake.Interaction,
+    interaction: disnake.Interaction[disnake.Client],
 ):
     if (
         isinstance(interaction, disnake.MessageInteraction)
@@ -90,7 +89,7 @@ async def check_wrapper(
 async def error_handler(
     manager: disnake_compass.ComponentManager,
     component: disnake_compass.api.RichComponent,
-    interaction: disnake.Interaction,
+    interaction: disnake.Interaction[disnake.Client],
     exception: Exception,
 ):
     if isinstance(exception, InvalidUserError):
@@ -101,14 +100,14 @@ async def error_handler(
     return False
 
 
-@bot.slash_command()  # pyright: ignore  # still some unknowns in disnake
-async def test_button(interaction: disnake.CommandInteraction) -> None:
+@bot.slash_command()
+async def test_button(interaction: disnake.CommandInteraction[disnake.Client]) -> None:
     component = await FooButton(count=0).as_ui_component()
     await interaction.response.send_message(components=component)
 
 
-@bot.slash_command()  # pyright: ignore  # still some unknowns in disnake
-async def test_nested_button(interaction: disnake.CommandInteraction) -> None:
+@bot.slash_command()
+async def test_nested_button(interaction: disnake.CommandInteraction[disnake.Client]) -> None:
     component = await FooBarBazButton(count=0).as_ui_component()
     await interaction.response.send_message(components=component)
 
