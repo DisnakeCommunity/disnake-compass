@@ -272,7 +272,7 @@ class ComponentBase(
 
     async def callback(  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: D102
         self,
-        inter: disnake.MessageInteraction,
+        inter: disnake.MessageInteraction[disnake.Client],
         /,
     ) -> None:
         # <<docstring inherited from component_api.RichButton>>

@@ -66,7 +66,7 @@ class UserParser(parser_base.Parser[disnake.User]):
         """
         user_id = await self.int_parser.loads(argument)
 
-        maybe_author = di.resolve_dependency(disnake.member._UserTag, None)  # pyright: ignore[reportPrivateUsage]  # noqa: SLF001
+        maybe_author = di.resolve_dependency(disnake.member._UserTag, None)  # pyright: ignore[reportPrivateUsage, reportPrivateImportUsage]  # noqa: SLF001
         if maybe_author and maybe_author.id == user_id:
             if isinstance(maybe_author, disnake.User):
                 return maybe_author
