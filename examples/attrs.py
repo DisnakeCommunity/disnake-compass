@@ -17,7 +17,9 @@ class CustomisableSelect(disnake_compass.RichStringSelect):
     def __attrs_post_init__(self) -> None:
         self.max_values = len(self.options)
 
-    async def callback(self, interaction: disnake.MessageInteraction[disnake.Client]) -> None:
+    async def callback(
+        self, interaction: disnake.MessageInteraction[disnake.Client]
+    ) -> None:
         selection = (
             "\n".join(f"- {value}" for value in interaction.values)
             if interaction.values

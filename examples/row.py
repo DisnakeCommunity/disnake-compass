@@ -32,7 +32,9 @@ class OptionsToggleButton(disnake_compass.RichButton):
 
         return [disnake.SelectOption(label=option) for option in self.options]
 
-    def update_select(self, components: typing.Sequence[disnake_compass.api.RichComponent]):
+    def update_select(
+        self, components: typing.Sequence[disnake_compass.api.RichComponent]
+    ):
         select: DynamicSelectMenu | None = None
         options: list[disnake.SelectOption] = []
 
@@ -91,7 +93,9 @@ class DynamicSelectMenu(disnake_compass.RichStringSelect):
             self.max_values = 1
             self.disabled = True
 
-    async def callback(self, interaction: disnake.MessageInteraction[disnake.Client]) -> None:
+    async def callback(
+        self, interaction: disnake.MessageInteraction[disnake.Client]
+    ) -> None:
         selection = (
             "\n".join(f"- {value}" for value in interaction.values)
             if interaction.values
@@ -102,7 +106,9 @@ class DynamicSelectMenu(disnake_compass.RichStringSelect):
 
 
 @bot.slash_command()
-async def test_components(interaction: disnake.CommandInteraction[disnake.Client]) -> None:
+async def test_components(
+    interaction: disnake.CommandInteraction[disnake.Client],
+) -> None:
     layout = await manager.finalise_components(
         [
             [

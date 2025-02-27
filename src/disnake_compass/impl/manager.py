@@ -33,7 +33,6 @@ _COMPONENT_CTX: contextvars.ContextVar[tuple[component_api.RichComponent, str]] 
 T = typing.TypeVar("T")
 
 
-
 class DependencyProviderFunc(typing.Protocol):
     def __call__(
         self,

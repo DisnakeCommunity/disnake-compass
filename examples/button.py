@@ -18,7 +18,9 @@ class MyButton(disnake_compass.RichButton):
 
     count: int = 0
 
-    async def callback(self, interaction: disnake.MessageInteraction[disnake.Client]) -> None:
+    async def callback(
+        self, interaction: disnake.MessageInteraction[disnake.Client]
+    ) -> None:
         self.count += 1
         self.label = str(self.count)
 

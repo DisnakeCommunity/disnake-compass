@@ -21,7 +21,9 @@ class FooButton(disnake_compass.RichButton):
 
     count: int
 
-    async def callback(self, interaction: disnake.MessageInteraction[disnake.Client]) -> None:
+    async def callback(
+        self, interaction: disnake.MessageInteraction[disnake.Client]
+    ) -> None:
         self.count += 1
         self.label = str(self.count)
 
@@ -35,7 +37,9 @@ class FooBarBazButton(disnake_compass.RichButton):
 
     count: int
 
-    async def callback(self, interaction: disnake.MessageInteraction[disnake.Client]) -> None:
+    async def callback(
+        self, interaction: disnake.MessageInteraction[disnake.Client]
+    ) -> None:
         self.count += 1
         self.label = str(self.count)
 
@@ -107,7 +111,9 @@ async def test_button(interaction: disnake.CommandInteraction[disnake.Client]) -
 
 
 @bot.slash_command()
-async def test_nested_button(interaction: disnake.CommandInteraction[disnake.Client]) -> None:
+async def test_nested_button(
+    interaction: disnake.CommandInteraction[disnake.Client],
+) -> None:
     component = await FooBarBazButton(count=0).as_ui_component()
     await interaction.response.send_message(components=component)
 
