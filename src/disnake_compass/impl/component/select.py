@@ -62,7 +62,7 @@ class RichStringSelect(BaseSelect, typing.Protocol):
     """
 
     options: list[disnake.SelectOption] = fields.internal(
-        default=attr.Factory(list),  # pyright: ignore[reportUnknownArgumentType]
+        default=attr.Factory(list[disnake.SelectOption]),
     )
     """The options for this select menu.
 
