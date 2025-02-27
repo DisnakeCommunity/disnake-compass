@@ -5,7 +5,6 @@ from __future__ import annotations
 import typing
 
 import disnake
-from disnake.ext import commands
 
 if typing.TYPE_CHECKING:
     import typing_extensions
@@ -20,7 +19,6 @@ __all__: typing.Sequence[str] = (
 
 _T = typing.TypeVar("_T")
 
-AnyBot: typing.TypeAlias = commands.Bot | commands.InteractionBot
 AnyEmoji: typing.TypeAlias = str | disnake.PartialEmoji | disnake.Emoji
 MaybeCoroutine: typing.TypeAlias = _T | typing.Coroutine[None, None, _T]
 
@@ -46,7 +44,7 @@ class RichComponent(typing.Protocol):
     factory: typing.ClassVar[ComponentFactory[RichComponent]]
     manager: typing.ClassVar[ComponentManager | None]
 
-    async def callback(self, interaction: disnake.Interaction, /) -> None:
+    async def callback(self, interaction: disnake.Interaction[disnake.Client], /) -> None:
         """Run the component callback.
 
         This should be implemented by the user in each concrete component type.
@@ -243,7 +241,7 @@ class ComponentManager(typing.Protocol):
 
     async def parse_message_interaction(
         self,
-        interaction: disnake.MessageInteraction,
+        interaction: disnake.MessageInteraction[disnake.Client],
     ) -> RichComponent | None:
         """Parse an interaction and construct a rich component from it.
 
@@ -308,14 +306,14 @@ class ComponentManager(typing.Protocol):
 
         """
 
-    def add_to_bot(self, bot: AnyBot) -> None:
-        """Register this manager to the provided bot.
+    def add_to_client(self, client: disnake.Client, /) -> None:
+        """Register this manager to the provided client.
 
         This is required to make components registered to this manager
         responsive.
 
         This method registers the :meth:`invoke` callback as an event to the
-        bot for the :obj:`disnake.on_message_interaction` and
+        client for the :obj:`disnake.on_message_interaction` and
         :obj:`disnake.on_modal_submit` events.
 
         .. note::
@@ -327,36 +325,40 @@ class ComponentManager(typing.Protocol):
 
         Parameters
         ----------
-        bot
-            The bot to which to register this manager.
+        client
+            The client to which to register this manager.
 
         Raises
         ------
         RuntimeError
-            This manager has already been registered to the provided bot.
+            This manager has already been registered to the provided client.
 
         """
         ...
 
-    def remove_from_bot(self, bot: AnyBot) -> None:
-        """Deregister this manager from the provided bot.
+    def remove_from_client(self, client: disnake.Client, /) -> None:
+        """Deregister this manager from the provided client.
 
         This makes all components registered to this manager unresponsive.
 
         Parameters
         ----------
-        bot
-            The bot from which to deregister this manager.
+        client
+            The client from which to deregister this manager.
 
         Raises
         ------
         RuntimeError
-            This manager is not registered to the provided bot.
+            This manager is not registered to the provided client.
 
         """
         ...
 
-    async def invoke_component(self, interaction: disnake.MessageInteraction, /) -> None:
+    async def invoke_component(
+        self,
+        interaction: disnake.MessageInteraction[disnake.Client],
+        /,
+    ) -> None:
         """Try to invoke a component with the given interaction.
 
         If this manager has no registered component that matches the interaction,
