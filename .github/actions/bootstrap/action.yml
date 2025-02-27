@@ -1,10 +1,6 @@
 name: Bootstrap disnake-compass
 description: Configure the environment with the specified Python version.
 
-defaults:
-  run:
-    shell: bash
-
 inputs:
   python-version:
     required: true
@@ -43,9 +39,12 @@ runs:
       run: |
         poetry env use ${{ steps.setup-python.outputs.python-version }}
         poetry install --no-interaction --no-root --without docs
+      shell: bash
 
     - name: Install disnake-compass
       run: poetry install --no-interaction --only-root
+      shell: bash
 
     - name: Activate venv
       run: source .venv/bin/activate
+      shell: bash
