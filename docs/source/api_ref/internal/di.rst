@@ -1,9 +1,9 @@
-.. currentmodule:: disnake.ext.components
+.. currentmodule:: disnake_compass
 
 DI Implementation
 =====================
 
-.. automodule:: components.internal.di
+.. automodule:: disnake_compass.internal.di
 
 
 Functions

@@ -1,20 +1,20 @@
-.. currentmodule:: disnake.ext.components.impl
+.. currentmodule:: disnake_compass.impl
 
 Message Parser Implementation
 =============================
 
-.. automodule:: components.impl.parser.message
+.. automodule:: disnake_compass.impl.parser.message
 
 
 Classes
 -------
 
-.. attributetable:: components.impl.parser.message.PartialMessageParser
+.. attributetable:: disnake_compass.impl.parser.message.PartialMessageParser
 
-.. autoclass:: components.impl.parser.message.PartialMessageParser
+.. autoclass:: disnake_compass.impl.parser.message.PartialMessageParser
     :members:
 
-.. attributetable:: components.impl.parser.message.MessageParser
+.. attributetable:: disnake_compass.impl.parser.message.MessageParser
 
-.. autoclass:: components.impl.parser.message.MessageParser
+.. autoclass:: disnake_compass.impl.parser.message.MessageParser
     :members:

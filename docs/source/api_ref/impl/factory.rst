@@ -1,19 +1,19 @@
-.. currentmodule:: disnake.ext.components
+.. currentmodule:: disnake_compass
 
 Component Manager Implementation
 ================================
 
-.. automodule:: components.impl.factory
+.. automodule:: disnake_compass.impl.factory
 
 Classes
 -------
 
-.. attributetable:: disnake.ext.components.impl.factory.ComponentFactory
+.. attributetable:: disnake_compass.impl.factory.ComponentFactory
 
-.. autoclass:: disnake.ext.components.impl.factory.ComponentFactory
+.. autoclass:: disnake_compass.impl.factory.ComponentFactory
     :members:
 
-.. attributetable:: disnake.ext.components.impl.factory.NoopFactory
+.. attributetable:: disnake_compass.impl.factory.NoopFactory
 
-.. autoclass:: disnake.ext.components.impl.factory.NoopFactory
+.. autoclass:: disnake_compass.impl.factory.NoopFactory
     :members:

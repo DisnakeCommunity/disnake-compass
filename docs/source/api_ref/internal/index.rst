@@ -1,9 +1,9 @@
 .. _internal:
 
-disnake.ext.components.internal
+disnake_compass.internal
 ===============================
 
-.. automodule:: disnake.ext.components.internal
+.. automodule:: disnake_compass.internal
 
 Submodules
 ----------

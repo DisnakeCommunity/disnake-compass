@@ -1,10 +1,11 @@
-"""An example of having multiple disnake-ext-components components interact."""
+"""An example of having multiple disnake-compass components interact."""
 
 import os
 import typing
 
 import disnake
-from disnake.ext import commands, components
+import disnake_compass
+from disnake.ext import commands
 
 DEFAULT_OPTION = disnake.SelectOption(
     label="Please enable some options.",
@@ -12,14 +13,14 @@ DEFAULT_OPTION = disnake.SelectOption(
     default=True,
 )
 
-bot = commands.Bot()
+bot = commands.InteractionBot()
 
-manager = components.get_manager()
-manager.add_to_bot(bot)
+manager = disnake_compass.get_manager()
+manager.add_to_client(bot)
 
 
 @manager.register()
-class OptionsToggleButton(components.RichButton):
+class OptionsToggleButton(disnake_compass.RichButton):
     """A button component that enables/disables options on a DynamicSelectMenu."""
 
     style: disnake.ButtonStyle = disnake.ButtonStyle.red
@@ -31,8 +32,8 @@ class OptionsToggleButton(components.RichButton):
 
         return [disnake.SelectOption(label=option) for option in self.options]
 
-    def update_select(self, components: typing.Sequence[components.api.RichComponent]):
-        select: typing.Optional[DynamicSelectMenu] = None
+    def update_select(self, components: typing.Sequence[disnake_compass.api.RichComponent]):
+        select: DynamicSelectMenu | None = None
         options: list[disnake.SelectOption] = []
 
         for component in components:
@@ -50,7 +51,7 @@ class OptionsToggleButton(components.RichButton):
 
         select.set_options(options)
 
-    async def callback(self, interaction: disnake.MessageInteraction):
+    async def callback(self, interaction: disnake.MessageInteraction[disnake.Client]):
         # Get all components on the message for easier re-sending.
         # Both of these lists will automagically contain self so that any
         # changes immediately reflect without extra effort.
@@ -73,7 +74,7 @@ class OptionsToggleButton(components.RichButton):
 
 
 @manager.register()
-class DynamicSelectMenu(components.RichStringSelect):
+class DynamicSelectMenu(disnake_compass.RichStringSelect):
     """A select menu that has its options externally managed."""
 
     def __attrs_post_init__(self) -> None:  # See the `attrs.py` example.
@@ -90,7 +91,7 @@ class DynamicSelectMenu(components.RichStringSelect):
             self.max_values = 1
             self.disabled = True
 
-    async def callback(self, interaction: disnake.MessageInteraction) -> None:
+    async def callback(self, interaction: disnake.MessageInteraction[disnake.Client]) -> None:
         selection = (
             "\n".join(f"- {value}" for value in interaction.values)
             if interaction.values
@@ -100,8 +101,8 @@ class DynamicSelectMenu(components.RichStringSelect):
         await interaction.response.send_message(f"You selected:\n{selection}")
 
 
-@bot.slash_command()  # pyright: ignore
-async def test_components(interaction: disnake.CommandInteraction) -> None:
+@bot.slash_command()
+async def test_components(interaction: disnake.CommandInteraction[disnake.Client]) -> None:
     layout = await manager.finalise_components(
         [
             [
@@ -110,7 +111,7 @@ async def test_components(interaction: disnake.CommandInteraction) -> None:
                 OptionsToggleButton(label="symbols", options=["*", "&", "#", "+", "-"]),
             ],
             [DynamicSelectMenu()],
-        ]
+        ],
     )
 
     await interaction.response.send_message(components=layout)

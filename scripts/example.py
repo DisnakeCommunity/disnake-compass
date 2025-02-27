@@ -21,9 +21,7 @@ def _main() -> typing.NoReturn:
         sys.exit(1)
 
     choices = [
-        file[:-3]
-        for file in os.listdir(os.path.realpath("examples"))
-        if file.endswith(".py")
+        file[:-3] for file in os.listdir(os.path.realpath("examples")) if file.endswith(".py")
     ]
 
     # Get the passed example using argparse

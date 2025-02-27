@@ -1,48 +1,48 @@
-.. currentmodule:: disnake.ext.components.impl
+.. currentmodule:: disnake_compass.impl
 
 Channel Parser Implementation
 =============================
 
-.. automodule:: components.impl.parser.channel
+.. automodule:: disnake_compass.impl.parser.channel
 
 
 Classes
 -------
 
-.. attributetable:: components.impl.parser.channel.PartialMessageableParser
+.. attributetable:: disnake_compass.impl.parser.channel.PartialMessageableParser
 
-.. autoclass:: components.impl.parser.channel.PartialMessageableParser
+.. autoclass:: disnake_compass.impl.parser.channel.PartialMessageableParser
     :members:
 
-.. attributetable:: components.impl.parser.channel.ChannelParserBase
+.. attributetable:: disnake_compass.impl.parser.channel.ChannelParserBase
 
-.. autoclass:: components.impl.parser.channel.ChannelParserBase
+.. autoclass:: disnake_compass.impl.parser.channel.ChannelParserBase
     :members:
 
 .. note::
     The following classes have the exact same attributes and methods as the
-    :class:`~components.impl.parser.channel.ChannelParserBase` base class,
+    :class:`~disnake_compass.impl.parser.channel.ChannelParserBase` base class,
     so their attributes and methods have been omitted.
 
 
-.. autoclass:: components.impl.parser.channel.GuildChannelParser
+.. autoclass:: disnake_compass.impl.parser.channel.GuildChannelParser
 
-.. autoclass:: components.impl.parser.channel.PrivateChannelParser
+.. autoclass:: disnake_compass.impl.parser.channel.PrivateChannelParser
 
-.. autoclass:: components.impl.parser.channel.DMChannelParser
+.. autoclass:: disnake_compass.impl.parser.channel.DMChannelParser
 
-.. autoclass:: components.impl.parser.channel.GroupChannelParser
+.. autoclass:: disnake_compass.impl.parser.channel.GroupChannelParser
 
-.. autoclass:: components.impl.parser.channel.ForumChannelParser
+.. autoclass:: disnake_compass.impl.parser.channel.ForumChannelParser
 
-.. autoclass:: components.impl.parser.channel.NewsChannelParser
+.. autoclass:: disnake_compass.impl.parser.channel.NewsChannelParser
 
-.. autoclass:: components.impl.parser.channel.VoiceChannelParser
+.. autoclass:: disnake_compass.impl.parser.channel.VoiceChannelParser
 
-.. autoclass:: components.impl.parser.channel.StageChannelParser
+.. autoclass:: disnake_compass.impl.parser.channel.StageChannelParser
 
-.. autoclass:: components.impl.parser.channel.TextChannelParser
+.. autoclass:: disnake_compass.impl.parser.channel.TextChannelParser
 
-.. autoclass:: components.impl.parser.channel.ThreadParser
+.. autoclass:: disnake_compass.impl.parser.channel.ThreadParser
 
-.. autoclass:: components.impl.parser.channel.CategoryParser
+.. autoclass:: disnake_compass.impl.parser.channel.CategoryParser

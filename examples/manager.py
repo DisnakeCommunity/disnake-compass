@@ -1,27 +1,27 @@
-"""A simple example on the use of component managers with disnake-ext-components."""
+"""A simple example on the use of component managers with disnake-compass."""
 
 import os
-import typing
 
 import disnake
-from disnake.ext import commands, components
+import disnake_compass
+from disnake.ext import commands
 
 bot = commands.InteractionBot()
 
-manager = components.get_manager()
-manager.add_to_bot(bot)
+manager = disnake_compass.get_manager()
+manager.add_to_client(bot)
 
-foo_manager = components.get_manager("foo")
-deeply_nested_manager = components.get_manager("foo.bar.baz")
+foo_manager = disnake_compass.get_manager("foo")
+deeply_nested_manager = disnake_compass.get_manager("foo.bar.baz")
 
 
 @foo_manager.register
-class FooButton(components.RichButton):
-    label: typing.Optional[str] = "0"
+class FooButton(disnake_compass.RichButton):
+    label: str | None = "0"
 
     count: int
 
-    async def callback(self, interaction: disnake.MessageInteraction) -> None:
+    async def callback(self, interaction: disnake.MessageInteraction[disnake.Client]) -> None:
         self.count += 1
         self.label = str(self.count)
 
@@ -30,12 +30,12 @@ class FooButton(components.RichButton):
 
 
 @deeply_nested_manager.register
-class FooBarBazButton(components.RichButton):
-    label: typing.Optional[str] = "0"
+class FooBarBazButton(disnake_compass.RichButton):
+    label: str | None = "0"
 
     count: int
 
-    async def callback(self, interaction: disnake.MessageInteraction) -> None:
+    async def callback(self, interaction: disnake.MessageInteraction[disnake.Client]) -> None:
         self.count += 1
         self.label = str(self.count)
 
@@ -45,25 +45,24 @@ class FooBarBazButton(components.RichButton):
 
 @manager.as_callback_wrapper
 async def wrapper(
-    manager: components.ComponentManager,
-    component: components.api.RichComponent,
-    interaction: disnake.Interaction,
+    manager: disnake_compass.ComponentManager,
+    component: disnake_compass.api.RichComponent,
+    interaction: disnake.Interaction[disnake.Client],
 ):
     print(
-        f"User {interaction.user.name!r} interacted with component"
-        f" {type(component).__name__!r}..."
+        f"User {interaction.user.name!r} interacted with component {type(component).__name__!r}...",
     )
 
     yield
 
     print(
         f"User {interaction.user.name!r}s interaction with component"
-        f" {type(component).__name__!r} was successful!"
+        f" {type(component).__name__!r} was successful!",
     )
 
 
 class InvalidUserError(Exception):
-    def __init__(self, message: str, user: typing.Union[disnake.User, disnake.Member]):
+    def __init__(self, message: str, user: disnake.User | disnake.Member) -> None:
         super().__init__(message)
         self.message = message
         self.user = user
@@ -71,9 +70,9 @@ class InvalidUserError(Exception):
 
 @deeply_nested_manager.as_callback_wrapper
 async def check_wrapper(
-    manager: components.api.ComponentManager,
-    component: components.api.RichComponent,
-    interaction: disnake.Interaction,
+    manager: disnake_compass.api.ComponentManager,
+    component: disnake_compass.api.RichComponent,
+    interaction: disnake.Interaction[disnake.Client],
 ):
     if (
         isinstance(interaction, disnake.MessageInteraction)
@@ -88,9 +87,9 @@ async def check_wrapper(
 
 @deeply_nested_manager.as_exception_handler
 async def error_handler(
-    manager: components.ComponentManager,
-    component: components.api.RichComponent,
-    interaction: disnake.Interaction,
+    manager: disnake_compass.ComponentManager,
+    component: disnake_compass.api.RichComponent,
+    interaction: disnake.Interaction[disnake.Client],
     exception: Exception,
 ):
     if isinstance(exception, InvalidUserError):
@@ -101,14 +100,14 @@ async def error_handler(
     return False
 
 
-@bot.slash_command()  # pyright: ignore  # still some unknowns in disnake
-async def test_button(interaction: disnake.CommandInteraction) -> None:
+@bot.slash_command()
+async def test_button(interaction: disnake.CommandInteraction[disnake.Client]) -> None:
     component = await FooButton(count=0).as_ui_component()
     await interaction.response.send_message(components=component)
 
 
-@bot.slash_command()  # pyright: ignore  # still some unknowns in disnake
-async def test_nested_button(interaction: disnake.CommandInteraction) -> None:
+@bot.slash_command()
+async def test_nested_button(interaction: disnake.CommandInteraction[disnake.Client]) -> None:
     component = await FooBarBazButton(count=0).as_ui_component()
     await interaction.response.send_message(components=component)
 

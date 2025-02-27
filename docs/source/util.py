@@ -11,10 +11,10 @@ import sphinx_autodoc_typehints as original
 from sphinx.util import inspect as sphinx_inspect
 
 __all__ = (
+    "apply_autodoc_typehints_patch",
+    "format_annotation",
     "get_module_path",
     "make_linkcode_resolver",
-    "format_annotation",
-    "apply_autodoc_typehints_patch",
 )
 
 
@@ -23,7 +23,7 @@ NoneType = type(None)
 
 def get_module_path() -> str:
     """Get the filepath for the module."""
-    _spec = importlib.util.find_spec("disnake.ext.components")
+    _spec = importlib.util.find_spec("disnake_compass")
     if not (_spec and _spec.origin):
         raise RuntimeError  # this should never happen
 
@@ -31,13 +31,16 @@ def get_module_path() -> str:
 
 
 def make_linkcode_resolver(
-    module_path: str, repo_url: str, git_ref: str
-) -> typing.Callable[[str, typing.Mapping[str, typing.Any]], typing.Optional[str]]:
+    module_path: str,
+    repo_url: str,
+    git_ref: str,
+) -> typing.Callable[[str, typing.Mapping[str, typing.Any]], str | None]:
     """Return a linkcode resolver for the provided module path and repo data."""
 
     def linkcode_resolve(
-        domain: str, info: typing.Mapping[str, typing.Any]
-    ) -> typing.Optional[str]:
+        domain: str,
+        info: typing.Mapping[str, typing.Any],
+    ) -> str | None:
         if domain != "py":
             return None
 
@@ -64,7 +67,8 @@ def make_linkcode_resolver(
 
 
 def format_annotation(  # noqa: PLR0911, PLR0912, PLR0915
-    annotation: typing.Any, config: sphinx.config.Config  # noqa: ANN401
+    annotation: typing.Any,  # noqa: ANN401
+    config: sphinx.config.Config,
 ) -> str:
     """Format the annotation."""
     if typehints_formatter := getattr(config, "typehints_formatter", None):
@@ -100,16 +104,12 @@ def format_annotation(  # noqa: PLR0911, PLR0912, PLR0915
     elif module == "_io":
         module = "io"
 
-    elif module.startswith("disnake.ext.components"):
-        module = module.removeprefix("disnake.ext.")
-
     full_name = f"{module}.{class_name}" if module != "builtins" else class_name
     fully_qualified: bool = getattr(config, "typehints_fully_qualified", False)
     prefix = "" if fully_qualified or full_name == class_name else "~"
     role = (
         "data"
-        if module == "typing"
-        and class_name in original._PYDATA_ANNOTATIONS  # pyright: ignore
+        if module == "typing" and class_name in original._PYDATA_ANNOTATIONS  # pyright: ignore
         else "class"
     )
     args_format = "\\[{}]"
@@ -142,7 +142,9 @@ def format_annotation(  # noqa: PLR0911, PLR0912, PLR0915
             args = tuple(x for x in args if x is not type(None))
         else:
             simplify_optional_unions: bool = getattr(
-                config, "simplify_optional_unions", True
+                config,
+                "simplify_optional_unions",
+                True,
             )
             if not simplify_optional_unions:
                 full_name = "typing.Optional"
@@ -151,9 +153,7 @@ def format_annotation(  # noqa: PLR0911, PLR0912, PLR0915
                 args = tuple(x for x in args if x is not type(None))
 
     elif (
-        full_name in ("typing.Callable", "collections.abc.Callable")
-        and args
-        and args[0] is not ...
+        full_name in ("typing.Callable", "collections.abc.Callable") and args and args[0] is not ...
     ):
         fmt = [format_annotation(arg, config) for arg in args]
         formatted_args = f"\\[\\[{', '.join(fmt[:-1])}], {fmt[-1]}]"

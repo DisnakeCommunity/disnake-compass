@@ -1,20 +1,20 @@
-.. currentmodule:: disnake.ext.components.impl
+.. currentmodule:: disnake_compass.impl
 
 User Parser Implementation
 ==========================
 
-.. automodule:: components.impl.parser.user
+.. automodule:: disnake_compass.impl.parser.user
 
 
 Classes
 -------
 
-.. attributetable:: components.impl.parser.user.UserParser
+.. attributetable:: disnake_compass.impl.parser.user.UserParser
 
-.. autoclass:: components.impl.parser.user.UserParser
+.. autoclass:: disnake_compass.impl.parser.user.UserParser
     :members:
 
-.. attributetable:: components.impl.parser.user.MemberParser
+.. attributetable:: disnake_compass.impl.parser.user.MemberParser
 
-.. autoclass:: components.impl.parser.user.MemberParser
+.. autoclass:: disnake_compass.impl.parser.user.MemberParser
     :members:

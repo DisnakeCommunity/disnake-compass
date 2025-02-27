@@ -1,18 +1,18 @@
-.. currentmodule:: disnake.ext.components.impl
+.. currentmodule:: disnake_compass.impl
 
 Enum Parser Implementation
 ==========================
 
-.. automodule:: components.impl.parser.enum
+.. automodule:: disnake_compass.impl.parser.enum
 
 
 Classes
 -------
 
-.. attributetable:: components.impl.parser.enum.EnumParser
+.. attributetable:: disnake_compass.impl.parser.enum.EnumParser
 
-.. autoclass:: components.impl.parser.enum.EnumParser
+.. autoclass:: disnake_compass.impl.parser.enum.EnumParser
     :members:
 
 
-.. autoclass:: components.impl.parser.enum.FlagParser
+.. autoclass:: disnake_compass.impl.parser.enum.FlagParser

@@ -1,9 +1,9 @@
 .. _api_ref:
 
-disnake.ext.components
+disnake_compass
 ======================
 
-.. automodule:: disnake.ext.components
+.. automodule:: disnake_compass
 
 Subpackages
 -----------

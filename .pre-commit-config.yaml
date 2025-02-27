@@ -26,26 +26,18 @@ repos:
         args: [--markdown-linebreak-ext=md]
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.4.8
+    rev: v0.9.6
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
         name: Running ruff in all files.
+      - id: ruff-format
 
-  - repo: https://github.com/psf/black
-    rev: 23.3.0
+  - repo: https://github.com/ariebovenberg/slotscheck
+    rev: v0.19.1
     hooks:
-      - id: black
-        name: Running black in all files.
-
-  - repo: local
-    hooks:
-      - id: slotscheck
-        name: Running slotscheck in all files.
-        language: python
-        entry: python -m scripts.slotscheck
-        types: [python]
-        additional_dependencies:
-        - slotscheck >= 0.16.5
-        - disnake >= 2.5.0
-        - typing-extensions >= 4.10
+    - id: slotscheck
+      entry: env PYTHONPATH=src slotscheck
+      language: system
+      exclude: "^(?!src/)"
+      args: ["--verbose", "--require-subclass"]

@@ -1,14 +1,14 @@
-.. currentmodule:: disnake.ext.components
+.. currentmodule:: disnake_compass
 
 Rich Button Implementation
 ==========================
 
-.. automodule:: components.impl.component.button
+.. automodule:: disnake_compass.impl.component.button
 
 Classes
 -------
 
-.. attributetable:: components.impl.component.button.RichButton
+.. attributetable:: disnake_compass.impl.component.button.RichButton
 
-.. autoclass:: components.impl.component.button.RichButton
+.. autoclass:: disnake_compass.impl.component.button.RichButton
     :members:

@@ -4,7 +4,7 @@ Select
 Step-by-Step
 ------------
 
-A simple example on the use of selects with disnake-ext-components.
+A simple example on the use of selects with disnake-compass.
 
 For this example, we implement a select menu with double functionality.
 Firstly, the select allows you to select one of three slots. After selecting a

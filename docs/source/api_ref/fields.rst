@@ -1,9 +1,9 @@
-.. currentmodule:: disnake.ext.components
+.. currentmodule:: disnake_compass
 
 Fields Implementation
 =====================
 
-.. automodule:: components.fields
+.. automodule:: disnake_compass.fields
 
 
 Enums

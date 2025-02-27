@@ -1,50 +1,50 @@
-.. currentmodule:: disnake.ext.components.impl
+.. currentmodule:: disnake_compass.impl
 
 Builtins Parser Implementations
 ===============================
 
-.. automodule:: components.impl.parser.builtins
+.. automodule:: disnake_compass.impl.parser.builtins
 
 
 Classes
 -------
 
-.. attributetable:: components.impl.parser.builtins.NoneParser
+.. attributetable:: disnake_compass.impl.parser.builtins.NoneParser
 
-.. autoclass:: components.impl.parser.builtins.NoneParser
+.. autoclass:: disnake_compass.impl.parser.builtins.NoneParser
     :members:
 
-.. attributetable:: components.impl.parser.builtins.FloatParser
+.. attributetable:: disnake_compass.impl.parser.builtins.FloatParser
 
-.. autoclass:: components.impl.parser.builtins.FloatParser
+.. autoclass:: disnake_compass.impl.parser.builtins.FloatParser
     :members:
 
-.. attributetable:: components.impl.parser.builtins.IntParser
+.. attributetable:: disnake_compass.impl.parser.builtins.IntParser
 
-.. autoclass:: components.impl.parser.builtins.IntParser
+.. autoclass:: disnake_compass.impl.parser.builtins.IntParser
     :members:
 
-.. attributetable:: components.impl.parser.builtins.BoolParser
+.. attributetable:: disnake_compass.impl.parser.builtins.BoolParser
 
-.. autoclass:: components.impl.parser.builtins.BoolParser
+.. autoclass:: disnake_compass.impl.parser.builtins.BoolParser
     :members:
 
-.. attributetable:: components.impl.parser.builtins.StringParser
+.. attributetable:: disnake_compass.impl.parser.builtins.StringParser
 
-.. autoclass:: components.impl.parser.builtins.StringParser
+.. autoclass:: disnake_compass.impl.parser.builtins.StringParser
     :members:
 
-.. attributetable:: components.impl.parser.builtins.TupleParser
+.. attributetable:: disnake_compass.impl.parser.builtins.TupleParser
 
-.. autoclass:: components.impl.parser.builtins.TupleParser
+.. autoclass:: disnake_compass.impl.parser.builtins.TupleParser
     :members:
 
-.. attributetable:: components.impl.parser.builtins.CollectionParser
+.. attributetable:: disnake_compass.impl.parser.builtins.CollectionParser
 
-.. autoclass:: components.impl.parser.builtins.CollectionParser
+.. autoclass:: disnake_compass.impl.parser.builtins.CollectionParser
     :members:
 
-.. attributetable:: components.impl.parser.builtins.UnionParser
+.. attributetable:: disnake_compass.impl.parser.builtins.UnionParser
 
-.. autoclass:: components.impl.parser.builtins.UnionParser
+.. autoclass:: disnake_compass.impl.parser.builtins.UnionParser
     :members:
