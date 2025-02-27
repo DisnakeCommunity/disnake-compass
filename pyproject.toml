@@ -11,7 +11,7 @@ packages = [{include = "disnake_compass", from="src"}]
 [tool.poetry.dependencies]
 python = "^3.10"
 typing-extensions = "^4.10.0"
-disnake = "^2.5.0"
+disnake = "^2.10"
 attrs = ">=24.3"
 
 
@@ -139,7 +139,7 @@ extend-ignore-names = ["metacls"]
 keep-runtime-typing = true
 
 [tool.taskipy.tasks]
-pre-commit = "pre-commit install --install-hooks"
+precommit = "pre-commit install --install-hooks"
 lint = "pre-commit run --all-files"
 ruff = "task lint ruff"
 slotscheck = "task lint slotscheck"
