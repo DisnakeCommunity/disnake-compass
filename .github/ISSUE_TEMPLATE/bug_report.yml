@@ -48,8 +48,8 @@ body:
       render: markdown
       label: System Information
       description: >
-        Please provide us with the version of `disnake` and `disnake-ext-components` you are running.
-        This can be done using `python -m pip show disnake` and `python -m pip show disnake-ext-components`
+        Please provide us with the version of `disnake` and `disnake-compass` you are running.
+        This can be done using `python -m pip show disnake` and `python -m pip show disnake-compass`
 
         If you are unable to run these commands, show some basic information involving
         your system such as operating system and Python version.

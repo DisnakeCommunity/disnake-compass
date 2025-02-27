@@ -1,28 +1,145 @@
+[tool.poetry]
+name = "disnake-compass"
+version = "1.0.0"
+description = "An extension for disnake aimed at making component interactions with listeners somewhat less cumbersome."
+authors = ["Chromosomologist <chromosomologist@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "disnake_compass", from="src"}]
+
+
+[tool.poetry.dependencies]
+python = "^3.10"
+typing-extensions = "^4.10.0"
+disnake = "^2.10"
+attrs = ">=24.3"
+
+
+[tool.poetry.group.dev.dependencies]
+pyright = "^1.1.366"
+ruff = "^0.9.6"
+slotscheck = "^0.16.5"
+pre-commit = "^3.1.1"
+taskipy = "^1.10.3"
+python-dotenv = "^1.0.0"
+
+
+[tool.poetry.group.docs.dependencies]
+furo = {git = "https://github.com/sharp-eyes/furo"}
+Sphinx = "^7.0.1"
+sphinx-autobuild = "^2021.3.14"
+sphinxcontrib-trio = "^1.1.2"
+sphinx-inline-tabs = "^2023.4.21"
+sphinx-autodoc-typehints = "^2.2.3"
+sphinx-hoverxref = "^1.3.0"
+sphinx-copybutton = "^0.5.2"
+
+
+[tool.poetry.scripts]
+example = "scripts.example:_main"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
 [tool.pyright]
-include = ["disnake_ext_components"]
 typeCheckingMode = "strict"
+pythonVersion = "3.10"
 reportMissingTypeStubs = false
-reportPrivateUsage = false
-reportImportCycles = false
+exclude = [
+    # Default options
+    "**/node_modules",
+    "**/__pycache__",
+    "**/.*",
+    # No typechecking in docs anymore :(
+    "docs",
+]
 
-[tool.black]
+[tool.ruff]
 line-length = 100
+target-version = "py310"
 
-[tool.isort]
-profile = "black"
-skip_gitignore = true
+[tool.ruff.lint]
+select = [
+    "ALL",  # Include everything, including new rules.
+]
+ignore = [
+    "A005",  # Internally shadowing builtins is probably okay. Probably.
+    "COM812",  # Disabled for linter compatibility.
+    "D105",  # __magic_method__ docstrings.
+    "D107",  # __init__ docstrings.
+    "D203",  # Style, we don't want a newline before class docstrings.
+    "D213",  # Style, we don't want docstrings to start with a newline.
+    "FA100",  # Not a fan of using future annotations to early-access syntax.
+    "FIX",  # TODO-comments are to-do for a reason.
+    "PD",  # No pandas to be seen here.
+    "PLC0414",  # reexports through 'from x import y as y'.
+    "S101",  # Assert statements; we use these mainly for type assertions.
+    "TD",  # TODO-comments are to-do for a reason.
+]
 
-[tool.mypy]
-namespace_packages = true
-files = ["disnake_ext_components/*.py"]
 
-[tool.pytest.ini_options]
-required_plugins = ["pytest-asyncio"]
-asyncio_mode = "strict"
-testpaths = ["tests"]
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F403"]
+"scripts/*.py" = ["INP001", "T201"]
+"examples/*.py" = ["INP001", "ARG001", "PLR2004"]
 
-[tool.coverage.run]
-branch = true
+"scripts/*" = ["T201", "S603", "PTH109"]
+# D: Don't enforce docstrings in examples except for the module,
+# TCH: Don't enforce type-checking 'optimisation', as it's distracting from the example.
+# T201: Allow printing inside examples.
+# ARG001: Allow unused arguments, variables with a name are more clear than a plain underscore.
+# ANN201: Allow functions without explicit return type as this is unnecessary bloat for examples.
+"examples/*" = [
+    "ANN201",
+    "ARG001",
+    "D101",
+    "D102",
+    "D103",
+    "D417",
+    "EM101",
+    "PGH003",
+    "S101",
+    "T201",
+    "TRY003",
+    "UP006",
+]
+# C901: Sorry McCabe.
+# D: We don't care about documenting the documentation internals.
+# E402: Imports at top of file.
+# INP001: Sphinx docs are meant to be namespace packages.
+# PGH003: Blanket type ignores.
+# PLR2004: Magic values are OK in documentation internals.
+# PTH: Needless complexity for documentation internals.
+# S: Subprocess calls, input is predefined.
+# SLF001: Sphinx hackery needs access to internals.
+"docs/*" = [
+    "C901",
+    "D",
+    "E402",
+    "INP001",
+    "PGH003",
+    "PLR2004",
+    "PTH",
+    "S",
+    "SLF001",
+]
+# N801: Absolutely agree but if it ain't broke, don't fix it.
+"docs/source/extensions/attributetable.py" = [
+    "N801"
+]
 
-[tool.coverage.report]
-exclude_lines = ["pragma: no cover", "@t.overload"]
+
+[tool.ruff.lint.pep8-naming]
+extend-ignore-names = ["metacls"]
+
+[tool.ruff.lint.pyupgrade]
+keep-runtime-typing = true
+
+[tool.taskipy.tasks]
+precommit = "pre-commit install --install-hooks"
+lint = "pre-commit run --all-files"
+ruff = "task lint ruff"
+slotscheck = "task lint slotscheck"

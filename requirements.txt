@@ -1,2 +1,0 @@
-disnake >= 2.5.0
-typing-extensions

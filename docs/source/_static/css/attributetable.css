@@ -1,0 +1,169 @@
+body {
+    --attribute-table-title: var(--color-foreground-primary);
+    --attribute-table-list-border: var(--color-sidebar-background-border);
+    --attribute-table-list-text: var(--color-content-foreground);
+    --attribute-table-list-hover-border: var(--color-brand-content);
+    --attribute-table-list-hover-background: var(--color-sidebar-background);
+    --attribute-table-list-hover-text: var(--color-brand-content);
+    --attribute-table-badge: var(--color-foreground-secondary);
+}
+
+.py-attribute-table {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  margin: 0 2em;
+  padding-top: 16px;
+}
+
+.py-attribute-table-column {
+  flex: 1 1 0;
+}
+
+.py-attribute-table-column > span {
+  color: var(--attribute-table-title);
+  text-transform: uppercase;
+  font-weight: 500;
+  font-size: 16pt;
+}
+
+.py-attribute-table-column span > a {
+  color: var(--color-content-foreground);
+}
+
+main .py-attribute-table-column > ul {
+  list-style: none;
+  margin: 4px 0px;
+  padding-left: 0;
+  font-size: 0.95em;
+}
+
+ul.py-attribute-table-list {
+  padding-left: unset;
+}
+
+.py-attribute-table-list > li {
+  margin: 0;
+  padding: 0;
+  padding-left: 0.5em;
+  border-left: 2px solid var(--attribute-table-list-border);
+  display: flex;
+  line-height: 1.2em;
+}
+
+.py-attribute-table-list > li > span:first-child {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+.py-attribute-table-list > li > a {
+  padding-left: 0.2em;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  color: var(--attribute-table-list-text);
+  flex-grow: 1;
+}
+
+.py-attribute-table-list > li > a:hover {
+  color: var(--attribute-table-list-hover-text);
+  text-decoration: none;
+}
+
+.py-attribute-table-list > li:hover {
+  background-color: var(--attribute-table-list-hover-background);
+  border-left: 2px solid var(--attribute-table-list-hover-border);
+  text-decoration: none;
+}
+
+.py-attribute-table-list :where(.badge-coroutine, .badge-method, .badge-decorator, .badge-classmethod, .badge-attribute) {
+  padding-left: 0.2em;
+  padding-right: 10px;
+  flex-basis: 3em;
+  text-align: right;
+  font-size: 0.9em;
+  color: var(--attribute-table-badge);
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.container.operations {
+  padding: 10px;
+  border: 1px solid var(--codeblock-border);
+  margin-bottom: 20px;
+}
+
+.container.operations::before {
+  content: 'Supported Operations';
+  color: var(--main-big-headers-text);
+  display: block;
+  padding-bottom: 0.5em;
+}
+
+.container.operations > dl.describe > dt {
+  background-color: var(--api-entry-background);
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table.docutils {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table.docutils.footnote {
+  width: auto;
+}
+
+table.docutils thead,
+table.docutils tfoot {
+  background: var(--table-header-background);
+}
+
+table.docutils thead tr th {
+  color: var(--table-text);
+  font-weight: normal;
+  padding: 7px 5px;
+  vertical-align: middle;
+}
+
+table.docutils tbody tr th,
+table.docutils tbody tr td {
+  border-bottom: 0;
+  padding: 7px 5px;
+  vertical-align: top;
+}
+
+table.docutils tbody tr:not(:first-child) {
+  border-top: solid 1px var(--table-border);
+}
+
+table.docutils tbody tr:last-child th,
+table.docutils tbody tr:last-child td {
+  border-bottom: solid 1px var(--table-border);
+}
+
+table.docutils thead tr td p,
+table.docutils tfoot tr td p,
+table.docutils tbody tr td p,
+table.docutils thead tr td ul,
+table.docutils tfoot tr td ul,
+table.docutils tbody tr td ul,
+table.docutils thead tr td ol,
+table.docutils tfoot tr td ol,
+table.docutils tbody tr td ol {
+  margin: 0 0 .5em;
+}
+table.docutils thead tr td p.last,
+table.docutils tfoot tr td p.last,
+table.docutils tbody tr td p.last,
+table.docutils thead tr td ul.last,
+table.docutils tfoot tr td ul.last,
+table.docutils tbody tr td ul.last,
+table.docutils thead tr td ol.last,
+table.docutils tfoot tr td ol.last,
+table.docutils tbody tr td ol.last {
+  margin-bottom: 0;
+}

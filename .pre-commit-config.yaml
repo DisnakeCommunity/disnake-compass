@@ -1,34 +1,43 @@
-## Pre-commit setup, mostly yoinked from disnake
+## Pre-commit setup, mostly yoinked from disnake/mafic
 
+ci:
+  autofix_commit_msg: |
+    style: auto fixes from pre-commit hooks
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.2.0
+    rev: v4.4.0
     hooks:
+      - id: check-ast
+        name: Check if python files are valid syntax for the ast parser
       - id: check-case-conflict
+        name: Check for case conflict on file names for case insensitive systems.
+      - id: check-merge-conflict
+        name: Check for merge conflict syntax.
       - id: check-toml
+        name: Check TOML files for valid syntax.
       - id: check-yaml
+        name: Check YAML files for valid syntax.
+      - id: debug-statements
+        name: Check for debug statements.
       - id: end-of-file-fixer
+        name: Check for only one newline character at EOL.
       - id: trailing-whitespace
+        name: Check for trailing whitespace.
         args: [--markdown-linebreak-ext=md]
 
-  - repo: https://github.com/pycqa/isort
-    rev: 5.10.1
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.9.6
     hooks:
-      - id: isort
-        name: Running isort in all files.
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        name: Running ruff in all files.
+      - id: ruff-format
 
-  - repo: https://github.com/psf/black
-    rev: 22.3.0
+  - repo: https://github.com/ariebovenberg/slotscheck
+    rev: v0.19.1
     hooks:
-      - id: black
-        name: Running black in all files.
-
-  - repo: local
-    hooks:
-      - id: flake8
-        name: flake8
-        description: 'Lint all of our code'
-        entry: flake8
-        language: python
-        types: [python]
-        require_serial: true
+    - id: slotscheck
+      entry: env PYTHONPATH=src slotscheck
+      language: system
+      exclude: "^(?!src/)"
+      args: ["--verbose", "--require-subclass"]

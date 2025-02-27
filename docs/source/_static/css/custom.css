@@ -1,0 +1,129 @@
+/* Modify the [source] buttons such that they do not textwrap */
+.sig:not(.sig-inline) span.pre,
+span.viewcode-link span.pre {
+    overflow-wrap: normal;
+}
+
+/* Hoverxref stuff */
+/* Remove dotted underline */
+.hxr-hoverxref{
+    border-bottom: unset;
+}
+
+/* Recolor hoverxref box */
+.tooltipster-sidetip .tooltipster-content {
+    color: var(--color-content-foreground)
+}
+
+.tooltipster-sidetip .tooltipster-box {
+    border: 1px solid var(--color-sidebar-background-border);
+    background-color: var(--color-sidebar-background);
+}
+
+.tooltipster-sidetip.tooltipster-right .tooltipster-arrow-background {
+    border-right-color: var(--color-sidebar-background);
+}
+
+.tooltipster-sidetip.tooltipster-right .tooltipster-arrow-border {
+    border-right-color: var(--color-sidebar-background-border);
+}
+
+/* Add some visual separation to individual items */
+.py.function,
+.py.class,
+.py.data {
+    margin-bottom: 30px;
+}
+
+/* Global customisation */
+/* Dark theme colours */
+body[data-theme="dark"] {
+    --color-api-name: #00AEFF;
+    --color-api-keyword: #98BFFF;
+    --color-brand-primary: #AA88FF;
+    --color-brand-content: #AA88FF;
+    --color-highlight-on-target: #132237;
+}
+
+/* Light theme colours */
+body:not([data-theme="dark"]) {
+    --color-brand-primary: #6F42C1;
+    --color-brand-content: #6F42C1;
+}
+
+body {
+    --monospace-font-family: monospace;
+    --color-api-pre-name: var(--color-api-name);
+    --toc-font-size: var(--font-size--small--2);
+}
+
+/* Colours in codeblocks */
+/* ">>>" in dark theme */
+body[data-theme="dark"] .highlight .gp {
+    color: var(--color-api-name);
+    font-weight: bold;
+}
+
+/* Class keyword in dark theme */
+body[data-theme="dark"] .highlight .k {
+    color: #98BFFF;
+}
+
+/* Strings in dark theme */
+body[data-theme="dark"] .highlight .s2 {
+    color: #AA88FF;
+}
+
+/* Self, ints, bools, keywords, and \N{} strings in dark theme */
+body[data-theme="dark"] .highlight .bp,
+body[data-theme="dark"] .highlight .mi,
+body[data-theme="dark"] .highlight .kc,
+body[data-theme="dark"] .highlight .kn,
+body[data-theme="dark"] .highlight .se {
+    color: #FF66BB;
+}
+
+/* Class definitions, types, decorators, and module imports in dark theme */
+body[data-theme="dark"] .highlight .nc,
+body[data-theme="dark"] .highlight .nb,
+body[data-theme="dark"] .highlight .nd,
+body[data-theme="dark"] .highlight .nn {
+    color: #00AEFF;
+    text-decoration: none;
+    font-weight: normal;
+}
+
+/* Sidebar changes */
+.toc-drawer {
+    display: flex;
+    width: 20em;
+    flex-grow: 1;
+}
+
+@media (max-width: 82em) {
+    .toc-drawer {
+        right: -20em;
+    }
+}
+
+.toc-scroll {
+    flex-grow: 1
+}
+
+/* ReadTheDocs-specific colours */
+.rst-current-version {
+    color: var(--color-api-keyword) !important;
+    font-weight: bold;
+}
+
+.rst-other-versions a {
+    color: var(--color-link) !important;
+}
+
+.rst-other-versions a:hover {
+    text-decoration: underline;
+}
+
+.rst-other-versions a:visited {
+    color: var(--color-link--visited) !important;
+}

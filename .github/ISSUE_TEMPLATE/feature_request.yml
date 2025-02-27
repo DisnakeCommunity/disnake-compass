@@ -14,7 +14,7 @@ body:
       multiple: false
       label: What is the feature request for?
       options:
-        - disnake.ext.components
+        - disnake_compass
         - The documentation
     validations:
       required: true
