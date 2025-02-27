@@ -5,7 +5,8 @@ from __future__ import annotations
 import types
 import typing
 
-import attr
+import attrs
+
 from disnake_compass import fields
 from disnake_compass.api import component as component_api
 from disnake_compass.api import parser as parser_api
@@ -20,7 +21,7 @@ __all__: typing.Sequence[str] = ("ComponentFactory",)
 ParserMapping = typing.Mapping[str, parser_api.Parser[typing.Any]]
 
 
-@attr.define(slots=True)
+@attrs.define(slots=True)
 class ComponentFactory(
     component_api.ComponentFactory[component_api.ComponentT],
     typing.Generic[component_api.ComponentT],
@@ -32,20 +33,20 @@ class ComponentFactory(
     component factory can simply be created using :meth:`from_component`.
     """
 
-    parsers: ParserMapping = attr.field(converter=types.MappingProxyType)  # type: ignore
+    parsers: ParserMapping = attrs.field(converter=types.MappingProxyType)  # pyright: ignore[reportGeneralTypeIssues]
     """A mapping of custom id field name to that field's parser."""
-    component: typing.Type[component_api.ComponentT]
+    component: type[component_api.ComponentT]
     """The component type that this factory builds."""
 
     @classmethod
     def from_component(  # noqa: D102
         cls,
-        component: typing.Type[component_api.RichComponent],
+        component: type[component_api.RichComponent],
     ) -> typing_extensions.Self:
         # <<docstring inherited from api.components.ComponentFactory>>
-        parser: typing.Optional[parser_api.Parser[typing.Any]]
+        parser: parser_api.Parser[typing.Any] | None
 
-        parsers: typing.Dict[str, parser_api.Parser[typing.Any]] = {}
+        parsers: dict[str, parser_api.Parser[typing.Any]] = {}
         for field in fields.get_fields(component, kind=fields.FieldType.CUSTOM_ID):
             parser = fields.get_parser(field)
 
@@ -57,7 +58,7 @@ class ComponentFactory(
 
         return cls(
             parsers,
-            typing.cast(typing.Type[component_api.ComponentT], component),
+            typing.cast(type[component_api.ComponentT], component),
         )
 
     async def load_params(  # noqa: D102
@@ -65,24 +66,15 @@ class ComponentFactory(
         params: typing.Sequence[str],
     ) -> typing.Mapping[str, object]:
         # <<docstring inherited from api.components.ComponentFactory>>
-
-        if len(params) != len(self.parsers):
-            # Ensure params and parsers are of the same length before zipping them.
-            # Equivalent to `zip(..., strict=True)` in py >= 3.10.
-            message = (
-                "Component parameter count mismatch."
-                f" Expected {len(self.parsers)}, got {len(params)}."
-            )
-            raise ValueError(message)
-
         return {
             param: await self.parsers[param].loads(value)
-            for param, value in zip(self.parsers, params)
+            for param, value in zip(self.parsers, params, strict=True)
             if value  # TODO: Check this, I think this is wrong.
         }
 
     async def dump_params(  # noqa: D102
-        self, component: component_api.ComponentT
+        self,
+        component: component_api.ComponentT,
     ) -> typing.Mapping[str, str]:
         # <<docstring inherited from api.components.ComponentFactory>>
 
@@ -94,7 +86,7 @@ class ComponentFactory(
     async def build_component(  # noqa: D102
         self,
         params: typing.Sequence[str],
-        component_params: typing.Optional[typing.Mapping[str, object]] = None,
+        component_params: typing.Mapping[str, object] | None = None,
     ) -> component_api.ComponentT:
         # <<docstring inherited from api.components.ComponentFactory>>
 
@@ -112,7 +104,7 @@ class NoopFactory(component_api.ComponentFactory[typing.Any]):
     """
 
     __slots__: typing.Sequence[str] = ()
-    __instance: typing.ClassVar[typing.Optional[typing_extensions.Self]] = None
+    __instance: typing.ClassVar[typing_extensions.Self | None] = None
 
     def __new__(cls) -> typing_extensions.Self:
         if cls.__instance is not None:
@@ -123,7 +115,8 @@ class NoopFactory(component_api.ComponentFactory[typing.Any]):
 
     @classmethod
     def from_component(
-        cls, _: typing.Type[component_api.RichComponent]
+        cls,
+        _: type[component_api.RichComponent],
     ) -> typing_extensions.Self:
         # <<docstring inherited from api.components.ComponentFactory>>
 
@@ -142,7 +135,7 @@ class NoopFactory(component_api.ComponentFactory[typing.Any]):
     async def build_component(
         self,
         params: typing.Sequence[str],
-        component_params: typing.Optional[typing.Mapping[str, object]] = None,
+        component_params: typing.Mapping[str, object] | None = None,
     ) -> typing.NoReturn:
         # <<docstring inherited from api.components.ComponentFactory>>
 

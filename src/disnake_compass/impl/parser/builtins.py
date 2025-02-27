@@ -7,31 +7,34 @@ import inspect
 import string
 import typing
 
-import typing_extensions
 import attrs
+import typing_extensions
+
 from disnake_compass.impl.parser import base as parser_base
 
 if typing.TYPE_CHECKING:
     from disnake_compass.api import parser as parser_api
 
 __all__: typing.Sequence[str] = (
+    "BoolParser",
+    "CollectionParser",
     "FloatParser",
     "IntParser",
-    "BoolParser",
     "StringParser",
-    "CollectionParser",
     "TupleParser",
     "UnionParser",
 )
 
-_NoneType: typing.Type[None] = type(None)
+_NoneType: type[None] = type(None)
 _NONES = (None, _NoneType)
 _INT_CHARS = string.digits + string.ascii_lowercase
 
 _CollectionT = typing_extensions.TypeVar(  # Simplest iterable container object.
-    "_CollectionT", bound=typing.Collection[object], default=typing.Collection[str]
+    "_CollectionT",
+    bound=typing.Collection[object],
+    default=typing.Collection[str],
 )
-_TupleT = typing_extensions.TypeVar("_TupleT", bound=typing.Tuple[typing.Any, ...])
+_TupleT = typing_extensions.TypeVar("_TupleT", bound=tuple[typing.Any, ...])
 _T = typing_extensions.TypeVar("_T")
 
 # NONE
@@ -159,7 +162,7 @@ class FloatParser(parser_base.Parser[float]):
 
 
 def _validate_base(_instance: object, _attribute: object, base: int) -> None:
-    if not 2 <= base <= 36:
+    if not 2 <= base <= 36:  # noqa: PLR2004
         msg = "Base must be between 2 and 36."
         raise ValueError(msg)
 
@@ -227,17 +230,17 @@ class IntParser(parser_base.Parser[int]):
         # Try to short-circuit as much as possible
         if argument < self.base:
             return str(argument)
-        if self.base == 2:
+        if self.base == 2:  # noqa: PLR2004
             return f"{argument:b}"
-        if self.base == 8:
+        if self.base == 8:  # noqa: PLR2004
             return f"{argument:o}"
-        if self.base == 10:
+        if self.base == 10:  # noqa: PLR2004
             return str(argument)
-        if self.base == 16:
+        if self.base == 16:  # noqa: PLR2004
             return f"{argument:x}"
 
         # Can't short-circuit, convert to string manually.
-        digits: typing.List[int] = []
+        digits: list[int] = []
         while argument:
             digits.append(argument % self.base)
             argument //= self.base
@@ -292,7 +295,7 @@ class BoolParser(parser_base.Parser[bool]):
         """
         if argument in self.trues:
             return True
-        elif argument in self.falses:
+        if argument in self.falses:
             return False
 
         trues_str = ", ".join(map(repr, self.trues))
@@ -352,9 +355,9 @@ class StringParser(parser_base.Parser[str]):
         return argument
 
 
-def _resolve_collection(type_: typing.Type[_CollectionT]) -> typing.Type[_CollectionT]:
+def _resolve_collection(type_: type[_CollectionT]) -> type[_CollectionT]:
     # ContainerParser itself does not support tuples.
-    if issubclass(type_, typing.Tuple):
+    if issubclass(type_, tuple):
         msg = (
             f"{CollectionParser.__name__}s do not support tuples. Please use a "
             f"{TupleParser.__name__} instead."
@@ -367,10 +370,10 @@ def _resolve_collection(type_: typing.Type[_CollectionT]) -> typing.Type[_Collec
 
     # Try to resolve an abstract type to a valid concrete structural subtype.
     if issubclass(type_, typing.Sequence):
-        return typing.cast(typing.Type[_CollectionT], list)
+        return typing.cast(type[_CollectionT], list)
 
-    elif issubclass(type_, typing.AbstractSet):
-        return typing.cast(typing.Type[_CollectionT], set)
+    if issubclass(type_, typing.AbstractSet):
+        return typing.cast(type[_CollectionT], set)
 
     msg = f"Cannot infer a concrete type for abstract type {type_.__name__!r}."
     raise TypeError(msg)
@@ -402,7 +405,7 @@ class TupleParser(parser_base.Parser[_TupleT]):
 
     """
 
-    inner_parsers: typing.Tuple[parser_api.Parser[typing.Any], ...]
+    inner_parsers: tuple[parser_api.Parser[typing.Any], ...]
     """The parsers to use to parse the items inside the tuple.
 
     These define the inner types and the allowed number of items in the in the
@@ -468,18 +471,13 @@ class TupleParser(parser_base.Parser[_TupleT]):
         """
         parts = argument.split(self.sep)
 
-        if len(parts) != len(self.inner_parsers):
-            # TODO: Custom exception
-            msg = f"Expected {len(self.inner_parsers)} arguments, got {len(parts)}."
-            raise RuntimeError(msg)
-
         # NamedTuples should be instantiated using _make.
         initialiser = getattr(self.tuple_cls, "_make", self.tuple_cls)
         return initialiser(
             [
                 await parser.loads(part)
-                for parser, part in zip(self.inner_parsers, parts)
-            ]
+                for parser, part in zip(self.inner_parsers, parts, strict=True)
+            ],
         )
 
     async def dumps(self, argument: _TupleT, /) -> str:
@@ -497,15 +495,11 @@ class TupleParser(parser_base.Parser[_TupleT]):
             inner parsers.
 
         """
-        if len(argument) != len(self.inner_parsers):
-            msg = f"Expected {len(self.inner_parsers)} arguments, got {len(argument)}."
-            raise RuntimeError(msg)
-
         return self.sep.join(
             [
                 await parser.dumps(part)
-                for parser, part in zip(self.inner_parsers, argument)
-            ]
+                for parser, part in zip(self.inner_parsers, argument, strict=True)
+            ],
         )
 
 
@@ -546,7 +540,7 @@ class CollectionParser(parser_base.Parser[_CollectionT]):
     Note that, unlike a :class:`TupleParser`, a collection parser requires all
     items to be of the same type.
     """
-    collection_type: typing.Type[_CollectionT]
+    collection_type: type[_CollectionT]
     """The collection type for this parser.
 
     This is the type that holds the items, e.g. a :class:`list`.
@@ -568,23 +562,23 @@ class CollectionParser(parser_base.Parser[_CollectionT]):
 
     def __init__(
         self,
-        inner_parser: typing.Optional[parser_api.Parser[typing.Any]] = None,
+        inner_parser: parser_api.Parser[typing.Any] | None = None,
         *,
-        collection_type: typing.Optional[typing.Type[_CollectionT]] = None,
+        collection_type: type[_CollectionT] | None = None,
         sep: str = ",",
     ) -> None:
         self.sep = sep
         self.collection_type = typing.cast(  # Pyright do be whack sometimes.
-            typing.Type[_CollectionT],
+            type[_CollectionT],
             list if collection_type is None else _resolve_collection(collection_type),
         )
-        self.inner_parser = (
-            StringParser.default(str) if inner_parser is None else inner_parser
-        )
+        self.inner_parser = StringParser.default(str) if inner_parser is None else inner_parser
 
     @classmethod
     def default(  # noqa: D102
-        cls, type_: type[_CollectionT], /
+        cls,
+        type_: type[_CollectionT],
+        /,
     ) -> typing_extensions.Self:
         origin = typing.get_origin(type_)
         args = typing.get_args(type_)
@@ -657,9 +651,9 @@ class UnionParser(parser_base.Parser[_T], typing.Generic[_T]):
 
     def __init__(
         self,
-        *inner_parsers: typing.Optional[parser_api.Parser[typing.Any]],
+        *inner_parsers: parser_api.Parser[typing.Any] | None,
     ) -> None:
-        if len(inner_parsers) < 2:
+        if len(inner_parsers) < 2:  # noqa: PLR2004
             msg = "A Union requires two or more type arguments."
             raise TypeError(msg)
 
@@ -785,22 +779,21 @@ class LiteralParser(parser_base.Parser[_T], typing.Generic[_T]):
         self,
         *options: _T,
         inner_parser: parser_api.Parser[_T],
-    ):
+    ) -> None:
         self.options = options
         self.inner_parser = inner_parser
 
     @classmethod
     def default(cls, type_: type[_T], /) -> typing_extensions.Self:
         assert typing.get_origin(type_) == typing.Literal
-        args: typing.Tuple[_T] = typing.get_args(type_)
+        args: tuple[_T] = typing.get_args(type_)
 
         args_iter = iter(args)
         arg_type = type(next(args_iter))
         for arg in args_iter:
             if not isinstance(arg, arg_type):
                 msg = (
-                    "Literal parsers only support literals where all options"
-                    " are of the same type."
+                    "Literal parsers only support literals where all options are of the same type."
                 )
                 raise TypeError(msg)
 

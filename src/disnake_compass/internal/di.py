@@ -5,6 +5,8 @@ from __future__ import annotations
 import contextvars
 import typing
 
+import typing_extensions
+
 from disnake_compass.internal import omit
 
 __all__: typing.Sequence[str] = (
@@ -14,16 +16,20 @@ __all__: typing.Sequence[str] = (
 )
 
 _T = typing.TypeVar("_T")
+TokenMap: typing_extensions.TypeAlias = typing.Mapping[
+    type[typing.Any],
+    contextvars.Token[object],
+]
 
 # XXX:  This actually introduces a memory leak when combined with hot-reloading
 #       as old types will never be cleared from the dependency map. Since hot-
 #       reloading in production environments is ill-advised anyway, I don't
 #       think it's worth adding a lot more complexity to circumvent it.
 #       ...Unless, of course, someone can come up with a better approach.
-DEPENDENCY_MAP: typing.Dict[typing.Type[typing.Any], contextvars.ContextVar[typing.Any]] = {}
+DEPENDENCY_MAP: dict[type[typing.Any], contextvars.ContextVar[typing.Any]] = {}
 
 
-def _get_contextvar_for(dependency_type: typing.Type[_T], /) -> contextvars.ContextVar[_T]:
+def _get_contextvar_for(dependency_type: type[_T], /) -> contextvars.ContextVar[_T]:
     if dependency_type in DEPENDENCY_MAP:
         return DEPENDENCY_MAP[dependency_type]
 
@@ -39,7 +45,7 @@ def _get_contextvar_for(dependency_type: typing.Type[_T], /) -> contextvars.Cont
     return context
 
 
-def register_dependencies(*dependencies: object) -> typing.Mapping[typing.Type[typing.Any], contextvars.Token[object]]:
+def register_dependencies(*dependencies: object) -> TokenMap:
     r"""Register any number of dependencies.
 
     This returns a mapping of :class:`contextvars.Token`\s that should be
@@ -62,7 +68,7 @@ def register_dependencies(*dependencies: object) -> typing.Mapping[typing.Type[t
         passed to :func:`reset_dependencies` for cleanup.
 
     """
-    tokens: typing.Dict[type, contextvars.Token[object]] = {}
+    tokens: dict[type, contextvars.Token[object]] = {}
     for dependency in dependencies:
         dependency_type = type(dependency)
         tokens[dependency_type] = _get_contextvar_for(dependency_type).set(dependency)
@@ -70,7 +76,7 @@ def register_dependencies(*dependencies: object) -> typing.Mapping[typing.Type[t
     return tokens
 
 
-def reset_dependencies(tokens: typing.Mapping[typing.Type[typing.Any], contextvars.Token[object]]) -> None:
+def reset_dependencies(tokens: TokenMap) -> None:
     """Reset dependencies that are no longer in use.
 
     This is meant to be used in conjunction with :func:`register_dependencies`.
@@ -88,7 +94,7 @@ def reset_dependencies(tokens: typing.Mapping[typing.Type[typing.Any], contextva
 
 
 def resolve_dependency(
-    dependency_type: typing.Type[_T],
+    dependency_type: type[_T],
     default: omit.Omissible[_T] = omit.Omitted,
 ) -> _T:
     """Resolve a dependency given a type and an optional default.
@@ -121,7 +127,7 @@ def resolve_dependency(
     if not omit.is_omitted(resolved):
         return resolved
 
-    elif not omit.is_omitted(default):
+    if not omit.is_omitted(default):
         return default
 
     msg = f"Failed to resolve dependency for type {dependency_type.__name__}."

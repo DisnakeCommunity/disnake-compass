@@ -7,25 +7,25 @@ import typing
 
 import attrs
 import disnake
+
 from disnake_compass.impl.parser import base as parser_base
 from disnake_compass.impl.parser import builtins as builtins_parsers
 from disnake_compass.internal import di
 
 __all__: typing.Sequence[str] = ("MessageParser", "PartialMessageParser")
 
-AnyChannel = typing.Union[
-    disnake.TextChannel,
-    disnake.Thread,
-    disnake.VoiceChannel,
-    disnake.DMChannel,
-    disnake.PartialMessageable,
-]
+AnyChannel: typing.TypeAlias = (
+    disnake.TextChannel
+    | disnake.Thread
+    | disnake.VoiceChannel
+    | disnake.DMChannel
+    | disnake.PartialMessageable
+)
 
 
 @typing.runtime_checkable
 class SupportsGetPartialMessage(typing.Protocol):
-    def get_partial_message(self, message_id: int, /) -> disnake.PartialMessage:
-        ...
+    def get_partial_message(self, message_id: int, /) -> disnake.PartialMessage: ...
 
 
 @parser_base.register_parser_for(disnake.PartialMessage)
@@ -46,14 +46,16 @@ class PartialMessageParser(parser_base.Parser[disnake.PartialMessage]):
 
     """
 
-    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
+    int_parser: builtins_parsers.IntParser = attrs.field(
+        factory=lambda: builtins_parsers.IntParser.default(int),
+    )
     """The :class:`~disnake_compass.impl.parser.builtins.IntParser` to use
     internally for this parser.
 
     Since the default integer parser uses base-36 to "compress" numbers, the
     default guild parser will also return compressed results.
     """
-    channel: typing.Optional[SupportsGetPartialMessage] = attrs.field(default=None, kw_only=True)
+    channel: SupportsGetPartialMessage | None = attrs.field(default=None, kw_only=True)
     """The channel in which to make the partial message."""
 
     async def loads(self, argument: str, /) -> disnake.PartialMessage:
@@ -115,7 +117,9 @@ class MessageParser(parser_base.Parser[disnake.Message]):
 
     """
 
-    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
+    int_parser: builtins_parsers.IntParser = attrs.field(
+        factory=lambda: builtins_parsers.IntParser.default(int),
+    )
     """The :class:`~disnake_compass.impl.parser.builtins.IntParser` to use
     internally for this parser.
 

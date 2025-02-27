@@ -6,6 +6,7 @@ import typing
 
 import attrs
 import disnake
+
 from disnake_compass.impl.parser import base as parser_base
 from disnake_compass.impl.parser import builtins as builtins_parsers
 from disnake_compass.internal import di
@@ -35,7 +36,9 @@ class PartialEmojiParser(parser_base.Parser[disnake.PartialEmoji]):
 
     """
 
-    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
+    int_parser: builtins_parsers.IntParser = attrs.field(
+        factory=lambda: builtins_parsers.IntParser.default(int),
+    )
     """The :class:`~disnake_compass.impl.parser.builtins.IntParser` to use
     internally for this parser.
 
@@ -89,7 +92,9 @@ class EmojiParser(parser_base.Parser[disnake.Emoji]):
 
     """
 
-    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
+    int_parser: builtins_parsers.IntParser = attrs.field(
+        factory=lambda: builtins_parsers.IntParser.default(int),
+    )
     """The :class:`~disnake_compass.impl.parser.builtins.IntParser` to use
     internally for this parser.
 
@@ -132,7 +137,6 @@ class EmojiParser(parser_base.Parser[disnake.Emoji]):
         msg = f"Could not find an emoji with id {emoji_id}."
         raise LookupError(msg)
 
-
     async def dumps(self, argument: disnake.Emoji, /) -> str:
         """Dump an emoji into a string.
 
@@ -162,7 +166,9 @@ class StickerParser(parser_base.Parser[disnake.Sticker]):
 
     """
 
-    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
+    int_parser: builtins_parsers.IntParser = attrs.field(
+        factory=lambda: builtins_parsers.IntParser.default(int),
+    )
     """The :class:`~disnake_compass.impl.parser.builtins.IntParser` to use
     internally for this parser.
 
@@ -204,7 +210,6 @@ class StickerParser(parser_base.Parser[disnake.Sticker]):
 
         msg = f"Could not find an emoji with id {sticker_id}."
         raise LookupError(msg)
-
 
     async def dumps(self, argument: disnake.Sticker, /) -> str:
         """Dump a sticker into a string.

@@ -9,15 +9,15 @@ packages = [{include = "disnake_compass", from="src"}]
 
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.10"
 typing-extensions = "^4.10.0"
-disnake = "^2.5.0"
+disnake = "^2.10"
+attrs = ">=24.3"
 
 
 [tool.poetry.group.dev.dependencies]
 pyright = "^1.1.366"
-ruff = "^0.4.8"
-black = "^23.1.0"
+ruff = "^0.9.6"
 slotscheck = "^0.16.5"
 pre-commit = "^3.1.1"
 taskipy = "^1.10.3"
@@ -26,17 +26,16 @@ python-dotenv = "^1.0.0"
 
 [tool.poetry.group.docs.dependencies]
 furo = {git = "https://github.com/sharp-eyes/furo"}
-Sphinx = {version="^7.0.1", python = "^3.9"}
+Sphinx = "^7.0.1"
 sphinx-autobuild = "^2021.3.14"
 sphinxcontrib-trio = "^1.1.2"
 sphinx-inline-tabs = "^2023.4.21"
-sphinx-autodoc-typehints = {version = "^2.2.3", python = "^3.9"}
+sphinx-autodoc-typehints = "^2.2.3"
 sphinx-hoverxref = "^1.3.0"
 sphinx-copybutton = "^0.5.2"
 
 
 [tool.poetry.scripts]
-dev-symlink = "scripts.symlink:_main"
 example = "scripts.example:_main"
 
 
@@ -47,7 +46,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pyright]
 typeCheckingMode = "strict"
-pythonVersion = "3.8"
+pythonVersion = "3.10"
 reportMissingTypeStubs = false
 exclude = [
     # Default options
@@ -58,125 +57,89 @@ exclude = [
     "docs",
 ]
 
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
 [tool.ruff.lint]
-# Taken from https://github.com/ooliver1/mafic/blob/master/pyproject.toml
-# as a baseline, will modify these as desired when deemed necessary.
 select = [
-    "E",
-    "F",
-    "W",
-    "I",
-    "D",
-    "UP",
-    "YTT",
-    "ANN",
-    "S",
-    "BLE",
-    "FBT",
-    "B",
-    "C40",
-    "DTZ",
-    "T10",
-    "EM",
-    "ISC",
-    "G",
-    "PIE",
-    "T20",
-    "Q",
-    "RSE",
-    "RET",
-    "SIM",
-    "TCH",
-    "ARG",
-    "PGH",
-    "PLC",
-    "PLE",
-    "PLR",
-    "PLW",
-    "TRY",
-    "RUF",
+    "ALL",  # Include everything, including new rules.
 ]
-
-# F403, F405 do not need to hate wildcard imports. Pyright can find undefined errors.
-# D105, not really any point in documenting magic methods.
-# D107, class docstr is in the class level, may change in future.
-# D203 and D211, D212 and D213 intentionally clash
-# ANN101, ANN102 ask for `self` and `cls` annotations, what?
-# RET505-RET508 does not allow for any branches where it is an elif and else after a return
-# PLR2004 too much to deal with right now.
-# UP006 incorrectly "updates" e.g. typing.Type[x] to type[x], which leads to runtime errors in 3.8
-# UP007 incorrectly "updates" Union[X, Y] to X | Y.
-# UP038 ^ inside isinstance.
-# PLC0414 doesn't support `import foo as foo` to reexport.
-# B905 incompatible with code that should run on py < 3.10.
 ignore = [
-    "F403",
-    "F405",
-    "D105",
-    "D107",
-    "D203",
-    "D213",
-    "ANN101",
-    "ANN102",
-    "RET505",
-    "RET506",
-    "RET507",
-    "RET508",
-    "PLR2004",
-    "UP006",
-    "UP007",
-    "UP038",
-    "PLC0414",
-    "B905",
-    "PGH003",
-    "S101",
+    "A005",  # Internally shadowing builtins is probably okay. Probably.
+    "COM812",  # Disabled for linter compatibility.
+    "D105",  # __magic_method__ docstrings.
+    "D107",  # __init__ docstrings.
+    "D203",  # Style, we don't want a newline before class docstrings.
+    "D213",  # Style, we don't want docstrings to start with a newline.
+    "FA100",  # Not a fan of using future annotations to early-access syntax.
+    "FIX",  # TODO-comments are to-do for a reason.
+    "PD",  # No pandas to be seen here.
+    "PLC0414",  # reexports through 'from x import y as y'.
+    "S101",  # Assert statements; we use these mainly for type assertions.
+    "TD",  # TODO-comments are to-do for a reason.
 ]
-
-unfixable = ["RET502", "RET503"]
-
-
-[tool.ruff.lint.flake8-annotations]
-# Allow ommitting None return type in __init__ signatures.
-mypy-init-return = true
 
 
 [tool.ruff.lint.per-file-ignores]
-# Allow print in scripts
-"scripts/*" = ["T201", "S603"]
+"__init__.py" = ["F403"]
+"scripts/*.py" = ["INP001", "T201"]
+"examples/*.py" = ["INP001", "ARG001", "PLR2004"]
+
+"scripts/*" = ["T201", "S603", "PTH109"]
 # D: Don't enforce docstrings in examples except for the module,
 # TCH: Don't enforce type-checking 'optimisation', as it's distracting from the example.
 # T201: Allow printing inside examples.
 # ARG001: Allow unused arguments, variables with a name are more clear than a plain underscore.
 # ANN201: Allow functions without explicit return type as this is unnecessary bloat for examples.
 "examples/*" = [
+    "ANN201",
+    "ARG001",
     "D101",
     "D102",
     "D103",
     "D417",
     "EM101",
+    "PGH003",
     "S101",
     "T201",
-    "TCH",
     "TRY003",
     "UP006",
-    "ARG001",
-    "ANN201",
 ]
+# C901: Sorry McCabe.
+# D: We don't care about documenting the documentation internals.
 # E402: Imports at top of file.
+# INP001: Sphinx docs are meant to be namespace packages.
 # PGH003: Blanket type ignores.
+# PLR2004: Magic values are OK in documentation internals.
+# PTH: Needless complexity for documentation internals.
 # S: Subprocess calls, input is predefined.
+# SLF001: Sphinx hackery needs access to internals.
 "docs/*" = [
+    "C901",
+    "D",
     "E402",
+    "INP001",
     "PGH003",
+    "PLR2004",
+    "PTH",
     "S",
+    "SLF001",
 ]
-"docs/source/extensions/*" = [
-    "D"
+# N801: Absolutely agree but if it ain't broke, don't fix it.
+"docs/source/extensions/attributetable.py" = [
+    "N801"
 ]
 
+
+[tool.ruff.lint.pep8-naming]
+extend-ignore-names = ["metacls"]
+
+[tool.ruff.lint.pyupgrade]
+keep-runtime-typing = true
+
 [tool.taskipy.tasks]
-pre-commit = "pre-commit install --install-hooks"
+precommit = "pre-commit install --install-hooks"
 lint = "pre-commit run --all-files"
-black = "task lint black"
 ruff = "task lint ruff"
 slotscheck = "task lint slotscheck"

@@ -9,16 +9,13 @@ import sys
 import typing
 import weakref
 
-import attr
-
+import attrs
 import disnake
-from disnake.ext import commands
+import typing_extensions
+
 from disnake_compass import fields
 from disnake_compass.api import component as component_api
 from disnake_compass.internal import di, omit
-
-if typing.TYPE_CHECKING:
-    import typing_extensions
 
 __all__: typing.Sequence[str] = ("ComponentManager", "check_manager", "get_manager")
 
@@ -28,86 +25,94 @@ _ROOT = sys.intern("root")
 _COMPONENT_EVENT = sys.intern("on_message_interaction")
 _MODAL_EVENT = sys.intern("on_modal_submit")
 
-_COMPONENT_CTX: contextvars.ContextVar[
-    tuple[component_api.RichComponent, str]
-] = contextvars.ContextVar("_COMPONENT_CTX")
+_COMPONENT_CTX: contextvars.ContextVar[tuple[component_api.RichComponent, str]] = (
+    contextvars.ContextVar("_COMPONENT_CTX")
+)
 
 
 T = typing.TypeVar("T")
 
-AnyBot = typing.Union[commands.Bot, commands.InteractionBot]
 
 class DependencyProviderFunc(typing.Protocol):
     def __call__(
         self,
         manager: ComponentManager,
         *dependencies: object,
-    ) -> typing.AsyncGenerator[None, None]:
-        ...
+    ) -> typing.AsyncGenerator[None, None]: ...
+
 
 class DependencyProvider(typing.Protocol):
     def __call__(
         self,
         manager: ComponentManager,
         *dependencies: object,
-    ) -> typing.AsyncContextManager[None]:
-        ...
+    ) -> typing.AsyncContextManager[None]: ...
+
 
 DependencyProviderFuncT = typing.TypeVar("DependencyProviderFuncT", bound=DependencyProviderFunc)
 
 
-CallbackWrapperFunc = typing.Callable[
-    ["ComponentManager", component_api.RichComponent, disnake.Interaction],
+CallbackWrapperFunc: typing.TypeAlias = typing.Callable[
+    ["ComponentManager", component_api.RichComponent, disnake.Interaction[disnake.Client]],
     typing.AsyncGenerator[None, None],
 ]
-CallbackWrapper = typing.Callable[
-    ["ComponentManager", component_api.RichComponent, disnake.Interaction],
+CallbackWrapper: typing.TypeAlias = typing.Callable[
+    ["ComponentManager", component_api.RichComponent, disnake.Interaction[disnake.Client]],
     typing.AsyncContextManager[None],
 ]
 CallbackWrapperFuncT = typing.TypeVar("CallbackWrapperFuncT", bound=CallbackWrapperFunc)
 
 
-ExceptionHandlerFunc = typing.Callable[
-    ["ComponentManager", component_api.RichComponent, disnake.Interaction, Exception],
-    typing.Coroutine[typing.Any, typing.Any, typing.Optional[bool]],
+ExceptionHandlerFunc: typing.TypeAlias = typing.Callable[
+    [
+        "ComponentManager",
+        component_api.RichComponent,
+        disnake.Interaction[disnake.Client],
+        Exception,
+    ],
+    typing.Coroutine[typing.Any, typing.Any, bool | None],
 ]
 ExceptionHandlerFuncT = typing.TypeVar(
-    "ExceptionHandlerFuncT", bound=ExceptionHandlerFunc
+    "ExceptionHandlerFuncT",
+    bound=ExceptionHandlerFunc,
 )
 
 RichComponentT = typing.TypeVar("RichComponentT", bound=component_api.RichComponent)
-RichComponentType = typing.Type[component_api.RichComponent]
+RichComponentType: typing.TypeAlias = type[component_api.RichComponent]
 
-MessageComponents = typing.Union[
-    component_api.RichButton,
-    disnake.ui.Button[typing.Any],
-    component_api.RichSelect,
-    disnake.ui.StringSelect[typing.Any],
-    disnake.ui.ChannelSelect[typing.Any],
-    disnake.ui.RoleSelect[typing.Any],
-    disnake.ui.UserSelect[typing.Any],
-    disnake.ui.MentionableSelect[typing.Any],
-]
+MessageComponents: typing.TypeAlias = (
+    component_api.RichButton
+    | disnake.ui.Button[typing.Any]
+    | component_api.RichSelect
+    | disnake.ui.StringSelect[typing.Any]
+    | disnake.ui.ChannelSelect[typing.Any]
+    | disnake.ui.RoleSelect[typing.Any]
+    | disnake.ui.UserSelect[typing.Any]
+    | disnake.ui.MentionableSelect[typing.Any]
+)
 
 
 def _to_ui_component(
-    component: typing.Union[disnake.Button, disnake.BaseSelectMenu],
+    component: disnake.Button | disnake.BaseSelectMenu,
 ) -> disnake.ui.MessageUIComponent:
     if isinstance(component, disnake.Button):
         return disnake.ui.Button[None].from_component(component)
-    elif isinstance(component, disnake.StringSelectMenu):
+    if isinstance(component, disnake.StringSelectMenu):
         return disnake.ui.StringSelect[None].from_component(component)
-    elif isinstance(component, disnake.UserSelectMenu):
+    if isinstance(component, disnake.UserSelectMenu):
         return disnake.ui.UserSelect[None].from_component(component)
-    elif isinstance(component, disnake.RoleSelectMenu):
+    if isinstance(component, disnake.RoleSelectMenu):
         return disnake.ui.RoleSelect[None].from_component(component)
-    elif isinstance(component, disnake.MentionableSelectMenu):
+    if isinstance(component, disnake.MentionableSelectMenu):
         return disnake.ui.MentionableSelect[None].from_component(component)
-    elif isinstance(component, disnake.ChannelSelectMenu):
+    if isinstance(component, disnake.ChannelSelectMenu):
         return disnake.ui.ChannelSelect[None].from_component(component)
 
     msg = f"Expected a message component type, got {type(component).__name__!r}."
     raise TypeError(msg)
+
+
+_MAX_COUNT = 1 << 8 - 1  # 1 byte, starting at 0
 
 
 def _minimise_count(count: int) -> str:
@@ -119,11 +124,11 @@ def _minimise_count(count: int) -> str:
     return byte.decode("latin-1")
 
 
-_COUNT_CHARS: typing.Final[typing.Tuple[str, ...]] = tuple(
-    map(_minimise_count, range(25))
+_COUNT_CHARS: typing.Final[tuple[str, ...]] = tuple(
+    map(_minimise_count, range(25)),
 )
 _DEFAULT_SEP: typing.Final[str] = sys.intern("|")
-_DEFAULT_COUNT: typing.Final[typing.Literal[True]] = True
+_DEFAULT_COUNT: typing.Final = True
 
 
 @contextlib.asynccontextmanager
@@ -132,7 +137,7 @@ async def default_dependency_provider(
     *dependencies: object,
 ) -> typing.AsyncGenerator[None, None]:
     tokens = di.register_dependencies(
-        *(dependency for dependency in dependencies if dependency is not None)
+        *(dependency for dependency in dependencies if dependency is not None),
     )
 
     yield
@@ -144,7 +149,7 @@ async def default_dependency_provider(
 async def default_callback_wrapper(
     manager: component_api.ComponentManager,  # noqa: ARG001
     component: component_api.RichComponent,  # noqa: ARG001
-    interaction: disnake.Interaction,  # noqa: ARG001
+    interaction: disnake.Interaction[disnake.Client],  # noqa: ARG001
 ) -> typing.AsyncGenerator[None, None]:
     """Wrap a callback for a component manager.
 
@@ -156,7 +161,7 @@ async def default_callback_wrapper(
 async def default_exception_handler(
     manager: component_api.ComponentManager,
     component: component_api.RichComponent,
-    interaction: disnake.Interaction,  # noqa: ARG001
+    interaction: disnake.Interaction[disnake.Client],  # noqa: ARG001
     exception: Exception,
 ) -> bool:
     """Handle an exception that occurs during execution of a component callback.
@@ -189,7 +194,7 @@ async def default_exception_handler(
     return True
 
 
-@attr.define
+@attrs.define
 class _ModuleData:
     name: str
     id: int
@@ -213,9 +218,7 @@ class ComponentManager(component_api.ComponentManager):
     """The standard implementation of a component manager.
 
     Component managers keep track of disnake-compass' special components
-    and ensure they smoothly communicate with disnake's bots. Since this relies
-    on listener functionality, component managers are incompatible with
-    :class:`disnake.Client`-classes.
+    and ensure they smoothly communicate with disnake's clients.
 
     To register a component to a component manager, use :meth:`register`.
     Without registering your components, they will remain unresponsive.
@@ -259,15 +262,15 @@ class ComponentManager(component_api.ComponentManager):
 
         If not set, the manager will use its parents' settings. The default
         set on the root manager is ``"|"``.
-    bot:
-        The bot to which to register this manager. This can be specified at any
-        point through :meth:`.add_to_bot`.
+    client:
+        The client to which to register this manager. This can be specified at any
+        point through :meth:`.add_to_client`.
 
     """
 
     __slots__: typing.Sequence[str] = (
-        "_bot",
         "_children",
+        "_client",
         "_components",
         "_count",
         "_counter",
@@ -280,23 +283,23 @@ class ComponentManager(component_api.ComponentManager):
         "wrap_callback",
     )
 
-    _bot: typing.Optional[AnyBot]
-    _children: typing.Set[ComponentManager]
+    _client: disnake.Client | None
+    _children: set[ComponentManager]
     _components: weakref.WeakValueDictionary[str, RichComponentType]
-    _count: typing.Optional[bool]
+    _count: bool | None
     _counter: int
     _identifiers: dict[str, str]
-    _module_data: typing.Dict[str, _ModuleData]
+    _module_data: dict[str, _ModuleData]
     _name: str
-    _sep: typing.Optional[str]
+    _sep: str | None
 
     def __init__(
         self,
         name: str,
         *,
-        count: typing.Optional[bool] = None,
-        sep: typing.Optional[str] = None,
-        bot: typing.Optional[commands.Bot] = None,
+        count: bool | None = None,
+        sep: str | None = None,
+        client: disnake.Client | None = None,
     ) -> None:
         self._name = name
         self._children = set()
@@ -310,32 +313,38 @@ class ComponentManager(component_api.ComponentManager):
         self.wrap_callback: CallbackWrapper = default_callback_wrapper
         self.handle_exception: ExceptionHandlerFunc = default_exception_handler
 
-        if bot:
-            self.add_to_bot(bot)
+        if client:
+            self.add_to_client(client)
 
     def __repr__(self) -> str:
         return f"ComponentManager(name={self.name})"
 
     @property
-    def bot(self) -> AnyBot:
-        """The bot to which this manager is registered.
+    @typing_extensions.deprecated("Please use client instead.")
+    def bot(self) -> disnake.Client:
+        """An alias of :attr:`client`."""
+        return self.client
+
+    @property
+    def client(self) -> disnake.Client:
+        """The client to which this manager is registered.
 
         If the manager has not yet been registered, this raises an exception.
 
         .. note::
             This is recursively accessed for all the parents of this manager.
-            For example, if ``get_manager().bot`` is set, then any of its
-            children ``get_manager("foo.bar").bot`` will also return that same
-            bot instance.
+            For example, if ``get_manager().client`` is set, then any of its
+            children ``get_manager("foo.bar").client`` will also return that
+            same client instance.
 
-            It is therefore generally recommended to set the bot on the root
+            It is therefore generally recommended to set the client on the root
             manager so that all other managers automatically have access to it.
         """
-        bot = _recurse_parents_getattr(self, "_bot", None)
-        if bot:
-            return bot
+        client = _recurse_parents_getattr(self, "_client", None)
+        if client:
+            return client
 
-        msg = f"Component manager {self.name!r} is not yet registered to a bot."
+        msg = f"Component manager {self.name!r} is not yet registered to a client."
         raise RuntimeError(msg)
 
     @property
@@ -345,7 +354,7 @@ class ComponentManager(component_api.ComponentManager):
         return self._name
 
     @property
-    def children(self) -> typing.Set[ComponentManager]:  # noqa: D102
+    def children(self) -> set[ComponentManager]:  # noqa: D102
         # <<docstring inherited from api.components.ComponentManager>>
 
         return self._children
@@ -400,7 +409,7 @@ class ComponentManager(component_api.ComponentManager):
         return _recurse_parents_getattr(self, "_sep", _DEFAULT_SEP)
 
     @property
-    def parent(self) -> typing.Optional[ComponentManager]:  # noqa: D102
+    def parent(self) -> ComponentManager | None:  # noqa: D102
         # <<docstring inherited from api.components.ComponentManager>>
 
         if "." not in self.name:
@@ -428,8 +437,9 @@ class ComponentManager(component_api.ComponentManager):
         return component_type.__name__
 
     def get_identifier(  # noqa: D102
-        self, custom_id: str
-    ) -> typing.Tuple[str, typing.Sequence[str]]:
+        self,
+        custom_id: str,
+    ) -> tuple[str, typing.Sequence[str]]:
         # <<docstring inherited from api.components.ComponentManager>>
 
         name, *params = custom_id.split(self.sep)
@@ -444,13 +454,14 @@ class ComponentManager(component_api.ComponentManager):
         count = _minimise_count(self._counter)
 
         self._counter += 1
-        if self._counter > 24:
+        if self._counter > _MAX_COUNT:
             self._counter = 0
 
         return count
 
     async def make_custom_id(  # noqa: D102
-        self, component: component_api.RichComponent
+        self,
+        component: component_api.RichComponent,
     ) -> str:
         # <<docstring inherited from api.components.ComponentManager>>
 
@@ -464,19 +475,19 @@ class ComponentManager(component_api.ComponentManager):
         return self.sep.join([identifier, *dumped_params.values()])
 
     async def parse_message_interaction(  # noqa: D102
-        self, interaction: disnake.Interaction,
-    ) -> typing.Optional[component_api.RichComponent]:
+        self,
+        interaction: disnake.Interaction[disnake.Client],
+    ) -> component_api.RichComponent | None:
         # <<docstring inherited from api.components.ComponentManager>>
         if isinstance(interaction, disnake.MessageInteraction):
             return await self.parse_raw_component(interaction.component)
 
-        else:
-            raise NotImplementedError
+        raise NotImplementedError
 
     async def parse_raw_component(
         self,
-        component: typing.Union[disnake.Button, disnake.BaseSelectMenu],
-    ) -> typing.Optional[component_api.RichComponent]:
+        component: disnake.Button | disnake.BaseSelectMenu,
+    ) -> component_api.RichComponent | None:
         """Parse a rich message component from a disnake raw component.
 
         .. note::
@@ -526,18 +537,20 @@ class ComponentManager(component_api.ComponentManager):
         component_params = {
             field.name: getattr(component, field.name)
             for field in fields.get_fields(
-                component_type, kind=fields.FieldType.INTERNAL
+                component_type,
+                kind=fields.FieldType.INTERNAL,
             )
         }
 
         return await component_type.factory.build_component(
-            params, component_params=component_params
+            params,
+            component_params=component_params,
         )
 
     async def parse_message_components(
         self,
         message: disnake.Message,
-    ) -> typing.Tuple[
+    ) -> tuple[
         typing.Sequence[typing.Sequence[MessageComponents]],
         typing.Sequence[component_api.RichComponent],
     ]:
@@ -573,14 +586,14 @@ class ComponentManager(component_api.ComponentManager):
             on the nested structure.
 
         """  # noqa: E501
-        new_rows: typing.List[typing.List[MessageComponents]] = []
-        rich_components: typing.List[component_api.RichComponent] = []
+        new_rows: list[list[MessageComponents]] = []
+        rich_components: list[component_api.RichComponent] = []
 
         current_component, current_component_id = _COMPONENT_CTX.get((None, None))
         should_test = current_component is not None
 
         for row in message.components:
-            new_row: typing.List[MessageComponents] = []
+            new_row: list[MessageComponents] = []
             new_rows.append(new_row)
 
             for component in row.children:
@@ -595,7 +608,7 @@ class ComponentManager(component_api.ComponentManager):
                     rich_components.append(new_component)
                     assert isinstance(
                         new_component,
-                        (component_api.RichButton, component_api.RichSelect),
+                        component_api.RichButton | component_api.RichSelect,
                     )
 
                 else:
@@ -624,18 +637,16 @@ class ComponentManager(component_api.ComponentManager):
         disnake.ui.Components[disnake.ui.MessageUIComponent]:
             A disnake-compatible structure of sendable components.
 
-        """  # noqa: E501
-        finalised: typing.List[typing.List[disnake.ui.MessageUIComponent]] = []
+        """
+        finalised: list[list[disnake.ui.MessageUIComponent]] = []
 
         for row in components:
-            new_row: typing.List[disnake.ui.MessageUIComponent] = []
+            new_row: list[disnake.ui.MessageUIComponent] = []
             finalised.append(new_row)
 
             for component in row:
-                if isinstance(
-                    component, (component_api.RichButton, component_api.RichSelect)
-                ):
-                    new_row.append(await component.as_ui_component())  # type: ignore
+                if isinstance(component, component_api.RichButton | component_api.RichSelect):
+                    new_row.append(await component.as_ui_component())  # pyright: ignore[reportArgumentType]
                 else:
                     new_row.append(component)
 
@@ -645,29 +656,26 @@ class ComponentManager(component_api.ComponentManager):
     @typing.overload
     def register(
         self,
-        component_type: typing.Type[RichComponentT],
+        component_type: type[RichComponentT],
         *,
-        identifier: typing.Optional[str] = None,
-    ) -> typing.Type[RichComponentT]:
-        ...
+        identifier: str | None = None,
+    ) -> type[RichComponentT]: ...
 
     # Only identifier: nested decorator, return callable that registers and
     # returns the component.
     @typing.overload
     def register(
-        self, *, identifier: typing.Optional[str] = None
-    ) -> typing.Callable[[typing.Type[RichComponentT]], typing.Type[RichComponentT]]:
-        ...
+        self,
+        *,
+        identifier: str | None = None,
+    ) -> typing.Callable[[type[RichComponentT]], type[RichComponentT]]: ...
 
     def register(
         self,
-        component_type: typing.Optional[typing.Type[RichComponentT]] = None,
+        component_type: type[RichComponentT] | None = None,
         *,
-        identifier: typing.Optional[str] = None,
-    ) -> typing.Union[
-        typing.Type[RichComponentT],
-        typing.Callable[[typing.Type[RichComponentT]], typing.Type[RichComponentT]],
-    ]:
+        identifier: str | None = None,
+    ) -> type[RichComponentT] | typing.Callable[[type[RichComponentT]], type[RichComponentT]]:
         """Register a component to this component manager.
 
         This is the decorator interface to :meth:`register_component`.
@@ -676,25 +684,25 @@ class ComponentManager(component_api.ComponentManager):
             return self.register_component(component_type, identifier=identifier)
 
         def wrapper(
-            component_type: typing.Type[RichComponentT],
-        ) -> typing.Type[RichComponentT]:
+            component_type: type[RichComponentT],
+        ) -> type[RichComponentT]:
             return self.register_component(component_type, identifier=identifier)
 
         return wrapper
 
     def register_component(  # noqa: D102
         self,
-        component_type: typing.Type[RichComponentT],
+        component_type: type[RichComponentT],
         *,
-        identifier: typing.Optional[str] = None,
-    ) -> typing.Type[RichComponentT]:
+        identifier: str | None = None,
+    ) -> type[RichComponentT]:
         # <<docstring inherited from api.components.ComponentManager>>
         resolved_identifier = identifier or self.make_identifier(component_type)
         module_data = _ModuleData.from_object(component_type)
 
         root_manager = get_manager(_ROOT)
 
-        if resolved_identifier in root_manager._components:
+        if resolved_identifier in root_manager._components:  # noqa: SLF001
             # NOTE: This occurs when a component is registered while another
             #       component with the same identifier already exists.
             #
@@ -705,7 +713,7 @@ class ComponentManager(component_api.ComponentManager):
             #       - This is an actual user error. If we were to silently
             #         overwrite the old component, it would unexpectedly go
             #         unresponsive. Instead, we raise an exception to the user.
-            old_module_data = root_manager._module_data[resolved_identifier]
+            old_module_data = root_manager._module_data[resolved_identifier]  # noqa: SLF001
             if not module_data.is_reload_of(old_module_data):
                 message = (
                     "Cannot register component with duplicate identifier"
@@ -719,14 +727,15 @@ class ComponentManager(component_api.ComponentManager):
         component_type.manager = self
 
         for manager in _recurse_parents(self):
-            manager._components[resolved_identifier] = component_type
-            manager._identifiers[component_type.__name__] = resolved_identifier
-            manager._module_data[resolved_identifier] = module_data
+            manager._components[resolved_identifier] = component_type  # noqa: SLF001
+            manager._identifiers[component_type.__name__] = resolved_identifier  # noqa: SLF001
+            manager._module_data[resolved_identifier] = module_data  # noqa: SLF001
 
         return component_type
 
     def deregister_component(  # noqa: D102
-        self, component_type: RichComponentType
+        self,
+        component_type: RichComponentType,
     ) -> None:
         # <<docstring inherited from api.components.ComponentManager>>
 
@@ -735,8 +744,7 @@ class ComponentManager(component_api.ComponentManager):
 
         if not component.manager:
             message = (
-                f"Component {component_type.__name__!r} is not registered to a"
-                " component manager."
+                f"Component {component_type.__name__!r} is not registered to a component manager."
             )
             raise TypeError(message)
 
@@ -748,39 +756,47 @@ class ComponentManager(component_api.ComponentManager):
 
         # Deregister from the current manager and all parent managers.
         for manager in _recurse_parents(component.manager):
-            manager._components.pop(identifier)
-            manager._module_data.pop(identifier)
+            manager._components.pop(identifier)  # noqa: SLF001
+            manager._module_data.pop(identifier)  # noqa: SLF001
 
-    def add_to_bot(self, bot: AnyBot) -> None:  # noqa: D102
+    def add_to_client(self, client: disnake.Client, /) -> None:  # noqa: D102
         # <<docstring inherited from api.components.ComponentManager>>
 
         # Ensure we don't duplicate the listeners.
         if (
-            self.invoke_component in bot.extra_events.get(_COMPONENT_EVENT, [])
-            # or self.invoke_component in bot.extra_events.get(_MODAL_EVENT, [])
+            self.invoke_component in client.extra_events.get(_COMPONENT_EVENT, [])
+            # or self.invoke_component in client.extra_events.get(_MODAL_EVENT, [])
         ):  # fmt: skip
-            message = "This component manager is already registered to this bot."
+            message = "This component manager is already registered to this client."
             raise RuntimeError(message)
 
-        bot.add_listener(self.invoke_component, _COMPONENT_EVENT)
-        # bot.add_listener(self.invoke, _MODAL_EVENT)
+        client.add_listener(self.invoke_component, _COMPONENT_EVENT)
+        # client.add_listener(self.invoke, _MODAL_EVENT)  # noqa: ERA001
 
-        self._bot = bot
+        self._client = client
 
-    def remove_from_bot(self, bot: AnyBot) -> None:  # noqa: D102
+    @typing_extensions.deprecated("Please use add_to_client() instead.")
+    def add_to_bot(self, bot: disnake.Client) -> None:  # noqa: D102
+        self.add_to_client(bot)
+
+    def remove_from_client(self, client: disnake.Client, /) -> None:  # noqa: D102
         # <<docstring inherited from api.components.ComponentManager>>
 
-        # Bot.remove_listener silently ignores if the event doesn't exist,
+        # client.remove_listener silently ignores if the event doesn't exist,
         # so we manually handle raising an exception for it.
         if not (
-            self.invoke_component in bot.extra_events.get(_COMPONENT_EVENT, [])  # noqa: E713
-            # and self.invoke_component in bot.extra_events.get(_MODAL_EVENT, [])
+            self.invoke_component in client.extra_events.get(_COMPONENT_EVENT, [])  # noqa: E713
+            # and self.invoke_component in client.extra_events.get(_MODAL_EVENT, [])
         ):  # fmt: skip
-            message = "This component manager is not yet registered to this bot."
+            message = "This component manager is not yet registered to this client."
             raise RuntimeError(message)
 
-        bot.remove_listener(self.invoke_component, _COMPONENT_EVENT)
-        # bot.remove_listener(self.invoke_component, _MODAL_EVENT)
+        client.remove_listener(self.invoke_component, _COMPONENT_EVENT)
+        # client.remove_listener(self.invoke_component, _MODAL_EVENT)  # noqa: ERA001
+
+    @typing_extensions.deprecated("Please use remove_from_client() instead.")
+    def remove_from_bot(self, bot: disnake.Client) -> None:  # noqa: D102
+        self.remove_from_client(bot)
 
     def as_dependency_provider(self, func: DependencyProviderFuncT) -> DependencyProviderFuncT:
         """Register a callback as this manager's dependency provider.
@@ -798,8 +814,8 @@ class ComponentManager(component_api.ComponentManager):
         statement, to automatically handle resource management.
 
         As this runs *before* we know which manager a component belongs to (if
-        at all!), this is run only for the manager(s) registered to a bot with
-        :meth:`add_to_bot`.
+        at all!), this is run only for the manager(s) registered to a client
+        with :meth:`add_to_client`.
 
         Examples
         --------
@@ -879,7 +895,7 @@ class ComponentManager(component_api.ComponentManager):
 
         Returns
         -------
-        Callable[[:class:`RichComponent`, :class:`disnake.Interaction`], AsyncGenerator[None, None]]
+        Callable[[:class:`RichComponent`, :class:`disnake.Interaction[disnake.Client]`], AsyncGenerator[None, None]]
             The function that was just registered.
 
         """  # noqa: E501
@@ -887,7 +903,8 @@ class ComponentManager(component_api.ComponentManager):
         return func
 
     def as_exception_handler(
-        self, func: ExceptionHandlerFuncT
+        self,
+        func: ExceptionHandlerFuncT,
     ) -> ExceptionHandlerFuncT:
         """Register a callback as this managers' error handler.
 
@@ -935,14 +952,18 @@ class ComponentManager(component_api.ComponentManager):
 
         Returns
         -------
-        Callable[[:class:`RichComponent`, :class:`disnake.Interaction`, :class:`Exception`], None]
+        Callable[[:class:`RichComponent`, :class:`disnake.Interaction[disnake.Client]`, :class:`Exception`], None]
             The function that was just registered.
 
         """  # noqa: E501
         self.handle_exception = func
         return func
 
-    async def _invoke_component(self, interaction: disnake.MessageInteraction) -> None:
+    async def _invoke_component(
+        self,
+        interaction: disnake.MessageInteraction[disnake.Client],
+        /,
+    ) -> None:
         # First, we check if the component is managed.
         component = await self.parse_message_interaction(interaction)
         if not (component and component.manager):
@@ -974,7 +995,7 @@ class ComponentManager(component_api.ComponentManager):
                 # Enter all the context managers...
                 for manager in reversed(managers):
                     await stack.enter_async_context(
-                        manager.wrap_callback(manager, component, interaction)
+                        manager.wrap_callback(manager, component, interaction),
                     )
 
                 # If none raised, we run the callback.
@@ -986,7 +1007,10 @@ class ComponentManager(component_api.ComponentManager):
 
             for manager in managers:
                 if await manager.handle_exception(
-                    manager, component, interaction, exception
+                    manager,
+                    component,
+                    interaction,
+                    exception,
                 ):
                     # If an error handler returns True, consider the error
                     # handled and skip the remaining handlers.
@@ -997,7 +1021,7 @@ class ComponentManager(component_api.ComponentManager):
 
     async def invoke_component(  # noqa: D102
         self,
-        interaction: disnake.MessageInteraction,
+        interaction: disnake.MessageInteraction[disnake.Client],
         /,
         *,
         with_di: bool = True,
@@ -1025,9 +1049,9 @@ class ComponentManager(component_api.ComponentManager):
         identifier: str,
         *,
         as_root: bool = True,
-        label: omit.Omissible[typing.Optional[str]] = omit.Omitted,
+        label: omit.Omissible[str | None] = omit.Omitted,
         style: omit.Omissible[disnake.ButtonStyle] = omit.Omitted,
-        emoji: omit.Omissible[typing.Optional[component_api.AnyEmoji]] = omit.Omitted,
+        emoji: omit.Omissible[component_api.AnyEmoji | None] = omit.Omitted,
         disabled: omit.Omissible[bool] = omit.Omitted,
         **kwargs: object,
     ) -> component_api.RichButton:
@@ -1097,11 +1121,11 @@ class ComponentManager(component_api.ComponentManager):
         identifier: str,
         *,
         as_root: bool = True,
-        placeholder: omit.Omissible[typing.Optional[str]] = omit.Omitted,
+        placeholder: omit.Omissible[str | None] = omit.Omitted,
         min_values: omit.Omissible[int] = omit.Omitted,
         max_values: omit.Omissible[int] = omit.Omitted,
         disabled: omit.Omissible[bool] = omit.Omitted,
-        options: omit.Omissible[typing.List[disnake.SelectOption]] = omit.Omitted,
+        options: omit.Omissible[list[disnake.SelectOption]] = omit.Omitted,
         **kwargs: object,
     ) -> component_api.RichSelect:
         """Make an instance of the string select class with the provided identifier.
@@ -1174,7 +1198,7 @@ class ComponentManager(component_api.ComponentManager):
         raise TypeError(msg)
 
 
-_MANAGER_STORE: typing.Final[typing.Dict[str, ComponentManager]] = {}
+_MANAGER_STORE: typing.Final[dict[str, ComponentManager]] = {}
 
 
 def _recurse_parents(manager: ComponentManager) -> typing.Iterator[ComponentManager]:
@@ -1184,7 +1208,9 @@ def _recurse_parents(manager: ComponentManager) -> typing.Iterator[ComponentMana
 
 
 def _recurse_parents_getattr(
-    manager: ComponentManager, attribute: str, default: T
+    manager: ComponentManager,
+    attribute: str,
+    default: T,
 ) -> T:
     for parent in _recurse_parents(manager):
         value = getattr(parent, attribute)
@@ -1194,7 +1220,7 @@ def _recurse_parents_getattr(
     return default
 
 
-def get_manager(name: typing.Optional[str] = None) -> ComponentManager:
+def get_manager(name: str | None = None) -> ComponentManager:
     """Get a manager by name, or create one if it does not yet exist.
 
     Calling :func:`get_manager` without specifying a name returns the root
@@ -1208,9 +1234,9 @@ def get_manager(name: typing.Optional[str] = None) -> ComponentManager:
 
     To register a component to a manager, use :meth:`ComponentManager.register`.
     To ensure component callbacks are invoked, the manager must first be linked
-    to a bot. This is done using :meth:`ComponentManager.add_to_bot`. Since
-    parents have access to the components of their children, it is sufficient
-    to bind only the root manager to a bot.
+    to a client. This is done using :meth:`ComponentManager.add_to_client`.
+    Since parents have access to the components of their children, it is often
+    sufficient to bind only the root manager to a client.
 
     It is generally recommended to use a separate manager per extension, though
     you can share the same manager between files by using the same name, if

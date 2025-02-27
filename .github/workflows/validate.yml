@@ -1,0 +1,55 @@
+name: validate
+
+on:
+  pull_request:
+
+jobs:
+  pyright:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Bootstrap disnake-compass
+        uses: ./.github/actions/bootstrap
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run pyright
+        run: poetry run pyright .
+
+  ruff-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Bootstrap disnake-compass
+        uses: ./.github/actions/bootstrap
+        with:
+          python-version: '3.10'
+
+      - name: Run ruff linter
+        run: poetry run ruff check --fix --exit-non-zero-on-fix
+
+  ruff-format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Bootstrap disnake-compass
+        uses: ./.github/actions/bootstrap
+        with:
+          python-version: '3.10'
+
+      - name: Run ruff formatter
+        run: poetry run ruff format --check

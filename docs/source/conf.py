@@ -12,13 +12,10 @@ import os
 import re
 import subprocess
 import sys
-import typing
 
 import disnake
 import sphinx.config
 from disnake.ext import commands
-
-import disnake_compass
 
 
 def git(*args: str) -> str:
@@ -35,11 +32,9 @@ sys.modules["commands"] = commands
 sys.path.append(os.path.abspath("./extensions"))
 
 project = "disnake-compass"
-copyright = "2023, Sharp-Eyes"
+copyright = "2023, Sharp-Eyes"  # noqa: A001
 author = "Sharp-Eyes"
 release = "0.5.0a1"
-
-# nitpicky = True
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -63,7 +58,6 @@ extensions = [
 ]
 exclude_patterns = []
 
-# add_module_names = False
 pygments_style = "friendly"
 
 # -- Options for HTML output -------------------------------------------------
@@ -165,17 +159,14 @@ simplify_optional_unions = True
 always_use_bars_union = True
 typehints_fully_qualified = False
 
-import disnake_compass.fields
-
 # Customise display for specific types.
-aliases: typing.Dict[object, str] = {
+aliases: dict[object, str] = {
     # Idk why this is needed, but it is...
     disnake.ButtonStyle: ":class:`~disnake.ButtonStyle`",
-    disnake_compass.fields.NOTHING: ":obj:`~attrs.NOTHING`",
 }
 
 
-def typehints_formatter(ann: object, _: sphinx.config.Config) -> typing.Optional[str]:
+def typehints_formatter(ann: object, _: sphinx.config.Config) -> str | None:
     """Format typehints."""
     if typehint := aliases.get(ann):
         return typehint

@@ -5,16 +5,17 @@ import typing
 
 import attrs
 import disnake
+
 from disnake_compass.api import parser as parser_api
 from disnake_compass.impl.parser import base as parser_base
 
 __all__: typing.Sequence[str] = ("EnumParser", "FlagParser")
 
-_AnyEnum = typing.Union[enum.Enum, disnake.Enum, disnake.flags.BaseFlags]
+_AnyEnum: typing.TypeAlias = enum.Enum | disnake.Enum | disnake.flags.BaseFlags
 _EnumT = typing.TypeVar("_EnumT", bound=_AnyEnum)
 
 
-def _get_enum_type(enum_class: typing.Type[_AnyEnum]) -> typing.Optional[type]:
+def _get_enum_type(enum_class: type[_AnyEnum]) -> type | None:
     if issubclass(enum_class, disnake.flags.BaseFlags):
         return int
 
@@ -25,12 +26,13 @@ def _get_enum_type(enum_class: typing.Type[_AnyEnum]) -> typing.Optional[type]:
     # Get first member's type
     member_iter = iter(enum_class)
     maybe_type = typing.cast(  # python typing sucks.
-        typing.Type[typing.Any], type(next(member_iter).value)
+        type[typing.Any],
+        type(next(member_iter).value),
     )
 
     # TODO: Check if this can be `is` instead of `==`.
     # If all members match this type, return it.
-    if all(type(member.value) == maybe_type for member in member_iter):
+    if all(type(member.value) == maybe_type for member in member_iter):  # noqa: E721
         return maybe_type
 
     # No single type; store by name instead.
@@ -70,7 +72,7 @@ class EnumParser(parser_base.Parser[_EnumT]):
 
     """
 
-    enum_class: typing.Type[_EnumT]
+    enum_class: type[_EnumT]
     """The enum or flag class to use for parsing."""
     store_by_value: bool
     """Whether :meth:`loads` and :meth:`dumps` expect the enum's value type or a string.
@@ -87,15 +89,12 @@ class EnumParser(parser_base.Parser[_EnumT]):
 
     def __init__(
         self,
-        enum_class: typing.Type[_EnumT],
+        enum_class: type[_EnumT],
         *,
-        store_by_value: typing.Optional[bool] = None,
+        store_by_value: bool | None = None,
     ) -> None:
         if issubclass(enum_class, disnake.flags.BaseFlags) and store_by_value is False:
-            msg = (
-                "Cannot store disnake flags by name, as their members do not have"
-                " names."
-            )
+            msg = "Cannot store disnake flags by name, as their members do not have names."
             raise ValueError(msg)
 
         value_type = _get_enum_type(enum_class)
@@ -150,8 +149,7 @@ class EnumParser(parser_base.Parser[_EnumT]):
 
         if self.store_by_value:
             return self.enum_class(parsed)  # pyright: ignore[reportCallIssue]
-        else:
-            return self.enum_class[parsed]  # pyright: ignore[reportInvalidTypeArguments]
+        return self.enum_class[parsed]  # pyright: ignore[reportInvalidTypeArguments]
 
     async def dumps(self, argument: _EnumT) -> str:
         """Dump an enum member into a string.
@@ -169,11 +167,10 @@ class EnumParser(parser_base.Parser[_EnumT]):
         """
         if self.store_by_value:
             return await self.value_parser.dumps(argument.value)
-        else:
-            # Baseflags members are always integers. This should never error
-            # due to the check in __init__.
-            assert not isinstance(argument, disnake.flags.BaseFlags)
-            return await self.value_parser.dumps(argument.name)
+        # Baseflags members are always integers. This should never error
+        # due to the check in __init__.
+        assert not isinstance(argument, disnake.flags.BaseFlags)
+        return await self.value_parser.dumps(argument.name)
 
 
 FlagParser = EnumParser

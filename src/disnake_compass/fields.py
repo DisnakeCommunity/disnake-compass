@@ -18,12 +18,6 @@ __all__: typing.Sequence[str] = ("field",)
 _T = typing_extensions.TypeVar("_T", default=typing.Any)
 
 
-# Workaround for attrs typing, TODO: remove when fixed.
-import attr._make  # noqa: E402
-
-NOTHING: typing_extensions.TypeAlias = typing.Literal[attr._make._Nothing.NOTHING]  # type: ignore
-
-
 class FieldMetadata(enum.Enum):
     """Enum containing keys for field metadata."""
 
@@ -50,7 +44,7 @@ class FieldType(enum.Flag):
     """Field parsed from a modal component's modal values."""
 
     @classmethod
-    def ALL(cls) -> FieldType:
+    def ALL(cls) -> FieldType:  # noqa: N802
         """Meta-value for all field types.
 
         Mainly intended for use in :func:`get_fields`.
@@ -64,7 +58,7 @@ _ALL_FIELD_TYPES._name_ = "ALL()"  # This makes it render nicer in docs.
 
 def get_parser(
     field: attrs.Attribute[typing.Any],
-) -> typing.Optional[parser_api.Parser[typing.Any]]:
+) -> parser_api.Parser[typing.Any] | None:
     """Get the user-provided parser of the provided field.
 
     Parameters
@@ -84,7 +78,8 @@ def get_parser(
 
 
 def get_field_type(
-    field: attrs.Attribute[typing.Any], default: typing.Optional[FieldType] = None
+    field: attrs.Attribute[typing.Any],
+    default: FieldType | None = None,
 ) -> FieldType:
     """Get the :class:`FieldType` of the field.
 
@@ -169,9 +164,9 @@ def get_fields(
 
 
 def field(
-    default: typing.Union[_T, typing.Literal[NOTHING]] = attrs.NOTHING,
+    default: _T | attrs.NothingType = attrs.NOTHING,
     *,
-    parser: typing.Optional[parser_api.Parser[_T]] = None,
+    parser: parser_api.Parser[_T] | None = None,
 ) -> _T:
     r"""Define a custom ID field for the component.
 

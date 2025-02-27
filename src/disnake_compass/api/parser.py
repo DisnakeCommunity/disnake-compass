@@ -9,8 +9,6 @@ import typing_extensions
 __all__: typing.Sequence[str] = ("Parser",)
 
 
-_T = typing.TypeVar("_T")
-
 ParserType = typing_extensions.TypeVar(
     "ParserType",
     default=typing.Any,
@@ -21,17 +19,6 @@ ParserType = typing_extensions.TypeVar(
 A parser of a given type takes (any subclass of) that type as argument to
 :meth:`.Parser.dumps`, and returns (any subclass of) that type from
 :meth:`.Parser.loads`.
-"""
-
-SourceType = typing_extensions.TypeVar(
-    "SourceType",
-    default=typing.Any,
-    infer_variance=True,
-)
-"""A typevar denoting the source type of the parser.
-
-The source type denotes the *minumum requirement* for a parser to load a string
-into its :obj:`ParserType`.
 """
 
 
@@ -45,7 +32,7 @@ class Parser(typing.Protocol[ParserType]):
     __slots__: typing.Sequence[str] = ()
 
     @classmethod
-    def default(cls, target_type: typing.Type[ParserType], /) -> typing_extensions.Self:
+    def default(cls, target_type: type[ParserType], /) -> typing_extensions.Self:
         """Return the default implementation of this parser type.
 
         By default, this will just create the parser class with no arguments,

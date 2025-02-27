@@ -7,6 +7,7 @@ import typing
 
 import attrs
 import disnake
+
 from disnake_compass.impl.parser import base as parser_base
 from disnake_compass.impl.parser import builtins as builtins_parsers
 from disnake_compass.internal import di
@@ -36,7 +37,9 @@ class GuildParser(parser_base.Parser[disnake.Guild]):
 
     """
 
-    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
+    int_parser: builtins_parsers.IntParser = attrs.field(
+        factory=lambda: builtins_parsers.IntParser.default(int),
+    )
     """The :class:`~disnake_compass.impl.parser.builtins.IntParser` to use
     internally for this parser.
 
@@ -125,7 +128,7 @@ class InviteParser(parser_base.Parser[disnake.Invite]):
     """Whether to include the number of times an invite was used."""
     with_expiration: bool = attrs.field(default=True)
     """Whether to include when the invite expires."""
-    guild_scheduled_event_id: typing.Optional[int] = attrs.field(default=None)
+    guild_scheduled_event_id: int | None = attrs.field(default=None)
     """The ID of the scheduled event to include in the invite."""
 
     async def loads(self, argument: str) -> disnake.Invite:
@@ -185,7 +188,9 @@ class RoleParser(parser_base.Parser[disnake.Role]):
 
     """
 
-    int_parser: builtins_parsers.IntParser = attrs.field(factory=lambda: builtins_parsers.IntParser.default(int))
+    int_parser: builtins_parsers.IntParser = attrs.field(
+        factory=lambda: builtins_parsers.IntParser.default(int),
+    )
     """The :class:`~disnake_compass.impl.parser.builtins.IntParser` to use
     internally for this parser.
 
