@@ -5,7 +5,7 @@ from __future__ import annotations
 import types
 import typing
 
-import attr
+import attrs
 
 from disnake_compass import fields
 from disnake_compass.api import component as component_api
@@ -21,7 +21,7 @@ __all__: typing.Sequence[str] = ("ComponentFactory",)
 ParserMapping = typing.Mapping[str, parser_api.Parser[typing.Any]]
 
 
-@attr.define(slots=True)
+@attrs.define(slots=True)
 class ComponentFactory(
     component_api.ComponentFactory[component_api.ComponentT],
     typing.Generic[component_api.ComponentT],
@@ -33,7 +33,7 @@ class ComponentFactory(
     component factory can simply be created using :meth:`from_component`.
     """
 
-    parsers: ParserMapping = attr.field(converter=types.MappingProxyType)  # pyright: ignore[reportGeneralTypeIssues]
+    parsers: ParserMapping = attrs.field(converter=types.MappingProxyType)  # pyright: ignore[reportGeneralTypeIssues]
     """A mapping of custom id field name to that field's parser."""
     component: type[component_api.ComponentT]
     """The component type that this factory builds."""

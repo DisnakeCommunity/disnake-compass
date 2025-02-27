@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import typing
 
-import attr
+import attrs
 import disnake
 
 from disnake_compass import fields
@@ -62,7 +62,7 @@ class RichStringSelect(BaseSelect, typing.Protocol):
     """
 
     options: list[disnake.SelectOption] = fields.internal(
-        default=attr.Factory(list[disnake.SelectOption]),
+        default=attrs.Factory(list[disnake.SelectOption]),
     )
     """The options for this select menu.
 

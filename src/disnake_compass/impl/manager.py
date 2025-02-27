@@ -9,7 +9,7 @@ import sys
 import typing
 import weakref
 
-import attr
+import attrs
 import disnake
 import typing_extensions
 
@@ -194,7 +194,7 @@ async def default_exception_handler(
     return True
 
 
-@attr.define
+@attrs.define
 class _ModuleData:
     name: str
     id: int
