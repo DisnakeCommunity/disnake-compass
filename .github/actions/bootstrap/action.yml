@@ -1,6 +1,10 @@
 name: Bootstrap disnake-compass
 description: Configure the environment with the specified Python version.
 
+defaults:
+  run:
+    shell: bash
+
 inputs:
   python-version:
     required: true
