@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "disnake-compass"
-version = "1.0.0"
+version = "1.0.1"
 description = "An extension for disnake aimed at making component interactions with listeners somewhat less cumbersome."
 authors = ["Chromosomologist <chromosomologist@gmail.com>"]
 license = "MIT"
@@ -33,6 +33,8 @@ sphinx-inline-tabs = "^2023.4.21"
 sphinx-autodoc-typehints = "^2.2.3"
 sphinx-hoverxref = "^1.3.0"
 sphinx-copybutton = "^0.5.2"
+towncrier = "^24.8.0"
+sphinxcontrib-towncrier = "^0.5.0a0"
 
 
 [tool.poetry.scripts]
@@ -143,3 +145,44 @@ precommit = "pre-commit install --install-hooks"
 lint = "pre-commit run --all-files"
 ruff = "task lint ruff"
 slotscheck = "task lint slotscheck"
+docs = "sphinx-autobuild ./docs/source ./docs/build/html"
+
+# Towncrier config taken from disnake
+[tool.towncrier]
+template = "changelog/_template.rst.jinja"
+package = "disnake"
+filename = "docs/source/whats_new.rst"
+directory = "changelog/"
+title_format = false
+underlines = "-~"
+issue_format = ":issue:`{issue}`"
+
+    [[tool.towncrier.type]]
+    directory = "breaking"
+    name = "Breaking Changes"
+    showcontent = true
+
+    [[tool.towncrier.type]]
+    directory = "deprecate"
+    name = "Deprecations"
+    showcontent = true
+
+    [[tool.towncrier.type]]
+    directory = "feature"
+    name = "New Features"
+    showcontent = true
+
+    [[tool.towncrier.type]]
+    directory = "bugfix"
+    name = "Bug Fixes"
+    showcontent = true
+
+    [[tool.towncrier.type]]
+    directory = "doc"
+    name = "Documentation"
+    showcontent = true
+
+    [[tool.towncrier.type]]
+    directory = "misc"
+    name = "Miscellaneous"
+    showcontent = true
