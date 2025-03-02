@@ -61,7 +61,7 @@ def make_linkcode_resolver(
             return None
 
         path = f"{path}#L{lineno}-L{lineno + len(src) - 1}"
-        return f"{repo_url}/blob/{git_ref}/src/disnake/ext/components/{path}"
+        return f"{repo_url}/blob/{git_ref}/src/disnake_compass/{path}"
 
     return linkcode_resolve
 
