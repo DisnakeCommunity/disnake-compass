@@ -143,6 +143,7 @@ linkcode_resolve = util.make_linkcode_resolver(module_path, repo_url, git_ref)
 # -- Extlinks config ----------------------------------------------------------
 
 extlinks = {
+    "issue": (f"{repo_url}/issues/%s", "#%s"),
     "github": (f"{repo_url}/%s", "%s"),
     "github-blob": (f"{repo_url}/blob/{git_ref}/%s", "%s"),
     "example": (f"{repo_url}/blob/{git_ref}/examples/%s.py", "View on GitHub: %s.py"),
