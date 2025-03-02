@@ -145,7 +145,7 @@ precommit = "pre-commit install --install-hooks"
 lint = "pre-commit run --all-files"
 ruff = "task lint ruff"
 slotscheck = "task lint slotscheck"
-docs = "sphinx-autobuild ./docs/source ./docs/build/html"
+docs = "sphinx-autobuild ./docs/source ./docs/build/html --watch ./src --watch ./changelog"
 
 # Towncrier config taken from disnake
 [tool.towncrier]
