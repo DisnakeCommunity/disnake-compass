@@ -40,9 +40,23 @@ class RichComponent(typing.Protocol):
 
     __slots__: typing.Sequence[str] = ()
 
-    event: typing.ClassVar[str]
-    factory: typing.ClassVar[ComponentFactory[RichComponent]]
-    manager: typing.ClassVar[ComponentManager | None]
+    def get_manager(self) -> ComponentManager:
+        """Get the manager that was responsible for parsing this component instance."""
+        ...
+
+    def set_manager(self, manager: ComponentManager, /) -> None:
+        """Set the manager that was responsible for parsing this component instance."""
+        ...
+
+    @classmethod
+    def get_factory(cls) -> ComponentFactory[typing_extensions.Self]:
+        """Get the factory that built this component instance."""
+        ...
+
+    @classmethod
+    def set_factory(cls, factory: ComponentFactory[typing_extensions.Self]) -> None:
+        """Set the factory that built this component instance."""
+        ...
 
     async def callback(self, interaction: disnake.Interaction[disnake.Client], /) -> None:
         """Run the component callback.
@@ -57,7 +71,9 @@ class RichComponent(typing.Protocol):
         """
         ...
 
-    async def as_ui_component(self) -> disnake.ui.WrappedComponent:
+    async def as_ui_component(
+        self, manager: ComponentManager | None = None, /
+    ) -> disnake.ui.WrappedComponent:
         """Convert this component into a component that can be sent by disnake.
 
         Returns
@@ -98,7 +114,9 @@ class RichButton(RichComponent, typing.Protocol):
     Disabled buttons can therefore not cause any interactions, either.
     """
 
-    async def as_ui_component(self) -> disnake.ui.Button[None]:  # noqa: D102
+    async def as_ui_component(  # noqa: D102
+        self, manager: ComponentManager | None = None, /
+    ) -> disnake.ui.Button[None]:
         # <<Docstring inherited from RichComponent>>
         ...
 
@@ -133,12 +151,13 @@ class RichSelect(RichComponent, typing.Protocol):
     """
 
     async def as_ui_component(  # noqa: D102
-        self,
+        self, manager: ComponentManager | None = None, /
     ) -> disnake.ui.BaseSelect[typing.Any, typing.Any, None]:
         # <<Docstring inherited from RichComponent>>
         ...
 
 
+@typing.runtime_checkable
 class ComponentManager(typing.Protocol):
     """The baseline protocol for component managers.
 
@@ -186,7 +205,7 @@ class ComponentManager(typing.Protocol):
         """
         ...
 
-    def make_identifier(self, component_type: type[RichComponent]) -> str:
+    def make_identifier(self, component_type: type[RichComponent], /) -> str:
         """Make an identifier for the provided component class.
 
         This is used to store the component in :attr:`components`, and to
@@ -206,7 +225,7 @@ class ComponentManager(typing.Protocol):
         """
         ...
 
-    def get_identifier(self, custom_id: str) -> tuple[str, typing.Sequence[str]]:
+    def get_identifier(self, custom_id: str, /) -> tuple[str, typing.Sequence[str]]:
         """Extract the identifier and parameters from a custom id.
 
         This is used to check whether the identifier is registered in
@@ -220,7 +239,7 @@ class ComponentManager(typing.Protocol):
         """
         ...
 
-    async def make_custom_id(self, component: RichComponent) -> str:
+    async def make_custom_id(self, component: RichComponent, /) -> str:
         """Make a custom id from the provided component.
 
         This can then be used later to reconstruct the component without any
@@ -239,36 +258,10 @@ class ComponentManager(typing.Protocol):
         """
         ...
 
-    async def parse_message_interaction(
-        self,
-        interaction: disnake.MessageInteraction[disnake.Client],
-    ) -> RichComponent | None:
-        """Parse an interaction and construct a rich component from it.
-
-        In case the interaction does not match any component registered to this
-        manager, this method will simply return :data:`None`.
-
-        Parameters
-        ----------
-        interaction
-            The interaction to parse. This should, under normal circumstances,
-            be either a :class:`disnake.MessageInteraction` or
-            :class:`disnake.ModalInteraction`.
-
-        Returns
-        -------
-        :class:`RichComponent`
-            The component if the interaction was caused by a component
-            registered to this manager.
-        :data:`None`
-            The interaction was not related to this manager.
-
-        """
-        ...
-
     def register_component(
         self,
         component_type: type[ComponentT],
+        /,
     ) -> type[ComponentT]:
         r"""Register a component to this component manager.
 
@@ -288,7 +281,7 @@ class ComponentManager(typing.Protocol):
         """
         ...
 
-    def deregister_component(self, component_type: type[RichComponent]) -> None:
+    def deregister_component(self, component_type: type[RichComponent], /) -> None:
         """Deregister a component from this component manager.
 
         After deregistration, the component will no be tracked, and its
