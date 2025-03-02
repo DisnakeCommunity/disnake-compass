@@ -41,7 +41,7 @@ class ComponentFactory(
     @classmethod
     def from_component(  # noqa: D102
         cls,
-        component: type[component_api.RichComponent],
+        component: type[component_api.ComponentT],
     ) -> typing_extensions.Self:
         # <<docstring inherited from api.components.ComponentFactory>>
         parser: parser_api.Parser[typing.Any] | None
@@ -56,10 +56,7 @@ class ComponentFactory(
 
             parsers[field.name] = parser
 
-        return cls(
-            parsers,
-            typing.cast(type[component_api.ComponentT], component),
-        )
+        return cls(parsers, component)
 
     async def load_params(  # noqa: D102
         self,
