@@ -1,6 +1,6 @@
 .. currentmodule:: disnake_compass
 
-Component Manager Implementation
+Component Factory Implementation
 ================================
 
 .. automodule:: disnake_compass.impl.factory
