@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 disnake-compass
-======================
+===============
 
 An extension for disnake aimed at making component interactions with listeners somewhat less cumbersome.
 
@@ -32,3 +32,5 @@ Getting started
    :hidden:
 
    API Reference </api_ref/index.rst>
+   What's New? </whats_new.rst>
+   Version Guarantees </version_guarantees.rst>

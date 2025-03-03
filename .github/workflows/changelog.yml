@@ -1,0 +1,44 @@
+# Adapted from https://github.com/DisnakeDev/disnake/blob/master/.github/workflows/changelog.yaml
+
+name: changelog entry
+
+on:
+  pull_request:
+    types: [opened, synchronize, labeled, unlabeled, reopened]
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-changelog-entry:
+    name: Check for changelog entry
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'skip news') != true
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # towncrier needs a non-shallow clone
+          fetch-depth: '0'
+
+      - name: Bootstrap disnake-compass
+        uses: ./.github/actions/bootstrap
+        with:
+          python-version: '3.10'
+
+      - name: Check for presence of a changelog fragment (only pull requests)
+        # NOTE: The pull request' base branch needs to be fetched so towncrier
+        # is able to compare the current branch with the base branch.
+        run: |
+          if ! poetry run towncrier check --compare-with origin/${BASE_BRANCH}; then
+            echo "::error::Please see https://github.com/DisnakeCommunity/disnake-compass/blob/master/changelog/README.md for details on how to create a changelog entry." >&2
+            exit 1
+          fi
+        env:
+          BASE_BRANCH: ${{ github.base_ref }}
