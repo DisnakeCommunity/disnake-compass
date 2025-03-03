@@ -37,6 +37,10 @@ towncrier = "^24.8.0"
 sphinxcontrib-towncrier = "^0.5.0a0"
 
 
+
+[tool.poetry.group.build.dependencies]
+twine = "^6.1.0"
+
 [tool.poetry.scripts]
 example = "scripts.example:_main"
 
