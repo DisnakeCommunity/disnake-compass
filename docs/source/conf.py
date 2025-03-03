@@ -34,7 +34,7 @@ sys.path.append(os.path.abspath("./extensions"))
 project = "disnake-compass"
 copyright = "2023, Sharp-Eyes"  # noqa: A001
 author = "Sharp-Eyes"
-release = "0.5.0a1"
+release = "1.0.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -48,6 +48,7 @@ extensions = [
     "sphinx.ext.napoleon",
     # External.
     "sphinxcontrib_trio",
+    "sphinxcontrib.towncrier.ext",
     "sphinx_inline_tabs",
     "sphinx_copybutton",
     "hoverxref.extension",
@@ -142,11 +143,18 @@ linkcode_resolve = util.make_linkcode_resolver(module_path, repo_url, git_ref)
 # -- Extlinks config ----------------------------------------------------------
 
 extlinks = {
+    "issue": (f"{repo_url}/issues/%s", "#%s"),
     "github": (f"{repo_url}/%s", "%s"),
     "github-blob": (f"{repo_url}/blob/{git_ref}/%s", "%s"),
     "example": (f"{repo_url}/blob/{git_ref}/examples/%s.py", "View on GitHub: %s.py"),
     "attrs": ("https://www.attrs.org/en/stable/%s", "%s"),
 }
+
+# -- towncrier config ---------------------------------------------------------
+
+towncrier_draft_autoversion_mode = "draft"
+towncrier_draft_include_empty = False  # hides the unreleased indicator if there are no changes
+towncrier_draft_working_directory = git_pwd
 
 # -- sphinx-autodoc-typehints config ------------------------------------------
 

@@ -4,13 +4,10 @@ Installing
 Installing disnake-compass
 ---------------------------------
 
-To install disnake-compass, you must be using Python version 3.8 or above.
+To install disnake-compass, you must be using Python version 3.10 or above and disnake version 2.10 or above.
 
 disnake-compass can be installed directly from PyPI.
 The exact command used varies depending on your system.
-
-.. warning::
-    disnake-compass is not yet on PyPI.
 
 .. tab:: Windows
 
