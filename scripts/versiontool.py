@@ -9,7 +9,7 @@ from enum import Enum
 from pathlib import Path
 from typing import NamedTuple, NoReturn
 
-TARGET_FILE = Path("disnake/__init__.py")
+TARGET_FILE = Path("src/disnake_compass/__init__.py")
 ORIG_INIT_CONTENTS = TARGET_FILE.read_text("utf-8")
 
 version_re = re.compile(r"(\d+)\.(\d+)\.(\d+)(?:(a|b|rc)(\d+)?)?")
