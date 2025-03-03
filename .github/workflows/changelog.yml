@@ -27,20 +27,17 @@ jobs:
           # towncrier needs a non-shallow clone
           fetch-depth: '0'
 
-      - name: Set up environment
-        uses: ./.github/actions/setup-env
+      - name: Bootstrap disnake-compass
+        uses: ./.github/actions/bootstrap
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
-      - name: Install dependencies
-        run: pdm install -dG changelog
-
-      - name: Check for presence of a Change Log fragment (only pull requests)
+      - name: Check for presence of a changelog fragment (only pull requests)
         # NOTE: The pull request' base branch needs to be fetched so towncrier
         # is able to compare the current branch with the base branch.
         run: |
-          if ! pdm run towncrier check --compare-with origin/${BASE_BRANCH}; then
-            echo "::error::Please see https://github.com/DisnakeCommunity/disnake-compass/blob/master/changelog/README.rst for details on how to create a changelog entry." >&2
+          if ! poetry run towncrier check --compare-with origin/${BASE_BRANCH}; then
+            echo "::error::Please see https://github.com/DisnakeCommunity/disnake-compass/blob/master/changelog/README.md for details on how to create a changelog entry." >&2
             exit 1
           fi
         env:
