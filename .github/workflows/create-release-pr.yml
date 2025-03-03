@@ -49,7 +49,7 @@ jobs:
 
       - name: Update version
         run: |
-          poetry run scripts/ci/versiontool.py --set "$VERSION_INPUT"
+          poetry run scripts/versiontool.py --set "$VERSION_INPUT"
           git commit -a -m "chore: update version to $VERSION_INPUT"
 
       - name: Build changelog
