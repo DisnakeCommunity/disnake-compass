@@ -1,0 +1,1 @@
+Support :obj:`~.ComponentManager.register`\ing the same component to multiple :class:`.ComponentManager`\s.

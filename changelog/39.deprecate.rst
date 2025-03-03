@@ -1,0 +1,1 @@
+Deprecate ``ComponentManager.parse_message_interaction`` in favour of :meth:`.ComponentManager.parse_raw_component`.
