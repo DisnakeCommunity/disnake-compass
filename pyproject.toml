@@ -37,9 +37,10 @@ towncrier = "^24.8.0"
 sphinxcontrib-towncrier = "^0.5.0a0"
 
 
-
 [tool.poetry.group.build.dependencies]
 twine = "^6.1.0"
+towncrier = "^24.8.0"
+
 
 [tool.poetry.scripts]
 example = "scripts.example:_main"
@@ -63,9 +64,11 @@ exclude = [
     "docs",
 ]
 
+
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+
 
 [tool.ruff.lint]
 select = [
@@ -141,8 +144,10 @@ ignore = [
 [tool.ruff.lint.pep8-naming]
 extend-ignore-names = ["metacls"]
 
+
 [tool.ruff.lint.pyupgrade]
 keep-runtime-typing = true
+
 
 [tool.taskipy.tasks]
 precommit = "pre-commit install --install-hooks"
@@ -150,6 +155,7 @@ lint = "pre-commit run --all-files"
 ruff = "task lint ruff"
 slotscheck = "task lint slotscheck"
 docs = "sphinx-autobuild ./docs/source ./docs/build/html --watch ./src --watch ./changelog"
+
 
 # Towncrier config taken from disnake
 [tool.towncrier]
