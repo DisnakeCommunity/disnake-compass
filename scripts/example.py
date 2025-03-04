@@ -37,7 +37,7 @@ def _main() -> typing.NoReturn:
         sys.exit(1)
 
     # Run example with unbuffered (-u) python.
-    args = ["poetry", "run", "python", "-u", "-m", example]
+    args = [sys.executable, "-u", "-m", example]
 
     # Open a subprocess that runs our args list.
     print(f"Running example {example!r}...")

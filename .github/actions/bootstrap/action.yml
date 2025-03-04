@@ -6,45 +6,39 @@ inputs:
     required: true
     type: string
 
-outputs:
-  python-version:
-    description: Version of the installed Python interpreter.
-    value: ${{ steps.setup-python.outputs.python-version }}
-
 runs:
   using: composite
 
   steps:
-    - name: Set up python
-      id: setup-python
-      uses: actions/setup-python@v5
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
       with:
+        # We handle caching ourselves so we can cache the entire venv.
+        enable-cache: false
         python-version: ${{ inputs.python-version }}
 
-    - name: Install poetry
-      uses: snok/install-poetry@v1
-      with:
-        virtualenvs-create: true
-        virtualenvs-in-project: true
+    - name: Configure uv
+      run: |
+        echo "UV_FROZEN=true" >> "$GITHUB_ENV"
+        echo "UV_NO_SYNC=true" >> "$GITHUB_ENV"
+      shell: bash
 
     - name: Load cached venv
-      id: cache-poetry-dependencies
+      # Try to get entire venv from cache.
+      id: cache-uv-dependencies
       uses: actions/cache@v3
       with:
         path: .venv
-        key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+        key: venv-${{ runner.os }}-${{ inputs.python-version }}-${{ hashFiles('**/uv.lock') }}
 
     - name: Install dependencies
-      if: steps.cache-poetry-dependencies.outputs.cache-hit != 'true'
+      # If cache is *not* hit, install all dependencies except docs group and disnake-compass.
+      if: steps.cache-uv-dependencies.outputs.cache-hit != 'true'
       run: |
-        poetry env use ${{ steps.setup-python.outputs.python-version }}
-        poetry install --no-interaction --no-root --without docs
+        uv sync --all-groups --no-group docs --no-install-project
       shell: bash
 
     - name: Install disnake-compass
-      run: poetry install --no-interaction --only-root
-      shell: bash
-
-    - name: Activate venv
-      run: source .venv/bin/activate
+      # Always install disnake-compass again to make sure the latest changes are reflected.
+      run: uv pip install -e . --no-deps
       shell: bash

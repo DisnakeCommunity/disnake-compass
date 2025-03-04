@@ -49,12 +49,12 @@ jobs:
 
       - name: Update version
         run: |
-          poetry run python scripts/versiontool.py --set "$VERSION_INPUT"
+          uv run python scripts/versiontool.py --set "$VERSION_INPUT"
           git commit -a -m "chore: update version to $VERSION_INPUT"
 
       - name: Build changelog
         run: |
-          poetry run towncrier build --yes --version "$VERSION_INPUT"
+          uv run towncrier build --yes --version "$VERSION_INPUT"
           git commit -a -m "docs: build changelog"
 
       - name: Create pull request

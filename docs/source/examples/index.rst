@@ -11,11 +11,11 @@ The examples aim to show you how some of the features of this extension can be u
 These examples are also available on our :github-blob:`GitHub repository <>` without documentation, and are perfectly runnable as-is.
 The easiest way of running the examples is:
 
-1. Clone the repository,
-2. Run ``poetry install`` to install dependencies,
+1. Ensure `uv <https://docs.astral.sh/uv/>`_ is installed,
+2. Clone the repository,
 3. Copy ``.env.example`` and name it ``.env``,
 4. Enter your bot token in the new ``.env`` file,
-5. Run ``poetry run example <name>``.
+5. Run ``uv run task example <name>``.
 
 If you think an example is unclear or an example for a feature is missing, feel free to open a :github:`pull request <pulls>` or :github:`issue <issues>`!
 
