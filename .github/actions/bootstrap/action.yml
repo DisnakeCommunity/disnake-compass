@@ -21,6 +21,7 @@ runs:
       run: |
         echo "UV_FROZEN=true" >> "$GITHUB_ENV"
         echo "UV_NO_SYNC=true" >> "$GITHUB_ENV"
+      shell: bash
 
     - name: Load cached venv
       # Try to get entire venv from cache.
