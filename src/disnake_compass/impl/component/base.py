@@ -8,6 +8,7 @@ functionality will have to be manually re-implemented.
 
 from __future__ import annotations
 
+import abc
 import sys
 import typing
 
@@ -156,9 +157,9 @@ def _field_transformer(
 
 @typing_extensions.dataclass_transform(
     kw_only_default=True,
-    field_specifiers=(fields.field, fields.internal),
+    field_specifiers=(fields.field, fields.internal, fields.meta),
 )
-class ComponentMeta(typing._ProtocolMeta):  # pyright: ignore[reportPrivateUsage]  # noqa: SLF001
+class ComponentMeta(type(typing.Protocol)):
     """Metaclass for all disnake-compass component types.
 
     It is **highly** recommended to use this metaclass for any class that
@@ -170,11 +171,6 @@ class ComponentMeta(typing._ProtocolMeta):  # pyright: ignore[reportPrivateUsage
     automatic slotting.
     """
 
-    # HACK: Pyright doesn't like this but it does seem to work with typechecking
-    #       down the line. I might change this later (e.g. define it on
-    #       BaseComponent instead, but that comes with its own challenges).
-    factory: component_api.ComponentFactory[typing_extensions.Self]  # pyright: ignore[reportGeneralTypeIssues, reportUnknownMemberType]
-
     def __new__(  # noqa: PYI034
         metacls,
         name: str,
@@ -185,62 +181,75 @@ class ComponentMeta(typing._ProtocolMeta):  # pyright: ignore[reportPrivateUsage
         #       definition, and once more by attrs.define(). We ensure we only
         #       run the full class creation logic once.
 
-        # Set slots if attrs hasn't already done so.
-        namespace.setdefault("__slots__", ())
+        cls = super().__new__(metacls, name, bases, namespace)
 
-        cls = typing.cast(
-            "type[ComponentBase]",
-            super().__new__(metacls, name, bases, namespace),
-        )
-
-        # If this is attrs' pass, return immediately after it has worked its magic.
+        # If this is attrs' pass, return immediately.
         if _is_attrs_pass(namespace):
             return cls
 
-        cls = attrs.define(
-            cls,
-            slots=True,
-            kw_only=True,
-            field_transformer=_field_transformer,
+        cls = attrs.define(cls, slots=True, kw_only=True, field_transformer=_field_transformer)
+
+        # NOTE: Pyright complains about RichComponent being a data protocol
+        #       here, but this is a false-positive, as the only non-method
+        #       member is __slots__.
+        assert issubclass(cls, component_api.RichComponent)  # pyright: ignore[reportGeneralTypeIssues]
+        factory_cls: type[component_api.ComponentFactory[typing.Any]] = (
+            factory_impl.NoopFactory
+            if typing_extensions.is_protocol(cls)
+            else factory_impl.ComponentFactory
         )
 
-        if typing_extensions.is_protocol(cls):
-            cls.factory = factory_impl.NoopFactory.from_component(cls)
-            return cls
-
-        cls.factory = factory_impl.ComponentFactory.from_component(cls)
-        return cls
+        cls.set_factory(factory_cls.from_component(cls))
+        return typing.cast(ComponentMeta, cls)
 
 
 @typing.runtime_checkable
-class ComponentBase(
-    component_api.RichComponent,
-    typing.Protocol,
-    metaclass=ComponentMeta,
-):
+class ComponentBase(component_api.RichComponent, typing.Protocol, metaclass=ComponentMeta):
     """Overarching base class for any kind of component."""
 
-    _parent: typing.ClassVar[type[typing.Any] | None] = None
-    manager: typing.ClassVar[component_api.ComponentManager | None] = None
-    """The manager to which this component is registered.
+    _factory: typing.ClassVar[component_api.ComponentFactory[typing_extensions.Self]]
+    _manager: component_api.ComponentManager = fields.meta()
 
-    Defaults to :obj:`None` if this component is not registered to any manager.
-    """
+    def get_manager(self) -> component_api.ComponentManager:  # noqa: D102
+        # <<Docstring inherited from component_api.RichComponent>>
 
-    factory = factory_impl.NoopFactory()
-    r"""Factory type that builds instances of this class.
+        return self._manager
 
-    Since component base classes can be declared as :class:`~typing.Protocol`\s
-    and protocols cannot be instantiated, this attribute defaults to a
-    :class:`~NoopFactory`. In case a concrete component subclass is created, a matching
-    :class:`~ComponentFactory` is automatically generated instead.
-    """
+    def set_manager(self, manager: component_api.ComponentManager) -> None:  # noqa: D102
+        # <<Docstring inherited from component_api.RichComponent>>
 
-    async def as_ui_component(self) -> disnake.ui.WrappedComponent:  # noqa: D102
+        self._manager = manager
+
+    @classmethod
+    def get_factory(cls) -> component_api.ComponentFactory[typing_extensions.Self]:
+        r"""Get the factory that built this component instance.
+
+        .. note::
+            Component base classes can be declared as a subclass of
+            :class:`~typing.Protocol`\s, which tells disnake_compass that this
+            component is a 'template' and should not be instantiable.
+            In this case, this attribute defaults to a :class:`~NoopFactory`.
+
+            In case a concrete component subclass is created, a matching
+            :class:`~ComponentFactory` is automatically generated instead.
+        """
+        return cls._factory
+
+    @classmethod
+    def set_factory(cls, factory: component_api.ComponentFactory[typing_extensions.Self]) -> None:  # noqa: D102
+        # <<Docstring inherited from component_api.RichComponent>>
+
+        cls._factory = factory
+
+    async def as_ui_component(  # noqa: D102
+        self,
+        manager: component_api.ComponentManager,
+        /,
+    ) -> disnake.ui.WrappedComponent:
         # <<Docstring inherited from component_api.RichComponent>>
         ...
 
-    async def make_custom_id(self) -> str:
+    async def make_custom_id(self, manager: component_api.ComponentManager | None, /) -> str:
         """Make a custom id from this component given its current state.
 
         The generated custom id will contain the full state of the component,
@@ -254,22 +263,25 @@ class ComponentBase(
             resides inside the component manager, the component *must* be
             registered to a manager to use this method.
 
+        Parameters
+        ----------
+        manager:
+            The manager to use to make a custom id for this component. This is
+            only relevant if you have multiple managers for the same component.
+            Defaults to the root manager.
+
         Returns
         -------
         str:
             The custom id representing the full state of this component.
 
         """
-        if not self.manager:
-            message = (
-                "A component must be registered to a manager to create a custom"
-                "id. Please register this component to a manager before trying"
-                "to create a custom id for it."
-            )
-            raise RuntimeError(message)
+        if manager is None:
+            manager = self.get_manager()
 
-        return await self.manager.make_custom_id(self)
+        return await manager.make_custom_id(self)
 
+    @abc.abstractmethod
     async def callback(  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: D102
         self,
         inter: disnake.MessageInteraction[disnake.Client],

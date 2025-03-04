@@ -73,6 +73,8 @@ git = "https://github.com/sharp-eyes/furo"
 typeCheckingMode = "strict"
 pythonVersion = "3.10"
 reportMissingTypeStubs = false
+# Disabling this only disables the use of bare `type: ignore` comments.
+enableTypeIgnoreComments = false
 exclude = [
     # Default options
     "**/node_modules",

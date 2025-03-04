@@ -53,17 +53,15 @@ class RichButton(
     emoji: _AnyEmoji | None = fields.internal(default=None)
     disabled: bool = fields.internal(default=False)
 
-    async def as_ui_component(self) -> disnake.ui.Button[None]:  # noqa: D102
+    async def as_ui_component(  # noqa: D102
+        self, manager: component_api.ComponentManager | None = None, /
+    ) -> disnake.ui.Button[None]:
         # <<docstring inherited from component_api.RichButton>>
-
-        if not self.manager:
-            message = "Cannot serialise components without a manager."
-            raise RuntimeError(message)
 
         return disnake.ui.Button(
             style=self.style,
             label=self.label,
             disabled=self.disabled,
             emoji=self.emoji,
-            custom_id=await self.manager.make_custom_id(self),
+            custom_id=await self.make_custom_id(manager),
         )

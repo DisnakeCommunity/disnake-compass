@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import enum
-import functools
 import typing
 
 import attrs
@@ -34,8 +33,10 @@ class FieldType(enum.Flag):
     the sole reason of facilitating unions in lookups using :func:`get_fields`.
     """
 
+    META = enum.auto()
+    """Internal field that facilitates disnake-compass functionality."""
     INTERNAL = enum.auto()
-    """Internal field that does not show up in the component's init signature."""
+    """Internal field that interfaces with disnake ui component fields."""
     CUSTOM_ID = enum.auto()
     """Field parsed into/from the component's custom id."""
     SELECT = enum.auto()
@@ -43,17 +44,8 @@ class FieldType(enum.Flag):
     MODAL = enum.auto()
     """Field parsed from a modal component's modal values."""
 
-    @classmethod
-    def ALL(cls) -> FieldType:  # noqa: N802
-        """Meta-value for all field types.
-
-        Mainly intended for use in :func:`get_fields`.
-        """
-        return _ALL_FIELD_TYPES
-
-
-_ALL_FIELD_TYPES = functools.reduce(FieldType.__or__, FieldType)
-_ALL_FIELD_TYPES._name_ = "ALL()"  # This makes it render nicer in docs.
+    ALL = META | INTERNAL | CUSTOM_ID | SELECT | MODAL
+    """Meta-value to facilitate checking for any field type."""
 
 
 def get_parser(
@@ -144,7 +136,7 @@ def get_fields(
     cls: type,
     /,
     *,
-    kind: FieldType = _ALL_FIELD_TYPES,
+    kind: FieldType = FieldType.ALL,
 ) -> typing.Sequence[attrs.Attribute[typing.Any]]:
     r"""Get the attributes of an attrs class.
 
@@ -208,7 +200,7 @@ def field(
 
 
 def internal(
-    default: _T,
+    default: _T = attrs.NOTHING,
     *,
     frozen: bool = False,
 ) -> _T:
@@ -241,4 +233,12 @@ def internal(
         default=default,
         on_setattr=attrs.setters.frozen if frozen else None,
         metadata={FieldMetadata.FIELDTYPE: FieldType.INTERNAL},
+    )
+
+
+def meta(*, init: bool = False) -> typing.Any:  # noqa: ANN401
+    return attrs.field(
+        metadata={FieldMetadata.FIELDTYPE: FieldType.META},
+        init=init,
+        repr=False,
     )

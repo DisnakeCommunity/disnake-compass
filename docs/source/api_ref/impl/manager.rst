@@ -19,3 +19,4 @@ Classes
 
 .. autoclass:: disnake_compass.impl.manager.ComponentManager
     :members:
+    :exclude-members: parse_message_interaction
