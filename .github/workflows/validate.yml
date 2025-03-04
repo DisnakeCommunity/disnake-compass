@@ -22,7 +22,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Run pyright
-        run: poetry run pyright .
+        run: uv run pyright .
 
   ruff-lint:
     runs-on: ubuntu-latest
@@ -36,8 +36,11 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: hi
+        run: echo $UV_NO_SYNC
+
       - name: Run ruff linter
-        run: poetry run ruff check --fix --exit-non-zero-on-fix
+        run: uv run ruff check --fix --exit-non-zero-on-fix
 
   ruff-format:
     runs-on: ubuntu-latest
@@ -52,4 +55,4 @@ jobs:
           python-version: '3.10'
 
       - name: Run ruff formatter
-        run: poetry run ruff format --check
+        run: uv run ruff format --check

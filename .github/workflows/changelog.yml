@@ -36,7 +36,7 @@ jobs:
         # NOTE: The pull request' base branch needs to be fetched so towncrier
         # is able to compare the current branch with the base branch.
         run: |
-          if ! poetry run towncrier check --compare-with origin/${BASE_BRANCH}; then
+          if ! uv run towncrier check --compare-with origin/${BASE_BRANCH}; then
             echo "::error::Please see https://github.com/DisnakeCommunity/disnake-compass/blob/master/changelog/README.md for details on how to create a changelog entry." >&2
             exit 1
           fi
