@@ -10,8 +10,10 @@ Requires disnake version 2.10.0 or above and python 3.10.0 or above.
 Key Features
 ------------
 - Smoothly integrates with disnake,
-- Uses an intuitive dataclass-like syntax to create innately persistent components,
-- `custom_id` matching, conversion, and creation are automated for you.
+- Intuitive dataclass-like syntax to declare component classes,
+- Fully stateless and persistent by permanently storing state inside custom ids,
+- Custom id matching, parsing, conversion and creation are all managed for you,
+- Highly customisable!
 
 Installing
 ----------
