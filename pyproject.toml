@@ -172,9 +172,15 @@ precommit = "pre-commit install --install-hooks"
 lint = "pre-commit run --all-files"
 ruff = "task lint ruff"
 slotscheck = "task lint slotscheck"
-docs = "sphinx-autobuild ./docs/source ./docs/build/html --watch ./src --watch ./changelog"
-example = "python -m scripts.example"
 
+    [tool.taskipy.tasks.example]
+    cwd = "."
+    cmd = "python -m scripts.example"
+
+    [tool.taskipy.tasks.docs]
+    cwd = "."
+    cmd = "uv run sphinx-autobuild ./docs/source ./docs/build/html --watch ./src --watch ./changelog"
+    pre = "uv sync --inexact --group docs"
 
 # Towncrier config taken from disnake
 [tool.towncrier]
