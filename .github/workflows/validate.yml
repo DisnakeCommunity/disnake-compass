@@ -36,9 +36,6 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: hi
-        run: echo $UV_NO_SYNC
-
       - name: Run ruff linter
         run: uv run ruff check --fix --exit-non-zero-on-fix
 
