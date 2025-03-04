@@ -40,5 +40,5 @@ runs:
 
     - name: Install disnake-compass
       # Always install disnake-compass again to make sure the latest changes are reflected.
-      run: uv sync --inexact --package disnake-compass
+      run: uv pip install -e . --no-deps
       shell: bash
