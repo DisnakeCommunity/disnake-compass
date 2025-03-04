@@ -17,6 +17,9 @@ import disnake
 import sphinx.config
 from disnake.ext import commands
 
+import disnake_compass
+from docs.source import util
+
 
 def git(*args: str) -> str:
     """Run a git command and return the output."""
@@ -26,15 +29,14 @@ def git(*args: str) -> str:
 git_pwd = git("rev-parse", "--show-toplevel")
 sys.path.append(os.path.abspath(git_pwd))
 
-from docs.source import util
 
 sys.modules["commands"] = commands
 sys.path.append(os.path.abspath("./extensions"))
 
-project = "disnake-compass"
+project = disnake_compass.__title__
 copyright = "2023, Sharp-Eyes"  # noqa: A001
-author = "Sharp-Eyes"
-release = "1.0.1"
+author = disnake_compass.__author__
+release = disnake_compass.__version__
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
