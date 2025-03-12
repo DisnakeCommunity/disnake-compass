@@ -417,7 +417,7 @@ class ComponentManager(component_api.ComponentManager):
 
         if "." not in self.name:
             # Return the root manager if this is not the root manager already.
-            return None if self.name is _ROOT else get_manager(_ROOT)
+            return None if self is ROOT_MANAGER else ROOT_MANAGER
 
         root, _ = self.name.rsplit(".", 1)
         return get_manager(root)
@@ -442,7 +442,7 @@ class ComponentManager(component_api.ComponentManager):
 
     def get_identifier(self, component_type: RichComponentType, /) -> str:  # noqa: D102
         # <<docstring inherited from api.components.ComponentManager>>
-        # NOTE: Keep _pop_identifier updated if this is ever changed!
+        # NOTE: Keep _set_identifier and _pop_identifier updated if this is ever changed!
 
         return self._identifiers[hash(component_type)]
 
@@ -654,16 +654,13 @@ class ComponentManager(component_api.ComponentManager):
         """
         finalised: list[list[disnake.ui.MessageUIComponent]] = []
 
-        if manager is None:
-            manager = get_manager(_ROOT)
-
         for row in components:
             new_row: list[disnake.ui.MessageUIComponent] = []
             finalised.append(new_row)
 
             for component in row:
                 if isinstance(component, component_api.RichButton | component_api.RichSelect):
-                    new_row.append(await component.as_ui_component(manager))  # pyright: ignore[reportArgumentType]
+                    new_row.append(await component.as_ui_component(manager or ROOT_MANAGER))  # pyright: ignore[reportArgumentType]
                 else:
                     new_row.append(component)
 
@@ -1101,7 +1098,7 @@ class ComponentManager(component_api.ComponentManager):
         if disabled is not omit.Omitted:
             kwargs["disabled"] = disabled
 
-        manager = get_manager(_ROOT) if as_root else self
+        manager = ROOT_MANAGER if as_root else self
         component_type = manager.components[identifier]
         component = component_type(**kwargs)
 
@@ -1182,7 +1179,7 @@ class ComponentManager(component_api.ComponentManager):
         if options is not omit.Omitted:
             kwargs["options"] = options
 
-        manager = get_manager(_ROOT) if as_root else self
+        manager = ROOT_MANAGER if as_root else self
         component_type = manager.components[identifier]
         component = component_type(**kwargs)
 
@@ -1260,14 +1257,14 @@ def get_manager(name: str | None = None) -> ComponentManager:
         manager is returned. Otherwise, a new manager is created.
 
     """
-    if name is None:
-        # TODO: Maybe use a sentinel:
-        #       - auto-infer name if sentinel,
-        #       - return root logger if None was passed explicitly.
-        name = _ROOT
-
     if name in _MANAGER_STORE:
         return _MANAGER_STORE[name]
+
+    # TODO: Maybe use a sentinel:
+    #       - auto-infer name if sentinel,
+    #       - return root logger if None was passed explicitly.
+    if name is None:
+        return ROOT_MANAGER
 
     _MANAGER_STORE[name] = manager = ComponentManager(name)
 
