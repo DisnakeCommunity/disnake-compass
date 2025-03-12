@@ -279,7 +279,7 @@ class ComponentBase(component_api.RichComponent, typing.Protocol, metaclass=Comp
         if manager is None:
             manager = self.get_manager()
 
-        return await manager.make_custom_id(self)
+        return await manager.generate_custom_id(self)
 
     @abc.abstractmethod
     async def callback(  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: D102

@@ -369,7 +369,7 @@ wheels = [
 
 [[package]]
 name = "disnake-compass"
-version = "1.0.1"
+version = "1.1.0a0"
 source = { editable = "." }
 dependencies = [
     { name = "attrs" },

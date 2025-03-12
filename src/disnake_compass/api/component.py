@@ -205,12 +205,15 @@ class ComponentManager(typing.Protocol):
         """
         ...
 
-    def make_identifier(self, component_type: type[RichComponent], /) -> str:
-        """Make an identifier for the provided component class.
+    def generate_identifier(self, component_type: type[RichComponent], /) -> str:
+        """Make a new 'default' identifier for the provided component class.
 
-        This is used to store the component in :attr:`components`, and to
-        determine which component's callback should be fired when an interaction
-        is received.
+        This is called when a component is registered without manually
+        providing an identifier for it.
+
+        The identifier is used to store the component in :attr:`components`,
+        and to determine which component's callback should be fired when an
+        interaction is received.
 
         Parameters
         ----------
@@ -225,22 +228,21 @@ class ComponentManager(typing.Protocol):
         """
         ...
 
-    def get_identifier(self, custom_id: str, /) -> tuple[str, typing.Sequence[str]]:
-        """Extract the identifier and parameters from a custom id.
+    def get_identifier(self, component_type: type[RichComponent], /) -> str:
+        """Look up the registered identifier for the provided component type.
 
-        This is used to check whether the identifier is registered in
-        :attr:`components`.
+        This only works on the manager used to register the component.
 
         Parameters
         ----------
-        custom_id
-            The custom id from which to extract the identifier.
+        component_type
+            The component type for which to look up the identifier.
 
         """
         ...
 
-    async def make_custom_id(self, component: RichComponent, /) -> str:
-        """Make a custom id from the provided component.
+    async def generate_custom_id(self, component: RichComponent, /) -> str:
+        """Generate a custom id from the provided component.
 
         This can then be used later to reconstruct the component without any
         state or data loss.
@@ -254,6 +256,20 @@ class ComponentManager(typing.Protocol):
         -------
         str
             A custom id that fully represents the provided component.
+
+        """
+        ...
+
+    def parse_custom_id(self, custom_id: str, /) -> tuple[str, typing.Sequence[str]]:
+        """Extract the identifier and parameters from a custom id.
+
+        This is used to check whether the identifier is registered in
+        :attr:`components`.
+
+        Parameters
+        ----------
+        custom_id
+            The custom id from which to extract the identifier.
 
         """
         ...

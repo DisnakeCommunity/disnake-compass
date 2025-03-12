@@ -290,7 +290,7 @@ class ComponentManager(component_api.ComponentManager):
     _components: weakref.WeakValueDictionary[str, RichComponentType]
     _count: bool | None
     _counter: int
-    _identifiers: dict[str, str]
+    _identifiers: weakref.WeakKeyDictionary[RichComponentType, str]
     _module_data: dict[str, _ModuleData]
     _name: str
     _registrars: weakref.WeakValueDictionary[str, ComponentManager]
@@ -307,7 +307,7 @@ class ComponentManager(component_api.ComponentManager):
         self._name = name
         self._children = set()
         self._components = weakref.WeakValueDictionary()
-        self._identifiers = {}
+        self._identifiers = weakref.WeakKeyDictionary()
         self._count = count
         self._counter = 0
         self._module_data = {}
@@ -436,12 +436,38 @@ class ComponentManager(component_api.ComponentManager):
         if not omit.is_omitted(sep):
             self._sep = sep
 
-    def make_identifier(self, component_type: RichComponentType, /) -> str:  # noqa: D102
+    def generate_identifier(self, component_type: RichComponentType, /) -> str:  # noqa: D102
         # <<docstring inherited from api.components.ComponentManager>>
 
         return component_type.__name__
 
-    def get_identifier(self, custom_id: str, /) -> tuple[str, typing.Sequence[str]]:  # noqa: D102
+    def get_identifier(self, component_type: RichComponentType, /) -> str:  # noqa: D102
+        # <<docstring inherited from api.components.ComponentManager>>
+
+        return self._identifiers[component_type]
+
+    def _increment(self) -> str:
+        count = _minimise_count(self._counter)
+
+        self._counter += 1
+        if self._counter > _MAX_COUNT:
+            self._counter = 0
+
+        return count
+
+    async def generate_custom_id(self, component: component_api.RichComponent, /) -> str:  # noqa: D102
+        # <<docstring inherited from api.components.ComponentManager>>
+
+        identifier = self._identifiers[type(component)]
+
+        if self.count:
+            identifier = identifier + self._increment()
+
+        dumped_params = await component.get_factory().dump_params(component)
+
+        return self.sep.join([identifier, *dumped_params.values()])
+
+    def parse_custom_id(self, custom_id: str, /) -> tuple[str, typing.Sequence[str]]:  # noqa: D102
         # <<docstring inherited from api.components.ComponentManager>>
 
         name, *params = custom_id.split(self.sep)
@@ -451,27 +477,6 @@ class ComponentManager(component_api.ComponentManager):
             return name[:-1], params
 
         return name, params
-
-    def increment(self) -> str:  # noqa: D102
-        count = _minimise_count(self._counter)
-
-        self._counter += 1
-        if self._counter > _MAX_COUNT:
-            self._counter = 0
-
-        return count
-
-    async def make_custom_id(self, component: component_api.RichComponent, /) -> str:  # noqa: D102
-        # <<docstring inherited from api.components.ComponentManager>>
-
-        identifier = self._identifiers[type(component).__name__]
-
-        if self.count:
-            identifier = identifier + self.increment()
-
-        dumped_params = await component.get_factory().dump_params(component)
-
-        return self.sep.join([identifier, *dumped_params.values()])
 
     @typing_extensions.deprecated("Please use parse_raw_component(interaction.component) instead.")
     async def parse_message_interaction(  # noqa: D102
@@ -483,48 +488,6 @@ class ComponentManager(component_api.ComponentManager):
             return await self.parse_raw_component(interaction.component)
 
         raise NotImplementedError
-
-    async def _parse_raw_component(
-        self,
-        component: disnake.Button | disnake.BaseSelectMenu,
-        /,
-    ) -> tuple[str, component_api.RichComponent] | tuple[None, None]:
-        custom_id = component.custom_id
-        if not custom_id:
-            return None, None
-
-        identifier, params = self.get_identifier(custom_id)
-        if identifier not in self._components:
-            return None, None
-
-        component_type = self._components[identifier]
-
-        module_data = self._module_data[identifier]
-        if not module_data.is_active():
-            # NOTE: This occurs if:
-            #       - The module on which the component is defined was unloaded.
-            #       - The module on which the component is defined was reloaded
-            #         and the component was never overwritten. It could either
-            #         have been removed, or simply no longer be registered. The
-            #         component *should* therefore be unresponsive.
-            #
-            #       Since we do not want to fire components that (to the user)
-            #       do not exist anymore, we should remove them from the
-            #       manager and return None.
-            self.deregister_component(component_type)
-            return None, None
-
-        component_params = {
-            field.name: getattr(component, field.name)
-            for field in fields.get_fields(component_type, kind=fields.FieldType.INTERNAL)
-        }
-
-        return (
-            identifier,
-            await component_type
-                .get_factory()
-                .build_component(params, component_params=component_params),
-        )  # fmt: skip
 
     async def parse_raw_component(
         self,
@@ -551,8 +514,43 @@ class ComponentManager(component_api.ComponentManager):
             that is registered to this manager.
 
         """
-        _identifier, rich_component = await self._parse_raw_component(component)
-        return rich_component
+        root_manager = get_manager(_ROOT)
+
+        custom_id = component.custom_id
+        if not custom_id:
+            return None
+
+        identifier, params = self.parse_custom_id(custom_id)
+
+        registrar = root_manager._registrars[identifier]
+        if identifier not in registrar._components:
+            return None
+
+        component_type = registrar._components[identifier]
+        module_data = root_manager._module_data[identifier]
+        if not module_data.is_active():
+            # NOTE: This occurs if:
+            #       - The module on which the component is defined was unloaded.
+            #       - The module on which the component is defined was reloaded
+            #         and the component was never overwritten. It could either
+            #         have been removed, or simply no longer be registered. The
+            #         component *should* therefore be unresponsive.
+            #
+            #       Since we do not want to fire components that (to the user)
+            #       do not exist anymore, we should remove them from the
+            #       manager and return None.
+            self.deregister_component(component_type)
+            return None
+
+        component_params = {
+            field.name: getattr(component, field.name)
+            for field in fields.get_fields(component_type, kind=fields.FieldType.INTERNAL)
+        }
+
+        factory = component_type.get_factory()
+        new_component = await factory.build_component(params, component_params=component_params)
+        new_component.set_manager(self)
+        return new_component
 
     async def parse_message_components(
         self, message: disnake.Message, /
@@ -716,7 +714,7 @@ class ComponentManager(component_api.ComponentManager):
         identifier: str | None = None,
     ) -> type[RichComponentT]:
         # <<docstring inherited from api.components.ComponentManager>>
-        resolved_identifier = identifier or self.make_identifier(component_type)
+        resolved_identifier = identifier or self.generate_identifier(component_type)
         module_data = _ModuleData.from_object(component_type)
 
         root_manager = get_manager(_ROOT)
@@ -742,32 +740,36 @@ class ComponentManager(component_api.ComponentManager):
                 )
                 raise RuntimeError(message)
 
-        # Register to current manager and all parent managers.
-        for manager in _recurse_parents(self):
-            manager._components[resolved_identifier] = component_type  # noqa: SLF001
-            manager._identifiers[component_type.__name__] = resolved_identifier  # noqa: SLF001
-            manager._module_data[resolved_identifier] = module_data  # noqa: SLF001
-            manager._registrars[resolved_identifier] = self  # noqa: SLF001
+        # Add registrar and module data for this component to the root manager.
+        root_manager._registrars[resolved_identifier] = self  # noqa: SLF001
+        root_manager._module_data[resolved_identifier] = module_data  # noqa: SLF001
+
+        # Register component information to the current manager.
+        self._identifiers[component_type] = resolved_identifier
+        self._components[resolved_identifier] = component_type
 
         return component_type
 
     def deregister_component(self, component_type: RichComponentType, /) -> None:  # noqa: D102
         # <<docstring inherited from api.components.ComponentManager>>
 
-        identifier = self.make_identifier(component_type)
-        registrar = self._registrars.get(identifier)
-
-        if not registrar:
+        if component_type not in self._identifiers:
             message = (
-                f"Component {component_type.__name__!r} is not registered to a component manager."
+                f"Component {component_type.__name__!r}"
+                " is not registered to this component manager."
             )
             raise TypeError(message)
 
-        # Deregister from the current manager and all parent managers.
-        for manager in _recurse_parents(registrar):
-            del manager._components[identifier]  # noqa: SLF001
-            del manager._module_data[identifier]  # noqa: SLF001
-            del manager._registrars[identifier]  # noqa: SLF001
+        identifier = self._identifiers[component_type]
+
+        # Remove registrar and module data for this component from the root manager.
+        root_manager = get_manager(_ROOT)
+        del root_manager._registrars[identifier]  # noqa: SLF001
+        del root_manager._module_data[identifier]  # noqa: SLF001
+
+        # Remove component identifier from the current manager
+        del self._identifiers[component_type]
+        del self._components[identifier]
 
     def add_to_client(self, client: disnake.Client, /) -> None:  # noqa: D102
         # <<docstring inherited from api.components.ComponentManager>>
@@ -966,26 +968,38 @@ class ComponentManager(component_api.ComponentManager):
         self.handle_exception = func
         return func
 
-    async def _invoke_component(
+    async def invoke_component(
         self,
         interaction: disnake.MessageInteraction[disnake.Client],
         /,
+        *,
+        with_di: bool = True,
     ) -> None:
+        # <<docstring inherited from api.components.ComponentManager>>
+
+        if with_di is True:
+            async with self.set_invocation_dependencies(
+                self,
+                interaction,
+                interaction.guild,
+                interaction.bot,
+                interaction.channel,
+                interaction.author,
+                # XXX:  Potential edge-case here where a parser needs a user
+                #       but we can only provide a member.
+            ):
+                await self.invoke_component(interaction, with_di=False)
+                return
+
         # First, check if there even is a component.
         raw_component = interaction.component
         if not raw_component:
             return
 
         # First, we check if the component is managed.
-        identifier, component = await self._parse_raw_component(raw_component)
-        if not (component and identifier):
-            # If the component was found, the manager is guaranteed to be
-            # defined but we need the extra check for type-safety.
+        component = await self.parse_raw_component(raw_component)
+        if not component:
             return
-
-        # Set the registrar for this component as the manager that invoked it.
-        registrar = self._registrars[identifier]
-        component.set_manager(registrar)
 
         # We traverse the managers in reverse: root first, then child, etc.
         # until we reach the component's actual manager. Therefore, we first
@@ -994,6 +1008,9 @@ class ComponentManager(component_api.ComponentManager):
         # This applies only to the callback wrappers. Error handlers are called
         # starting from the actual manager and propagated down to the root
         # manager if the error was left unhandled.
+        registrar = component.get_manager()
+        assert isinstance(registrar, ComponentManager)
+
         managers = list(_recurse_parents(registrar))
 
         assert interaction.component.custom_id
@@ -1028,31 +1045,6 @@ class ComponentManager(component_api.ComponentManager):
 
         finally:
             _COMPONENT_CTX.reset(component_ctx_token)
-
-    async def invoke_component(  # noqa: D102
-        self,
-        interaction: disnake.MessageInteraction[disnake.Client],
-        /,
-        *,
-        with_di: bool = True,
-    ) -> None:
-        # <<docstring inherited from api.components.ComponentManager>>
-
-        if with_di:
-            async with self.set_invocation_dependencies(
-                self,
-                interaction,
-                interaction.guild,
-                interaction.bot,
-                interaction.channel,
-                interaction.author,
-                # XXX:  Potential edge-case here where a parser needs a user
-                #       but we can only provide a member.
-            ):
-                await self._invoke_component(interaction)
-
-        else:
-            await self._invoke_component(interaction)
 
     def make_button(  # noqa: PLR0913
         self,
