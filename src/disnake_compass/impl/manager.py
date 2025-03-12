@@ -20,6 +20,11 @@ from disnake_compass.internal import di, omit
 __all__: typing.Sequence[str] = ("ComponentManager", "check_manager", "get_manager")
 
 
+# Global mapping of {component identifier: component type}
+_REGISTRARS: weakref.WeakValueDictionary[str, ComponentManager] = weakref.WeakValueDictionary()
+# Global mapping of {component identifier: module data}
+_MODULE_DATA: dict[str, _ModuleData] = {}
+
 _LOGGER = logging.getLogger(__name__)
 _ROOT = sys.intern("root")
 _COMPONENT_EVENT = sys.intern("on_message_interaction")
@@ -276,9 +281,7 @@ class ComponentManager(component_api.ComponentManager):
         "_count",
         "_counter",
         "_identifiers",
-        "_module_data",
         "_name",
-        "_registrars",
         "_sep",
         "handle_exception",
         "set_invocation_dependencies",
@@ -291,9 +294,7 @@ class ComponentManager(component_api.ComponentManager):
     _count: bool | None
     _counter: int
     _identifiers: weakref.WeakKeyDictionary[RichComponentType, str]
-    _module_data: dict[str, _ModuleData]
     _name: str
-    _registrars: weakref.WeakValueDictionary[str, ComponentManager]
     _sep: str | None
 
     def __init__(
@@ -310,8 +311,6 @@ class ComponentManager(component_api.ComponentManager):
         self._identifiers = weakref.WeakKeyDictionary()
         self._count = count
         self._counter = 0
-        self._module_data = {}
-        self._registrars = weakref.WeakValueDictionary()
         self._sep = sep
         self.set_invocation_dependencies: DependencyProvider = default_dependency_provider
         self.wrap_callback: CallbackWrapper = default_callback_wrapper
@@ -514,20 +513,18 @@ class ComponentManager(component_api.ComponentManager):
             that is registered to this manager.
 
         """
-        root_manager = get_manager(_ROOT)
-
         custom_id = component.custom_id
         if not custom_id:
             return None
 
         identifier, params = self.parse_custom_id(custom_id)
 
-        registrar = root_manager._registrars[identifier]
-        if identifier not in registrar._components:
+        registrar = _REGISTRARS[identifier]
+        if identifier not in registrar._components:  # noqa: SLF001
             return None
 
-        component_type = registrar._components[identifier]
-        module_data = root_manager._module_data[identifier]
+        component_type = registrar._components[identifier]  # noqa: SLF001
+        module_data = _MODULE_DATA[identifier]
         if not module_data.is_active():
             # NOTE: This occurs if:
             #       - The module on which the component is defined was unloaded.
@@ -717,9 +714,7 @@ class ComponentManager(component_api.ComponentManager):
         resolved_identifier = identifier or self.generate_identifier(component_type)
         module_data = _ModuleData.from_object(component_type)
 
-        root_manager = get_manager(_ROOT)
-
-        if resolved_identifier in root_manager._components:  # noqa: SLF001
+        if resolved_identifier in ROOT_MANAGER._components:  # noqa: SLF001
             # NOTE: This occurs when a component is registered while another
             #       component with the same identifier already exists.
             #
@@ -730,7 +725,7 @@ class ComponentManager(component_api.ComponentManager):
             #       - This is an actual user error. If we were to silently
             #         overwrite the old component, it would unexpectedly go
             #         unresponsive. Instead, we raise an exception to the user.
-            old_module_data = root_manager._module_data[resolved_identifier]  # noqa: SLF001
+            old_module_data = _MODULE_DATA[resolved_identifier]
             if not module_data.is_reload_of(old_module_data):
                 message = (
                     "Cannot register component with duplicate identifier"
@@ -740,9 +735,9 @@ class ComponentManager(component_api.ComponentManager):
                 )
                 raise RuntimeError(message)
 
-        # Add registrar and module data for this component to the root manager.
-        root_manager._registrars[resolved_identifier] = self  # noqa: SLF001
-        root_manager._module_data[resolved_identifier] = module_data  # noqa: SLF001
+        # Add registrar and module data for this component.
+        _REGISTRARS[resolved_identifier] = self
+        _MODULE_DATA[resolved_identifier] = module_data
 
         # Register component information to the current manager.
         self._identifiers[component_type] = resolved_identifier
@@ -762,12 +757,11 @@ class ComponentManager(component_api.ComponentManager):
 
         identifier = self._identifiers[component_type]
 
-        # Remove registrar and module data for this component from the root manager.
-        root_manager = get_manager(_ROOT)
-        del root_manager._registrars[identifier]  # noqa: SLF001
-        del root_manager._module_data[identifier]  # noqa: SLF001
+        # Remove registrar and module data for this component.
+        del _REGISTRARS[identifier]
+        del _MODULE_DATA[identifier]
 
-        # Remove component identifier from the current manager
+        # Remove component identifier from the current manager.
         del self._identifiers[component_type]
         del self._components[identifier]
 
@@ -968,7 +962,7 @@ class ComponentManager(component_api.ComponentManager):
         self.handle_exception = func
         return func
 
-    async def invoke_component(
+    async def invoke_component(  # noqa: D102
         self,
         interaction: disnake.MessageInteraction[disnake.Client],
         /,
@@ -1278,6 +1272,9 @@ def get_manager(name: str | None = None) -> ComponentManager:
         parent.children.add(manager)
 
     return manager
+
+
+ROOT_MANAGER = get_manager(_ROOT)
 
 
 def check_manager(name: str) -> bool:
