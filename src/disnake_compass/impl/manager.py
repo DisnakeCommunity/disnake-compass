@@ -293,7 +293,7 @@ class ComponentManager(component_api.ComponentManager):
     _components: weakref.WeakValueDictionary[str, RichComponentType]
     _count: bool | None
     _counter: int
-    _identifiers: weakref.WeakKeyDictionary[RichComponentType, str]
+    _identifiers: dict[int, str]
     _name: str
     _sep: str | None
 
@@ -308,7 +308,7 @@ class ComponentManager(component_api.ComponentManager):
         self._name = name
         self._children = set()
         self._components = weakref.WeakValueDictionary()
-        self._identifiers = weakref.WeakKeyDictionary()
+        self._identifiers = {}
         self._count = count
         self._counter = 0
         self._sep = sep
@@ -442,8 +442,15 @@ class ComponentManager(component_api.ComponentManager):
 
     def get_identifier(self, component_type: RichComponentType, /) -> str:  # noqa: D102
         # <<docstring inherited from api.components.ComponentManager>>
+        # NOTE: Keep _pop_identifier updated if this is ever changed!
 
-        return self._identifiers[component_type]
+        return self._identifiers[hash(component_type)]
+
+    def _set_identifier(self, component_type: RichComponentType, identifier: str, /) -> None:
+        self._identifiers[hash(component_type)] = identifier
+
+    def _pop_identifier(self, component_type: RichComponentType, /) -> str:
+        return self._identifiers.pop(hash(component_type))
 
     def _increment(self) -> str:
         count = _minimise_count(self._counter)
@@ -457,7 +464,7 @@ class ComponentManager(component_api.ComponentManager):
     async def generate_custom_id(self, component: component_api.RichComponent, /) -> str:  # noqa: D102
         # <<docstring inherited from api.components.ComponentManager>>
 
-        identifier = self._identifiers[type(component)]
+        identifier = self.get_identifier(type(component))
 
         if self.count:
             identifier = identifier + self._increment()
@@ -740,7 +747,7 @@ class ComponentManager(component_api.ComponentManager):
         _MODULE_DATA[resolved_identifier] = module_data
 
         # Register component information to the current manager.
-        self._identifiers[component_type] = resolved_identifier
+        self._set_identifier(component_type, resolved_identifier)
         self._components[resolved_identifier] = component_type
 
         return component_type
@@ -755,15 +762,13 @@ class ComponentManager(component_api.ComponentManager):
             )
             raise TypeError(message)
 
-        identifier = self._identifiers[component_type]
+        # Remove component identifier from the current manager.
+        identifier = self._pop_identifier(component_type)
+        del self._components[identifier]
 
         # Remove registrar and module data for this component.
         del _REGISTRARS[identifier]
         del _MODULE_DATA[identifier]
-
-        # Remove component identifier from the current manager.
-        del self._identifiers[component_type]
-        del self._components[identifier]
 
     def add_to_client(self, client: disnake.Client, /) -> None:  # noqa: D102
         # <<docstring inherited from api.components.ComponentManager>>
