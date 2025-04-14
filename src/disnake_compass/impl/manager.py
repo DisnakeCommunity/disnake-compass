@@ -708,14 +708,32 @@ class ComponentManager(component_api.ComponentManager):
 
         return wrapper
 
-    def register_component(  # noqa: D102
+    def register_component(
         self,
         component_type: type[RichComponentT],
         /,
         *,
         identifier: str | None = None,
     ) -> type[RichComponentT]:
-        # <<docstring inherited from api.components.ComponentManager>>
+        r"""Register a component to this component manager.
+
+        This returns the provided class, such that this method can serve as a
+        decorator.
+
+        Parameters
+        ----------
+        component_type
+            The component class to register.
+        identifier
+            The identifier under which to register this component class.
+            This should be unique across all components.
+
+        Returns
+        -------
+        :class:`type`\[:data:`.ComponentT`]
+            The component class that was just registered.
+
+        """
         resolved_identifier = identifier or self.make_identifier(component_type)
         module_data = _ModuleData.from_object(component_type)
 
