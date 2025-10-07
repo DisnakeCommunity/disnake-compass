@@ -40,11 +40,13 @@ class RichComponent(typing.Protocol):
 
     __slots__: typing.Sequence[str] = ()
 
-    def get_manager(self) -> ComponentManager:
+    @classmethod
+    def get_manager(cls) -> ComponentManager:
         """Get the manager that was responsible for parsing this component instance."""
         ...
 
-    def set_manager(self, manager: ComponentManager, /) -> None:
+    @classmethod
+    def set_manager(cls, manager: ComponentManager | None, /) -> None:
         """Set the manager that was responsible for parsing this component instance."""
         ...
 
