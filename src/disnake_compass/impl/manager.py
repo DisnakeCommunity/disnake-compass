@@ -24,6 +24,7 @@ _LOGGER = logging.getLogger(__name__)
 _ROOT = sys.intern("root")
 _COMPONENT_EVENT = sys.intern("on_message_interaction")
 _MODAL_EVENT = sys.intern("on_modal_submit")
+_IS_COMPONENTS_V2 = 1 << 15
 
 _COMPONENT_CTX: contextvars.ContextVar[tuple[component_api.RichComponent, str]] = (
     contextvars.ContextVar("_COMPONENT_CTX")
@@ -598,6 +599,10 @@ class ComponentManager(component_api.ComponentManager):
             on the nested structure.
 
         """  # noqa: E501
+        if message.flags.value & _IS_COMPONENTS_V2:
+            msg = "parse_message_components does not yet work with components v2."
+            raise RuntimeError(msg)
+
         new_rows: list[list[MessageComponents]] = []
         rich_components: list[component_api.RichComponent] = []
 
@@ -605,6 +610,7 @@ class ComponentManager(component_api.ComponentManager):
         should_test = current_component is not None
 
         for row in message.components:
+            assert isinstance(row, disnake.ActionRow)
             new_row: list[MessageComponents] = []
             new_rows.append(new_row)
 
