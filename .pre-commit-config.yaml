@@ -29,9 +29,10 @@ repos:
     rev: v0.9.6
     hooks:
       - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
+        args: [--fix, --exit-non-zero-on-fix, --config, pyproject.toml]
         name: Running ruff in all files.
       - id: ruff-format
+        args: [--config, pyproject.toml]
 
   - repo: https://github.com/ariebovenberg/slotscheck
     rev: v0.19.1
