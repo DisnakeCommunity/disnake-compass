@@ -69,72 +69,13 @@ _COMPONENT_CTX: contextvars.ContextVar[tuple[component_api.RichComponent, str]] 
 
 
 T = typing.TypeVar("T")
-
-
-async def _parse_message_components_v1(
-    message: disnake.Message,
-    manager: ComponentManager,
-) -> tuple[typing.Sequence[MessageTopLevelComponentV2], typing.Sequence[component_api.RichComponent]]:
-    new_rows: list[list[MessageComponents]] = []
-    rich_components: list[component_api.RichComponent] = []
-
-    current_component, current_component_id = _COMPONENT_CTX.get((None, None))
-    should_test = current_component is not None
-
-    for row in message.components:
-        assert isinstance(row, disnake.ActionRow)
-
-        new_row: list[MessageComponents] = []
-        new_rows.append(new_row)
-
-        for component in row.children:
-            if should_test and component.custom_id == current_component_id:
-                should_test = False
-                new_component = current_component
-
-            else:
-                new_component = await manager.parse_raw_component(component)
-
-            if new_component:
-                rich_components.append(new_component)
-                assert isinstance(
-                    new_component,
-                    component_api.RichButton | component_api.RichSelect,
-                )
-
-            else:
-                new_component = _to_ui_component(component)
-
-            new_row.append(new_component)
-
 ComponentT = typing.TypeVar("ComponentT", bound=disnake.Component)
 
 
-def _to_ui_component(component: disnake.Component) -> disnake.ui.UIComponent:
-    return disnake.ui.action_row.UI_COMPONENT_LOOKUP[type(component)].from_component(component)
-
-async def _parse_message_components_v2(
-    message: disnake.Message,
-    manager: ComponentManager,
-) -> tuple[typing.Sequence[MessageTopLevelComponentV2], typing.Sequence[component_api.RichComponent]]:
-    rich_components: list[component_api.RichComponent] = []
-
-    current_component, current_component_id = _COMPONENT_CTX.get((None, None))
-    should_test = current_component is not None
-
-    ui_components = [_to_ui_component(component) for component in message.components]
-    for component in disnake.ui.walk_components(message.components):
-        if should_test and getattr(component, "custom_id", None) == current_component_id:
-            assert current_component
-            should_test = False
-            rich_components.append(current_component)
-
-        elif isinstance(component, (disnake.Button, disnake.BaseSelectMenu)):
-            new_component = await manager.parse_raw_component(component)
-            if new_component is not None:
-                rich_components.append(new_component)
-
-    return ui_components, rich_components
+def _to_ui_component(component: disnake.Component) -> MessageTopLevelComponentV2:
+    resolved = disnake.ui.action_row.UI_COMPONENT_LOOKUP[type(component)].from_component(component)
+    assert isinstance(resolved, MessageTopLevelComponentV2)
+    return resolved
 
 
 class DependencyProviderFunc(typing.Protocol):
@@ -183,37 +124,6 @@ ExceptionHandlerFuncT = typing.TypeVar(
 
 RichComponentT = typing.TypeVar("RichComponentT", bound=component_api.RichComponent)
 RichComponentType: typing.TypeAlias = type[component_api.RichComponent]
-
-# MessageComponents: typing.TypeAlias = (
-#     component_api.RichButton
-#     | disnake.ui.Button[typing.Any]
-#     | component_api.RichSelect
-#     | disnake.ui.StringSelect[typing.Any]
-#     | disnake.ui.ChannelSelect[typing.Any]
-#     | disnake.ui.RoleSelect[typing.Any]
-#     | disnake.ui.UserSelect[typing.Any]
-#     | disnake.ui.MentionableSelect[typing.Any]
-# )
-
-
-# def _to_ui_component(
-#     component: disnake.Button | disnake.BaseSelectMenu,
-# ) -> disnake.ui.MessageUIComponent:
-#     if isinstance(component, disnake.Button):
-#         return disnake.ui.Button[None].from_component(component)
-#     if isinstance(component, disnake.StringSelectMenu):
-#         return disnake.ui.StringSelect[None].from_component(component)
-#     if isinstance(component, disnake.UserSelectMenu):
-#         return disnake.ui.UserSelect[None].from_component(component)
-#     if isinstance(component, disnake.RoleSelectMenu):
-#         return disnake.ui.RoleSelect[None].from_component(component)
-#     if isinstance(component, disnake.MentionableSelectMenu):
-#         return disnake.ui.MentionableSelect[None].from_component(component)
-#     if isinstance(component, disnake.ChannelSelectMenu):
-#         return disnake.ui.ChannelSelect[None].from_component(component)
-
-#     msg = f"Expected a message component type, got {type(component).__name__!r}."
-#     raise TypeError(msg)
 
 
 _MAX_COUNT = 1 << 8 - 1  # 1 byte, starting at 0
@@ -571,10 +481,15 @@ class ComponentManager(component_api.ComponentManager):
 
         return count
 
+    def lookup_identifier(self, component_type: RichComponentType, /) -> str:  # noqa: D102
+        # <<docstring inherited from api.components.ComponentManager>>
+
+        return self._identifiers[component_type.__name__]
+
     async def make_custom_id(self, component: component_api.RichComponent, /) -> str:  # noqa: D102
         # <<docstring inherited from api.components.ComponentManager>>
 
-        identifier = self._identifiers[type(component).__name__]
+        identifier = self.lookup_identifier(type(component))
 
         if self.count:
             identifier = identifier + self.increment()
@@ -665,46 +580,61 @@ class ComponentManager(component_api.ComponentManager):
         return rich_component
 
     async def parse_message_components(
-        self, message: disnake.Message, /
-    ) -> tuple[
-        MessageComponents,
-        typing.Sequence[component_api.RichComponent],
+        self, components: typing.Sequence[disnake.components.MessageTopLevelComponent]) -> tuple[
+        typing.Sequence[MessageTopLevelComponentV2],
+        typing.Sequence[component_api.RichComponent]
     ]:
-        """Parse all components on a message into rich components or ui components.
+        """Parse all components on a message into a layout of ui components and a sequence of rich components.
 
-        This method is particularly useful if you wish to modify multiple
-        components attached to a given message.
+        This method takes a sequence of components such as that returned by
+        :obj:`disnake.Message.components`, and converts them into disnake UI
+        components for re-sending, maintaining the same layout.
+        It then also converts every possible component into a registered rich
+        component so you have full power over editing them.
 
-        This returns a structure of components that can be directly passed into
-        any send method's component parameters, and a separate sequence
-        containing all rich components for easier editing.
+        .. tip::
+            This method is particularly useful if you wish to modify multiple
+            components attached to a message. After your modifications, the
+            output of this function can be passed into :meth:`update_layout`
+            to update the layout with the changes you made to your rich
+            components. This can then be passed to the ``components`` argument
+            of any disnake methods.
 
         Parameters
         ----------
-        message:
-            The message of which to parse all components.
+        components:
+            The message components to parse.
 
         Returns
         -------
         :class:`tuple`[:class:`Sequence`[:class:`Sequence`[:obj:`MessageComponents`]], :class:`Sequence`[:class:`RichComponent`]]
             A tuple containing:
 
-            - A nested structure of sequences that contains the parsed message
-            components. The outer sequence can contain a maximum of 5 inner
-            sequences, which can each contain up to five components; as per
-            Discord API spec.
+            - The exact component layout that was passed in, except fully
+            converted into UI components.
 
-            - A sequence containing only the rich components to facilitate
-            easier modification of the components.
-
-            These objects share the same component instances, so any changes
-            made to components inside the separate sequence will also reflect
-            on the nested structure.
+            - A sequence containing only the rich components to make it easier
+            to modify them.
 
         """  # noqa: E501
-        return await _parse_message_components_v2(message, self)
+        rich_components: list[component_api.RichComponent] = []
 
-    async def finalise_components(
+        current_component, current_component_id = _COMPONENT_CTX.get((None, None))
+        should_test = current_component is not None
+
+        ui_components = [_to_ui_component(component) for component in components]
+        for component in disnake.ui.walk_components(components):
+            if should_test and getattr(component, "custom_id", None) == current_component_id:
+                assert current_component
+                should_test = False
+                rich_components.append(current_component)
+
+            elif isinstance(component, (disnake.Button, disnake.BaseSelectMenu)):
+                new_component = await self.parse_raw_component(component)
+                if new_component is not None:
+                    rich_components.append(new_component)
+
+        return ui_components, rich_components
         self,
         components: MessageComponents,
         /,

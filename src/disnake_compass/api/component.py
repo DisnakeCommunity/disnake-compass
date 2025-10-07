@@ -241,6 +241,17 @@ class ComponentManager(typing.Protocol):
         """
         ...
 
+    def lookup_identifier(self, component_type: type[RichComponent], /) -> str:
+        """Look up the identifier of an already registered component type.
+
+        Parameters
+        ----------
+        component_type
+            The component type for which to look up the registered identifier.
+
+        """
+        ...
+
     async def make_custom_id(self, component: RichComponent, /) -> str:
         """Make a custom id from the provided component.
 
@@ -278,7 +289,7 @@ class ComponentManager(typing.Protocol):
             The component class to register.
         identifier
             The identifier with which to register this component class.
-            
+
         Returns
         -------
         :class:`type`\[:data:`.ComponentT`]
