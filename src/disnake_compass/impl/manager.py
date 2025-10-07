@@ -78,6 +78,19 @@ def _to_ui_component(component: disnake.Component) -> MessageTopLevelComponentV2
     return resolved
 
 
+class UpdatableComponent(typing.Protocol):
+    # Simplification of a component that has everything we need to be able to update it.
+
+    custom_id: str
+
+    def refresh_component(self, component: disnake.Component) -> None: ...
+
+
+def _has_custom_id(obj: object) -> typing_extensions.TypeGuard[UpdatableComponent]:
+    # Ever so slightly more restrictive structural isinstance with the protocol.
+    return getattr(obj, "custom_id", None) is not None and hasattr(obj, "refresh_component")
+
+
 class DependencyProviderFunc(typing.Protocol):
     def __call__(
         self,
@@ -580,9 +593,9 @@ class ComponentManager(component_api.ComponentManager):
         return rich_component
 
     async def parse_message_components(
-        self, components: typing.Sequence[disnake.components.MessageTopLevelComponent]) -> tuple[
-        typing.Sequence[MessageTopLevelComponentV2],
-        typing.Sequence[component_api.RichComponent]
+        self, components: typing.Sequence[disnake.components.MessageTopLevelComponent]
+    ) -> tuple[
+        typing.Sequence[MessageTopLevelComponentV2], typing.Sequence[component_api.RichComponent]
     ]:
         """Parse all components on a message into a layout of ui components and a sequence of rich components.
 
@@ -635,24 +648,30 @@ class ComponentManager(component_api.ComponentManager):
                     rich_components.append(new_component)
 
         return ui_components, rich_components
+
+    async def update_layout(
         self,
-        components: MessageComponents,
-        /,
-        *,
-        manager: ComponentManager | None = None,
-    ) -> disnake.ui.Components[disnake.ui.MessageUIComponent]:
-        """Finalise the output of :meth:`parse_message_components` back into disnake ui components.
+        layout: typing.Sequence[MessageTopLevelComponentV2],
+        rich_components: typing.Sequence[component_api.RichComponent],
+    ) -> None:
+        """Update a component layout in-place with a sequence of rich components.
+
+        A component layout can be obtained using :meth:`parse_message_components`.
+
+        .. warning::
+            Make sure that the manager you use to call this method is aware of
+            all the components you pass through the ``rich_components`` argument.
+            Consider using the root manager or similar if this is not something
+            you can easily guarantee.
 
         Parameters
         ----------
-        components:
-            A sequence of rows of components, which can be any combination of
-            disnake ui components and rich components. The rich components are
-            automatically cast to their equivalent disnake ui components so
-            that they can be sent as an interaction response.
-        manager:
-            The manager to use to parse the provided components. If not
-            provided, defaults to the root manager.
+        layout:
+            A sequence of components such that it is a valid input to disnake's
+            send and edit methods. This works for both v1 and v2 component
+            layouts (v1 layouts are effectively a subset of v2 layouts).
+        rich_components:
+            The rich components to finalise and update the layout with.
 
         Returns
         -------
@@ -660,22 +679,25 @@ class ComponentManager(component_api.ComponentManager):
             A disnake-compatible structure of sendable components.
 
         """
-        finalised: list[list[disnake.ui.MessageUIComponent]] = []
+        if not rich_components:
+            return
 
-        if manager is None:
-            manager = get_manager(_ROOT)
+        rich_component_iter = iter(rich_components)
+        rich_component = next(rich_component_iter)
+        identifier = self.lookup_identifier(type(rich_component))
 
-        for row in components:
-            new_row: list[disnake.ui.MessageUIComponent] = []
-            finalised.append(new_row)
+        for component in disnake.ui.walk_components(layout):
+            if not (_has_custom_id(component) and component.custom_id.startswith(identifier)):
+                continue
 
-            for component in row:
-                if isinstance(component, component_api.RichButton | component_api.RichSelect):
-                    new_row.append(await component.as_ui_component(manager))  # pyright: ignore[reportArgumentType]
-                else:
-                    new_row.append(component)
+            finalised = await rich_component.as_ui_component()
+            component.refresh_component(finalised._underlying)  # pyright: ignore[reportPrivateUsage]  # noqa: SLF001
 
-        return finalised
+            rich_component = next(rich_component_iter, None)
+            if rich_component is None:
+                return
+
+            identifier = self.lookup_identifier(type(rich_component))
 
     # Identifier and component: function call, return component
     @typing.overload
