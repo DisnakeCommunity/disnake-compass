@@ -291,6 +291,7 @@ class ComponentManager(component_api.ComponentManager):
     _count: bool | None
     _counter: int
     _identifiers: dict[str, str]
+    # TODO: Refactor module data to go somewhere else now that only the root manager is aware of it.
     _module_data: dict[str, _ModuleData]
     _name: str
     _registrars: weakref.WeakValueDictionary[str, ComponentManager]
@@ -413,15 +414,20 @@ class ComponentManager(component_api.ComponentManager):
         return _recurse_parents_getattr(self, "_sep", _DEFAULT_SEP)
 
     @property
-    def parent(self) -> ComponentManager | None:  # noqa: D102
+    def parent(self) -> component_api.ComponentManager | None:  # noqa: D102
         # <<docstring inherited from api.components.ComponentManager>>
 
         if "." not in self.name:
             # Return the root manager if this is not the root manager already.
-            return None if self.name is _ROOT else get_manager(_ROOT)
+            return None if self.is_root else get_manager(_ROOT)
 
         root, _ = self.name.rsplit(".", 1)
         return get_manager(root)
+
+    @property
+    def is_root(self) -> bool:
+        """Whether this manager is the root manager."""
+        return self.name is _ROOT
 
     def config(
         self,
@@ -511,7 +517,7 @@ class ComponentManager(component_api.ComponentManager):
             #       Since we do not want to fire components that (to the user)
             #       do not exist anymore, we should remove them from the
             #       manager and return None.
-            self.deregister_component(component_type)
+            self.deregister_component(identifier)
             return None, None
 
         component_params = {
@@ -735,57 +741,79 @@ class ComponentManager(component_api.ComponentManager):
 
         """
         resolved_identifier = identifier or self.make_identifier(component_type)
-        module_data = _ModuleData.from_object(component_type)
 
-        root_manager = get_manager(_ROOT)
+        if self.is_root:
+            module_data = _ModuleData.from_object(component_type)
 
-        if resolved_identifier in root_manager._components:  # noqa: SLF001
-            # NOTE: This occurs when a component is registered while another
-            #       component with the same identifier already exists.
-            #
-            #       We now have two options:
-            #       - This is caused by a reload. In this case, we expect the
-            #         module name to remain unchanged and the module id to have
-            #         changed. We can safely overwrite the old component.
-            #       - This is an actual user error. If we were to silently
-            #         overwrite the old component, it would unexpectedly go
-            #         unresponsive. Instead, we raise an exception to the user.
-            old_module_data = root_manager._module_data[resolved_identifier]  # noqa: SLF001
-            if not module_data.is_reload_of(old_module_data):
-                message = (
-                    "Cannot register component with duplicate identifier"
-                    f" {identifier!r}. (Original defined in module"
-                    f" {old_module_data.name!r}, duplicate defined in module"
-                    f" {module_data.name!r})"
-                )
-                raise RuntimeError(message)
+            if resolved_identifier in self._components:
+                # NOTE:
+                # This occurs when a component is registered while another
+                # component with the same identifier already exists.
+                #
+                # We now have two options:
+                # - This is caused by a reload. In this case, we expect the
+                #   module name to remain unchanged and the module id to have
+                #   changed. We can safely overwrite the old component.
+                # - This is an actual user error. If we were to silently
+                #   overwrite the old component, it would unexpectedly go
+                #   unresponsive. Instead, we raise an exception to the user.
+                old_module_data = self._module_data[resolved_identifier]
+                if not module_data.is_reload_of(old_module_data):
+                    message = (
+                        "Cannot register component with duplicate identifier"
+                        f" {identifier!r}. (Original defined in module"
+                        f" {old_module_data.name!r}, duplicate defined in"
+                        f" module {module_data.name!r})"
+                    )
+                    raise RuntimeError(message)
+
+                # TODO: Pre-emptively remove all components that were registered
+                #       to the module that just went out-of-scope.
+
+            self._module_data[resolved_identifier] = module_data
 
         # Register to current manager and all parent managers.
-        for manager in _recurse_parents(self):
-            manager._components[resolved_identifier] = component_type  # noqa: SLF001
-            manager._identifiers[component_type.__name__] = resolved_identifier  # noqa: SLF001
-            manager._module_data[resolved_identifier] = module_data  # noqa: SLF001
-            manager._registrars[resolved_identifier] = self  # noqa: SLF001
+        # for manager in _recurse_parents(self):
+        self._components[resolved_identifier] = component_type
+        self._identifiers[component_type.__name__] = resolved_identifier
+        self._registrars[resolved_identifier] = self
 
+        if self.parent:
+            self.parent.register_component(component_type, identifier=resolved_identifier)
+
+        # This is somewhat wasteful as every parent class also calls set_manager,
+        # but I'm not sure if we can make this better.
+        # Bottom-line is, we don't spend much time registering components anyway.
+        component_type.set_manager(self)
         return component_type
 
-    def deregister_component(self, component_type: RichComponentType, /) -> None:  # noqa: D102
+    def deregister_component(self, identifier: str, /) -> None:  # noqa: D102
         # <<docstring inherited from api.components.ComponentManager>>
 
-        identifier = self.make_identifier(component_type)
-        registrar = self._registrars.get(identifier)
+        if identifier not in self.components:
+            msg = f"This manager is not aware of a component with identifier {identifier!r}."
+            raise LookupError(msg)
 
-        if not registrar:
-            message = (
-                f"Component {component_type.__name__!r} is not registered to a component manager."
-            )
-            raise TypeError(message)
+        component_type = self.components[identifier]
+        registrar = component_type.get_manager()
+
+        # Always start deregistering from the registrar down to root.
+        if registrar is not self:
+            registrar.deregister_component(identifier)
+            component_type.set_manager(None)
+            return
 
         # Deregister from the current manager and all parent managers.
-        for manager in _recurse_parents(registrar):
-            del manager._components[identifier]  # noqa: SLF001
-            del manager._module_data[identifier]  # noqa: SLF001
-            del manager._registrars[identifier]  # noqa: SLF001
+        del self._components[identifier]
+        del self._registrars[identifier]
+
+        if self.parent:
+            # Again, goofy but for the time being this works, i guess.
+            component_type.set_manager(self.parent)
+            self.parent.deregister_component(identifier)
+        else:
+            # Only root has module data now.
+            del self._module_data[identifier]
 
     def add_to_client(self, client: disnake.Client, /) -> None:  # noqa: D102
         # <<docstring inherited from api.components.ComponentManager>>
