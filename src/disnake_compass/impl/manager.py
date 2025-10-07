@@ -1029,18 +1029,11 @@ class ComponentManager(component_api.ComponentManager):
             # defined but we need the extra check for type-safety.
             return
 
-        # Set the registrar for this component as the manager that invoked it.
-        registrar = self._registrars[identifier]
-        component.set_manager(registrar)
-
-        # We traverse the managers in reverse: root first, then child, etc.
-        # until we reach the component's actual manager. Therefore, we first
-        # store all managers in a list, so that we can call reversed() on it
-        # later.
-        # This applies only to the callback wrappers. Error handlers are called
-        # starting from the actual manager and propagated down to the root
-        # manager if the error was left unhandled.
-        managers = list(_recurse_parents(registrar))
+        # Store all managers that are aware of the invoked component in a list
+        # to be able to loop over them later.
+        manager = component.get_manager()
+        assert isinstance(manager, ComponentManager)
+        managers = list(_recurse_parents(manager))
 
         assert interaction.component.custom_id
         ctx_value = (component, interaction.component.custom_id)
@@ -1048,7 +1041,8 @@ class ComponentManager(component_api.ComponentManager):
 
         try:
             async with contextlib.AsyncExitStack() as stack:
-                # Enter all the context managers...
+                # Before invocation, we wrap the callback in all parents'
+                # callback wrappers from root to the registrar.
                 for manager in reversed(managers):
                     await stack.enter_async_context(
                         manager.wrap_callback(manager, component, interaction),
@@ -1061,15 +1055,10 @@ class ComponentManager(component_api.ComponentManager):
             # Blanket exception catching is desired here as it's meant to
             # redirect all non-system errors to the error handler.
 
+            # Call all error handlers in order from registrar to root.
+            # Short-circuit if any handler returns True.
             for manager in managers:
-                if await manager.handle_exception(
-                    manager,
-                    component,
-                    interaction,
-                    exception,
-                ):
-                    # If an error handler returns True, consider the error
-                    # handled and skip the remaining handlers.
+                if await manager.handle_exception(manager, component, interaction, exception):
                     break
 
         finally:
