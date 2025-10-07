@@ -15,46 +15,10 @@ import typing_extensions
 
 from disnake_compass import fields
 from disnake_compass.api import component as component_api
+from disnake_compass.api import disnake_compat as disnake_api
 from disnake_compass.internal import di, omit
 
 __all__: typing.Sequence[str] = ("ComponentManager", "check_manager", "get_manager")
-
-
-# TODO: ???
-ActionRowMessageComponent = typing.Union[disnake.ui.Button[typing.Any], disnake.ui.Select[typing.Any]]
-MessageTopLevelComponentV2 = typing.Union[
-    disnake.ui.Section,
-    disnake.ui.TextDisplay,
-    disnake.ui.MediaGallery,
-    disnake.ui.File,
-    disnake.ui.Separator,
-    disnake.ui.Container,
-]
-ModalTopLevelComponent_ = typing.Union[
-    disnake.ui.TextDisplay,
-    disnake.ui.Label,
-]
-ActionRowChildT = typing.TypeVar("ActionRowChildT", bound=disnake.ui.WrappedComponent)
-NonActionRowChildT = typing.TypeVar(
-    "NonActionRowChildT",
-    bound=typing.Union[MessageTopLevelComponentV2, ModalTopLevelComponent_],
-)
-AnyUIComponentInput = typing.Union[
-    ActionRowChildT,  # action row child component
-    disnake.ui.ActionRow[ActionRowChildT],  # action row with given child types
-    NonActionRowChildT,  # some subset of (v2) components that work outside of action rows
-]
-ComponentInput = typing.Union[
-    AnyUIComponentInput[ActionRowChildT, NonActionRowChildT],  # any single component
-    typing.Sequence[  # or, a sequence of either -
-        typing.Union[
-            AnyUIComponentInput[ActionRowChildT, NonActionRowChildT],  # - any single component
-            typing.Sequence[ActionRowChildT],  # - a sequence of action row child types
-        ]
-    ],
-]
-MessageComponents = ComponentInput[ActionRowMessageComponent, MessageTopLevelComponentV2]
-# TODO: ???
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -72,9 +36,9 @@ T = typing.TypeVar("T")
 ComponentT = typing.TypeVar("ComponentT", bound=disnake.Component)
 
 
-def _to_ui_component(component: disnake.Component) -> MessageTopLevelComponentV2:
+def _to_ui_component(component: disnake.Component) -> disnake_api.MessageTopLevelComponentV2:
     resolved = disnake.ui.action_row.UI_COMPONENT_LOOKUP[type(component)].from_component(component)
-    assert isinstance(resolved, MessageTopLevelComponentV2)
+    assert isinstance(resolved, disnake_api.MessageTopLevelComponentV2)
     return resolved
 
 
@@ -595,7 +559,8 @@ class ComponentManager(component_api.ComponentManager):
     async def parse_message_components(
         self, components: typing.Sequence[disnake.components.MessageTopLevelComponent]
     ) -> tuple[
-        typing.Sequence[MessageTopLevelComponentV2], typing.Sequence[component_api.RichComponent]
+        typing.Sequence[disnake_api.MessageTopLevelComponentV2],
+        typing.Sequence[component_api.RichComponent],
     ]:
         """Parse all components on a message into a layout of ui components and a sequence of rich components.
 
@@ -651,7 +616,7 @@ class ComponentManager(component_api.ComponentManager):
 
     async def update_layout(
         self,
-        layout: typing.Sequence[MessageTopLevelComponentV2],
+        layout: typing.Sequence[disnake_api.MessageTopLevelComponentV2],
         rich_components: typing.Sequence[component_api.RichComponent],
     ) -> None:
         """Update a component layout in-place with a sequence of rich components.
