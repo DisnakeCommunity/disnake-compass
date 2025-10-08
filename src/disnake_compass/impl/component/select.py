@@ -38,6 +38,7 @@ class BaseSelect(
     min_values: int = fields.internal(default=1)
     max_values: int = fields.internal(default=1)
     disabled: bool = fields.internal(default=False)
+    id: int = fields.internal(default=0)
 
 
 class RichStringSelect(BaseSelect, typing.Protocol):
@@ -81,6 +82,7 @@ class RichStringSelect(BaseSelect, typing.Protocol):
             disabled=self.disabled,
             options=self.options,
             custom_id=await self.make_custom_id(manager),
+            id=self.id,
         )
 
 
@@ -116,6 +118,7 @@ class RichUserSelect(BaseSelect, typing.Protocol):
             max_values=self.max_values,
             disabled=self.disabled,
             custom_id=await self.make_custom_id(manager),
+            id=self.id,
         )
 
 
@@ -151,6 +154,7 @@ class RichRoleSelect(BaseSelect, typing.Protocol):
             max_values=self.max_values,
             disabled=self.disabled,
             custom_id=await self.make_custom_id(manager),
+            id=self.id,
         )
 
 
@@ -186,6 +190,7 @@ class RichMentionableSelect(BaseSelect, typing.Protocol):
             max_values=self.max_values,
             disabled=self.disabled,
             custom_id=await self.make_custom_id(manager),
+            id=self.id,
         )
 
 
@@ -230,4 +235,5 @@ class RichChannelSelect(BaseSelect, typing.Protocol):
             max_values=self.max_values,
             disabled=self.disabled,
             custom_id=await self.make_custom_id(manager),
+            id=self.id,
         )

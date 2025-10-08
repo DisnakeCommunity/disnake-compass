@@ -115,6 +115,7 @@ class RichButton(RichComponent, typing.Protocol):
     A disabled button is greyed out on discord, and cannot be pressed.
     Disabled buttons can therefore not cause any interactions, either.
     """
+    id: int
 
     async def as_ui_component(  # noqa: D102
         self, manager: ComponentManager | None = None, /
@@ -151,6 +152,7 @@ class RichSelect(RichComponent, typing.Protocol):
     A disabled select is greyed out on discord, and cannot be used.
     Disabled selects can therefore not cause any interactions, either.
     """
+    id: int
 
     async def as_ui_component(  # noqa: D102
         self, manager: ComponentManager | None = None, /

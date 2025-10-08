@@ -52,6 +52,7 @@ class RichButton(
     style: disnake.ButtonStyle = fields.internal(default=disnake.ButtonStyle.secondary)
     emoji: _AnyEmoji | None = fields.internal(default=None)
     disabled: bool = fields.internal(default=False)
+    id: int = fields.internal(default=0)
 
     async def as_ui_component(  # noqa: D102
         self, manager: component_api.ComponentManager | None = None, /
@@ -64,4 +65,5 @@ class RichButton(
             disabled=self.disabled,
             emoji=self.emoji,
             custom_id=await self.make_custom_id(manager),
+            id=self.id,
         )
