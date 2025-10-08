@@ -1,0 +1,2 @@
+:meth:`ComponentManager.register_component` and :meth:`ComponentManager.deregister_component` have been modified, and certain internal behaviour has changed.
+More noticeably, :meth:`ComponentManager.deregister_component` now takes a component identifier rather than a full class.

@@ -40,11 +40,13 @@ class RichComponent(typing.Protocol):
 
     __slots__: typing.Sequence[str] = ()
 
-    def get_manager(self) -> ComponentManager:
+    @classmethod
+    def get_manager(cls) -> ComponentManager:
         """Get the manager that was responsible for parsing this component instance."""
         ...
 
-    def set_manager(self, manager: ComponentManager, /) -> None:
+    @classmethod
+    def set_manager(cls, manager: ComponentManager | None, /) -> None:
         """Set the manager that was responsible for parsing this component instance."""
         ...
 
@@ -262,6 +264,8 @@ class ComponentManager(typing.Protocol):
         self,
         component_type: type[ComponentT],
         /,
+        *,
+        identifier: str,
     ) -> type[ComponentT]:
         r"""Register a component to this component manager.
 
@@ -272,7 +276,9 @@ class ComponentManager(typing.Protocol):
         ----------
         component_type
             The component class to register.
-
+        identifier
+            The identifier with which to register this component class.
+            
         Returns
         -------
         :class:`type`\[:data:`.ComponentT`]
@@ -281,7 +287,7 @@ class ComponentManager(typing.Protocol):
         """
         ...
 
-    def deregister_component(self, component_type: type[RichComponent], /) -> None:
+    def deregister_component(self, identifier: str, /) -> None:
         """Deregister a component from this component manager.
 
         After deregistration, the component will no be tracked, and its
@@ -289,8 +295,8 @@ class ComponentManager(typing.Protocol):
 
         Parameters
         ----------
-        component_type
-            The component class to deregister.
+        identifier
+            The identifier of the component class to deregister.
 
         Returns
         -------

@@ -208,17 +208,23 @@ class ComponentBase(component_api.RichComponent, typing.Protocol, metaclass=Comp
     """Overarching base class for any kind of component."""
 
     _factory: typing.ClassVar[component_api.ComponentFactory[typing_extensions.Self]]
-    _manager: component_api.ComponentManager = fields.meta()
+    _manager: typing.ClassVar[component_api.ComponentManager | None] = None
 
-    def get_manager(self) -> component_api.ComponentManager:  # noqa: D102
+    @classmethod
+    def get_manager(cls) -> component_api.ComponentManager:  # noqa: D102
         # <<Docstring inherited from component_api.RichComponent>>
 
-        return self._manager
+        if cls._manager is None:
+            msg = f"Component {cls.__qualname__} is not yet registered to a manager."
+            raise RuntimeError(msg)
 
-    def set_manager(self, manager: component_api.ComponentManager) -> None:  # noqa: D102
+        return cls._manager
+
+    @classmethod
+    def set_manager(cls, manager: component_api.ComponentManager | None) -> None:  # noqa: D102
         # <<Docstring inherited from component_api.RichComponent>>
 
-        self._manager = manager
+        cls._manager = manager
 
     @classmethod
     def get_factory(cls) -> component_api.ComponentFactory[typing_extensions.Self]:
