@@ -116,7 +116,7 @@ def _minimise_count(count: int) -> str:
 
 
 _COUNT_CHARS: typing.Final[tuple[str, ...]] = tuple(
-    map(_minimise_count, range(25)),
+    map(_minimise_count, range(_MAX_COUNT)),
 )
 _DEFAULT_SEP: typing.Final[str] = sys.intern("|")
 _DEFAULT_COUNT: typing.Final = True
