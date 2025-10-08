@@ -115,6 +115,7 @@ class RichButton(RichComponent, typing.Protocol):
     A disabled button is greyed out on discord, and cannot be pressed.
     Disabled buttons can therefore not cause any interactions, either.
     """
+    id: int
 
     async def as_ui_component(  # noqa: D102
         self, manager: ComponentManager | None = None, /
@@ -151,6 +152,7 @@ class RichSelect(RichComponent, typing.Protocol):
     A disabled select is greyed out on discord, and cannot be used.
     Disabled selects can therefore not cause any interactions, either.
     """
+    id: int
 
     async def as_ui_component(  # noqa: D102
         self, manager: ComponentManager | None = None, /
@@ -241,6 +243,17 @@ class ComponentManager(typing.Protocol):
         """
         ...
 
+    def lookup_identifier(self, component_type: type[RichComponent], /) -> str:
+        """Look up the identifier of an already registered component type.
+
+        Parameters
+        ----------
+        component_type
+            The component type for which to look up the registered identifier.
+
+        """
+        ...
+
     async def make_custom_id(self, component: RichComponent, /) -> str:
         """Make a custom id from the provided component.
 
@@ -278,7 +291,7 @@ class ComponentManager(typing.Protocol):
             The component class to register.
         identifier
             The identifier with which to register this component class.
-            
+
         Returns
         -------
         :class:`type`\[:data:`.ComponentT`]

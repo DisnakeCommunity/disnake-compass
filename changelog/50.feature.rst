@@ -1,0 +1,1 @@
+Add :meth:`ComponentManager.update_layout` to update a disnake UI component layout in-place with rich components (v1 and v2 compatible).

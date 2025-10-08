@@ -4,8 +4,9 @@ import os
 import typing
 
 import disnake
-import disnake_compass
 from disnake.ext import commands
+
+import disnake_compass
 
 DEFAULT_OPTION = disnake.SelectOption(
     label="Please enable some options.",
@@ -32,9 +33,7 @@ class OptionsToggleButton(disnake_compass.RichButton):
 
         return [disnake.SelectOption(label=option) for option in self.options]
 
-    def update_select(
-        self, components: typing.Sequence[disnake_compass.api.RichComponent]
-    ):
+    def update_select(self, components: typing.Sequence[disnake_compass.api.RichComponent]):
         select: DynamicSelectMenu | None = None
         options: list[disnake.SelectOption] = []
 
@@ -57,7 +56,7 @@ class OptionsToggleButton(disnake_compass.RichButton):
         # Get all components on the message for easier re-sending.
         # Both of these lists will automagically contain self so that any
         # changes immediately reflect without extra effort.
-        rows, components = await manager.parse_message_components(interaction.message)
+        layout, components = await manager.parse_message_components(interaction.message.components)
 
         # Toggle style for the clicked button.
         self.style = (
@@ -71,8 +70,8 @@ class OptionsToggleButton(disnake_compass.RichButton):
         self.update_select(components)
 
         # Re-send and update all components.
-        finalised = await manager.finalise_components(rows)
-        await interaction.response.edit_message(components=finalised)
+        await manager.update_layout(layout, components)
+        await interaction.response.edit_message(components=layout)
 
 
 @manager.register()
@@ -93,9 +92,7 @@ class DynamicSelectMenu(disnake_compass.RichStringSelect):
             self.max_values = 1
             self.disabled = True
 
-    async def callback(
-        self, interaction: disnake.MessageInteraction[disnake.Client]
-    ) -> None:
+    async def callback(self, interaction: disnake.MessageInteraction[disnake.Client]) -> None:
         selection = (
             "\n".join(f"- {value}" for value in interaction.values)
             if interaction.values
@@ -109,16 +106,22 @@ class DynamicSelectMenu(disnake_compass.RichStringSelect):
 async def test_components(
     interaction: disnake.CommandInteraction[disnake.Client],
 ) -> None:
-    layout = await manager.finalise_components(
+    # TODO: Maybe a utility method to turn a sequence of rich components into a
+    #       sequence of UI components?
+    layout = [
         [
-            [
-                OptionsToggleButton(label="numbers", options=["1", "2", "3", "4", "5"]),
-                OptionsToggleButton(label="letters", options=["a", "b", "c", "d", "e"]),
-                OptionsToggleButton(label="symbols", options=["*", "&", "#", "+", "-"]),
-            ],
-            [DynamicSelectMenu()],
+            await OptionsToggleButton(
+                label="numbers", options=["1", "2", "3", "4", "5"]
+            ).as_ui_component(),
+            await OptionsToggleButton(
+                label="letters", options=["a", "b", "c", "d", "e"]
+            ).as_ui_component(),
+            await OptionsToggleButton(
+                label="symbols", options=["*", "&", "#", "+", "-"]
+            ).as_ui_component(),
         ],
-    )
+        [await DynamicSelectMenu().as_ui_component()],
+    ]
 
     await interaction.response.send_message(components=layout)
 
