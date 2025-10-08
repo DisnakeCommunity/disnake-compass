@@ -193,10 +193,10 @@ class ComponentMeta(type(typing.Protocol)):
         #       here, but this is a false-positive, as the only non-method
         #       member is __slots__.
         assert issubclass(cls, component_api.RichComponent)  # pyright: ignore[reportGeneralTypeIssues]
-        factory_cls: type[component_api.ComponentFactory[typing.Any]] = (
+        factory_cls = (
             factory_impl.NoopFactory
             if typing_extensions.is_protocol(cls)
-            else factory_impl.ComponentFactory
+            else factory_impl.ComponentFactory[typing.Any]
         )
 
         cls.set_factory(factory_cls.from_component(cls))
