@@ -1,1 +1,0 @@
-Remove the ``RichComponent.manager`` class variable and replace it with new :meth:`.RichComponent.get_manager` and :meth:`.RichComponent.set_manager` instance methods.

@@ -1,1 +1,0 @@
-:meth:`RichComponent.get_manager` and :meth:`RichComponent.set_manager` are now class methods.

@@ -1,1 +1,0 @@
-Remove ``ComponentManager.finalise_components`` in favour of :meth:`ComponentManager.update_layout`.

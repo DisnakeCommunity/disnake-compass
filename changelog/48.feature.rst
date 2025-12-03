@@ -1,2 +1,0 @@
-The :class:`ComponentManager` instance is now immediately stored on a :class:`RichComponent` when it is registered.
-This should reduce the number of times you need to manually provide a manager to :meth:`RichComponent.as_ui_component` etc.
