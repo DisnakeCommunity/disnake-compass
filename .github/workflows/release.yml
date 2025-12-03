@@ -150,7 +150,7 @@ jobs:
           path: dist/
 
       - name: Upload to pypi
-        uses: pypa/gh-action-pypi-publish@81e9d935c883d0b210363ab89cf05f3894778450  # v1.8.14
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e  # v1.13.0
         with:
           print-hash: true
 
