@@ -11,3 +11,4 @@ Submodules
 
    component </api_ref/api/component>
    parser </api_ref/api/parser>
+   disnake_compat </api_ref/api/disnake_compat>

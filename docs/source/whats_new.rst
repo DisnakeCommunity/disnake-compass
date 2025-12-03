@@ -21,11 +21,11 @@ Breaking Changes
 ~~~~~~~~~~~~~~~~
 - Remove the ``RichComponent.factory`` class variable and replace it with new :meth:`.RichComponent.get_factory` and :meth:`.RichComponent.set_factory` class methods. (:issue:`39`)
 - Remove the ``RichComponent.manager`` class variable and replace it with new :meth:`.RichComponent.get_manager` and :meth:`.RichComponent.set_manager` instance methods. (:issue:`39`)
-- :meth:`ComponentManager.register_component` and :meth:`ComponentManager.deregister_component` have been modified, and certain internal behaviour has changed. (:issue:`48`)
-    More noticeably, :meth:`ComponentManager.deregister_component` now takes a component identifier rather than a full class.
-- :meth:`RichComponent.get_manager` and :meth:`RichComponent.set_manager` are now class methods. (:issue:`48`)
-- Modify :meth:`ComponentManager.parse_message_components` to take components directly and return a sequence of disnake UI components to support parsing v2 components. (:issue:`50`)
-- Remove ``ComponentManager.finalise_components`` in favour of :meth:`ComponentManager.update_layout`. (:issue:`50`)
+- :meth:`.ComponentManager.register_component` and :meth:`.ComponentManager.deregister_component` have been modified, and certain internal behaviour has changed. (:issue:`48`)
+    More noticeably, :meth:`.ComponentManager.deregister_component` now takes a component identifier rather than a full class.
+- :meth:`.RichComponent.get_manager` and :meth:`.RichComponent.set_manager` are now class methods. (:issue:`48`)
+- Modify :meth:`.ComponentManager.parse_message_components` to take components directly and return a sequence of disnake UI components to support parsing v2 components. (:issue:`50`)
+- Remove ``ComponentManager.finalise_components`` in favour of :meth:`.ComponentManager.update_layout`. (:issue:`50`)
 
 Deprecations
 ~~~~~~~~~~~~
