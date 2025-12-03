@@ -546,7 +546,7 @@ class ComponentManager(component_api.ComponentManager):
 
         Returns
         -------
-        :class:`RichComponent`
+        :class:`.RichComponent`
             The newly created component.
         :obj:`None`:
             The provided component could not be parsed into a rich component
@@ -562,7 +562,7 @@ class ComponentManager(component_api.ComponentManager):
         typing.Sequence[disnake_api.MessageTopLevelComponentV2],
         typing.Sequence[component_api.RichComponent],
     ]:
-        """Parse all components on a message into a layout of ui components and a sequence of rich components.
+        r"""Parse all components on a message into a layout of ui components and a sequence of rich components.
 
         This method takes a sequence of components such as that returned by
         :obj:`disnake.Message.components`, and converts them into disnake UI
@@ -585,7 +585,7 @@ class ComponentManager(component_api.ComponentManager):
 
         Returns
         -------
-        :class:`tuple`[:class:`Sequence`[:class:`Sequence`[:obj:`MessageComponents`]], :class:`Sequence`[:class:`RichComponent`]]
+        :class:`tuple`\[:class:`~typing.Sequence`\[:obj:`~.MessageTopLevelComponentV2`]], :class:`~typing.Sequence`\[:class:`~.RichComponent`]]
             A tuple containing:
 
             - The exact component layout that was passed in, except fully
@@ -950,7 +950,7 @@ class ComponentManager(component_api.ComponentManager):
         return func
 
     def as_exception_handler(self, func: ExceptionHandlerFuncT, /) -> ExceptionHandlerFuncT:
-        """Register a callback as this managers' error handler.
+        r"""Register a callback as this managers' error handler.
 
         By default, this simply logs the exception and keeps it from
         propagating.
@@ -996,7 +996,7 @@ class ComponentManager(component_api.ComponentManager):
 
         Returns
         -------
-        Callable[[:class:`RichComponent`, :class:`disnake.Interaction[disnake.Client]`, :class:`Exception`], None]
+        :class:`typing.Callable`\[[:class:`.RichComponent`, :class:`disnake.Interaction[disnake.Client]`, :class:`Exception`], `None`]
             The function that was just registered.
 
         """  # noqa: E501
@@ -1114,7 +1114,7 @@ class ComponentManager(component_api.ComponentManager):
 
         Returns
         -------
-        :class:`disnake_compass.api.RichButton`
+        :class:`~disnake_compass.api.component.RichButton`
             The newly created button.
 
         Raises
@@ -1191,7 +1191,7 @@ class ComponentManager(component_api.ComponentManager):
 
         Returns
         -------
-        :class:`disnake_compass.api.RichStringSelect`
+        :class:`.RichSelect`
             The newly created string select.
 
         Raises
