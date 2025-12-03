@@ -1,1 +1,0 @@
-Remove the ``RichComponent.factory`` class variable and replace it with new :meth:`.RichComponent.get_factory` and :meth:`.RichComponent.set_factory` class methods.

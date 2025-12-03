@@ -1,1 +1,0 @@
-Modify :meth:`ComponentManager.parse_message_components` to take components directly and return a sequence of disnake UI components to support parsing v2 components.

@@ -1,1 +1,0 @@
-Add a new :obj:`~.FieldType.META` :class:`.FieldType` for component fields that should *not* be stored in the custom ID (:obj:`.FieldType.CUSTOM_ID`) and should *not* be inferred from the raw disnake component (:obj:`.FieldType.INTERNAL`).
