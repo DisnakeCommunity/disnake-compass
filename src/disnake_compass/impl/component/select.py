@@ -137,6 +137,7 @@ class RichUserSelect(BaseSelect, typing.Protocol):
             min_values=self.min_values,
             max_values=self.max_values,
             disabled=self.disabled,
+            default_values=self.default_values,
             custom_id=await self.make_custom_id(manager),
             id=self.id,
         )
@@ -179,6 +180,7 @@ class RichRoleSelect(BaseSelect, typing.Protocol):
             min_values=self.min_values,
             max_values=self.max_values,
             disabled=self.disabled,
+            default_values=self.default_values,
             custom_id=await self.make_custom_id(manager),
             id=self.id,
         )
@@ -223,6 +225,7 @@ class RichMentionableSelect(BaseSelect, typing.Protocol):
             min_values=self.min_values,
             max_values=self.max_values,
             disabled=self.disabled,
+            default_values=self.default_values,
             custom_id=await self.make_custom_id(manager),
             id=self.id,
         )
@@ -274,6 +277,7 @@ class RichChannelSelect(BaseSelect, typing.Protocol):
             min_values=self.min_values,
             max_values=self.max_values,
             disabled=self.disabled,
+            default_values=self.default_values,
             custom_id=await self.make_custom_id(manager),
             id=self.id,
         )
